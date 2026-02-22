@@ -1,0 +1,138 @@
+<!-- CONTENEDOR PRINCIPAL DE LOGIN -->
+<div class="login-container">
+  
+  <!-- CARD DE LOGIN -->
+  <div class="login-card">
+    
+    <!-- HEADER DEL CARD -->
+    <div class="login-header">
+      <!-- Logo de la empresa -->
+      <div class="logo-container">
+        <img 
+          *ngIf="companyLogo" 
+          [src]="companyLogo" 
+          alt="Logo" 
+          class="company-logo">
+        <i *ngIf="!companyLogo" class="bi bi-shop logo-icon"></i>
+      </div>
+      
+      <!-- Título -->
+      <h1 class="login-title">{{ appName }}</h1>
+      <p class="login-subtitle">Iniciar Sesión</p>
+    </div>
+
+    <!-- FORMULARIO DE LOGIN -->
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      
+      <!-- Campo: Usuario -->
+      <div class="form-group">
+        <label for="username" class="form-label">
+          <i class="bi bi-person-fill me-2"></i>
+          Usuario
+        </label>
+        <input
+          type="text"
+          id="username"
+          class="form-control"
+          [class.is-invalid]="hasError('username', 'required') || hasError('username', 'minlength')"
+          formControlName="username"
+          placeholder="Ingrese su usuario"
+          autocomplete="username"
+          [disabled]="isLoading">
+        
+        <div class="invalid-feedback" *ngIf="loginForm.get('username')?.touched">
+          {{ getErrorMessage('username') }}
+        </div>
+      </div>
+
+      <!-- Campo: Contraseña -->
+      <div class="form-group">
+        <label for="password" class="form-label">
+          <i class="bi bi-lock-fill me-2"></i>
+          Contraseña
+        </label>
+        <div class="input-group">
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            id="password"
+            class="form-control"
+            [class.is-invalid]="hasError('password', 'required') || hasError('password', 'minlength')"
+            formControlName="password"
+            placeholder="Ingrese su contraseña"
+            autocomplete="current-password"
+            [disabled]="isLoading">
+          
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="togglePasswordVisibility()"
+            [disabled]="isLoading"
+            tabindex="-1">
+            <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+          </button>
+        </div>
+        
+        <div class="invalid-feedback" *ngIf="loginForm.get('password')?.touched">
+          {{ getErrorMessage('password') }}
+        </div>
+      </div>
+
+      <!-- Checkbox: Recordar sesión -->
+      <div class="form-group">
+        <div class="form-check">
+          <input
+            type="checkbox"
+            id="rememberMe"
+            class="form-check-input"
+            formControlName="rememberMe"
+            [disabled]="isLoading">
+          <label for="rememberMe" class="form-check-label">
+            Recordar sesión
+          </label>
+        </div>
+      </div>
+
+      <!-- Botón: Iniciar Sesión -->
+      <button
+        type="submit"
+        class="btn btn-primary btn-login"
+        [disabled]="isLoading || loginForm.invalid">
+        <span *ngIf="!isLoading">
+          <i class="bi bi-box-arrow-in-right me-2"></i>
+          Iniciar Sesión
+        </span>
+        <span *ngIf="isLoading">
+          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+          Iniciando sesión...
+        </span>
+      </button>
+
+      <!-- Enlace: ¿Olvidaste tu contraseña? -->
+      <div class="text-center mt-3">
+        <a 
+          href="javascript:void(0)" 
+          class="forgot-password-link"
+          (click)="onForgotPassword()"
+          [class.disabled]="isLoading">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+    </form>
+
+    <!-- FOOTER DEL CARD -->
+    <div class="login-footer">
+      <small class="text-muted">
+        {{ appName }} v{{ appVersion }}
+      </small>
+    </div>
+  </div>
+
+  <!-- INFO DE DESARROLLO (solo visible en dev) -->
+  <div class="dev-info">
+    <div class="alert alert-info">
+      <strong>Credenciales de prueba:</strong><br>
+      <code>Usuario: admin</code><br>
+      <code>Contraseña: Admin123</code>
+    </div>
+  </div>
+</div>
