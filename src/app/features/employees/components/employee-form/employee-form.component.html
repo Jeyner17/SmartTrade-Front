@@ -1,0 +1,231 @@
+<!-- LOADER -->
+<app-loader *ngIf="isLoading" message="Cargando empleado..." size="lg"></app-loader>
+<app-loader *ngIf="isSaving"  message="Guardando..."        [overlay]="true"></app-loader>
+
+<div *ngIf="!isLoading">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-person-badge text-primary me-2"></i>
+        {{ isEditMode ? 'Editar Empleado' : 'Nuevo Empleado' }}
+      </h2>
+      <p class="text-muted mb-0">
+        {{ isEditMode ? 'Modifique los datos del empleado' : 'Complete los datos para registrar un nuevo empleado' }}
+      </p>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </button>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="row g-4">
+
+      <!-- ── COLUMNA IZQUIERDA ─────────────────────────────────────────── -->
+      <div class="col-lg-8">
+
+        <!-- Datos personales -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-person me-2 text-primary"></i>Datos Personales</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="firstName" placeholder="Ej: Juan"
+                       [class.is-invalid]="isFieldInvalid('firstName')"
+                       [class.is-valid]="isFieldValid('firstName')">
+                <div class="invalid-feedback">{{ getErrorMessage('firstName') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="lastName" placeholder="Ej: Pérez"
+                       [class.is-invalid]="isFieldInvalid('lastName')"
+                       [class.is-valid]="isFieldValid('lastName')">
+                <div class="invalid-feedback">{{ getErrorMessage('lastName') }}</div>
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Tipo de Documento <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="documentType"
+                        [class.is-invalid]="isFieldInvalid('documentType')">
+                  <option *ngFor="let opt of documentTypeOptions" [value]="opt.value">{{ opt.label }}</option>
+                </select>
+                <div class="invalid-feedback">{{ getErrorMessage('documentType') }}</div>
+              </div>
+
+              <div class="col-md-8">
+                <label class="form-label fw-semibold">Número de Documento <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="documentNumber"
+                       placeholder="Ej: 1712345678"
+                       [class.is-invalid]="isFieldInvalid('documentNumber')"
+                       [class.is-valid]="isFieldValid('documentNumber')">
+                <div class="invalid-feedback">{{ getErrorMessage('documentNumber') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Nacimiento</label>
+                <input type="date" class="form-control" formControlName="birthDate">
+              </div>
+
+              <div class="col-md-12">
+                <label class="form-label fw-semibold">Dirección</label>
+                <input type="text" class="form-control" formControlName="address" placeholder="Ej: Av. República 123">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Teléfono</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                  <input type="tel" class="form-control" formControlName="phone" placeholder="Ej: 0987654321"
+                         [class.is-invalid]="isFieldInvalid('phone')">
+                </div>
+                <div class="text-danger small mt-1" *ngIf="isFieldInvalid('phone')">{{ getErrorMessage('phone') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Correo Electrónico</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input type="email" class="form-control" formControlName="email" placeholder="juan@ejemplo.com"
+                         [class.is-invalid]="isFieldInvalid('email')"
+                         [class.is-valid]="isFieldValid('email')">
+                </div>
+                <div class="text-danger small mt-1" *ngIf="isFieldInvalid('email')">{{ getErrorMessage('email') }}</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos laborales -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-briefcase me-2 text-primary"></i>Datos Laborales</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Área <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="area"
+                        [class.is-invalid]="isFieldInvalid('area')"
+                        [class.is-valid]="isFieldValid('area')">
+                  <option value="">-- Seleccione un área --</option>
+                  <option *ngFor="let opt of areaOptions" [value]="opt.value">{{ opt.label }}</option>
+                </select>
+                <div class="invalid-feedback">{{ getErrorMessage('area') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Turno <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="shift"
+                        [class.is-invalid]="isFieldInvalid('shift')"
+                        [class.is-valid]="isFieldValid('shift')">
+                  <option value="">-- Seleccione un turno --</option>
+                  <option *ngFor="let opt of shiftOptions" [value]="opt.value">{{ opt.label }}</option>
+                </select>
+                <div class="invalid-feedback">{{ getErrorMessage('shift') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de Contratación</label>
+                <input type="date" class="form-control" formControlName="hireDate">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Salario</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" class="form-control" formControlName="salary"
+                         placeholder="0.00" min="0" step="0.01"
+                         [class.is-invalid]="isFieldInvalid('salary')">
+                </div>
+                <div class="text-danger small mt-1" *ngIf="isFieldInvalid('salary')">{{ getErrorMessage('salary') }}</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── COLUMNA DERECHA ──────────────────────────────────────────── -->
+      <div class="col-lg-4">
+
+        <!-- Estado (edición) -->
+        <div class="card mb-4" *ngIf="isEditMode">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-toggles me-2 text-primary"></i>Estado</h5>
+          </div>
+          <div class="card-body">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="isActive"
+                     formControlName="isActive" role="switch">
+              <label class="form-check-label" for="isActive">Empleado activo</label>
+              <div class="form-text">Los empleados inactivos no aparecen en la lista por defecto.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vincular usuario del sistema (solo admin + crear) -->
+        <div class="card mb-4" *ngIf="!isEditMode && isAdmin">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-link-45deg me-2 text-primary"></i>Usuario del Sistema</h5>
+          </div>
+          <div class="card-body">
+            <label class="form-label fw-semibold">
+              Vincular con usuario
+              <small class="text-muted fw-normal">(opcional)</small>
+            </label>
+            <select class="form-select" formControlName="userId">
+              <option [value]="null">Sin vincular</option>
+              <option *ngFor="let user of users" [value]="user.id">
+                {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
+              </option>
+            </select>
+            <div class="form-text">El usuario podrá acceder al sistema con los permisos de su rol.</div>
+          </div>
+        </div>
+
+        <!-- Información del empleado (edición) -->
+        <div class="card mb-4" *ngIf="isEditMode && currentEmployee">
+          <div class="card-header">
+            <h5 class="mb-0"><i class="bi bi-info-circle me-2 text-primary"></i>Información</h5>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-5 text-muted">Registrado</dt>
+              <dd class="col-7">{{ currentEmployee.createdAt | date:'dd/MM/yyyy' }}</dd>
+              <dt class="col-5 text-muted">Actualizado</dt>
+              <dd class="col-7">{{ currentEmployee.updatedAt | date:'dd/MM/yyyy' }}</dd>
+              <dt class="col-5 text-muted" *ngIf="currentEmployee.linkedUser">Usuario</dt>
+              <dd class="col-7" *ngIf="currentEmployee.linkedUser">
+                <span class="badge bg-info text-dark">{{ currentEmployee.linkedUser.username }}</span>
+              </dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary btn-lg" [disabled]="isSaving">
+            <i class="bi bi-check-circle me-2"></i>
+            <span *ngIf="!isSaving">{{ isEditMode ? 'Guardar Cambios' : 'Crear Empleado' }}</span>
+            <span *ngIf="isSaving">Guardando...</span>
+          </button>
+          <button type="button" class="btn btn-outline-secondary" (click)="cancel()" [disabled]="isSaving">
+            <i class="bi bi-x-circle me-1"></i>Cancelar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </form>
+
+</div>

@@ -1,0 +1,249 @@
+<!-- LOADERS -->
+<app-loader *ngIf="isLoading"       message="Cargando usuario..." size="lg"></app-loader>
+<app-loader *ngIf="isActionLoading" message="Procesando..."       [overlay]="true"></app-loader>
+
+<!-- CONTENIDO -->
+<div *ngIf="!isLoading && user">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-person-circle text-primary me-2"></i>
+        Detalle de Usuario
+      </h2>
+      <p class="text-muted mb-0">
+        Información completa y acciones sobre la cuenta
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a *ngIf="canEdit" [routerLink]="['/users', user.id, 'edit']" class="btn btn-primary">
+        <i class="bi bi-pencil me-1"></i>
+        Editar
+      </a>
+      <a routerLink="/users" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Volver
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ── COLUMNA IZQUIERDA ───────────────────────────────────────────── -->
+    <div class="col-lg-4">
+
+      <!-- Tarjeta de perfil -->
+      <div class="card mb-4">
+        <div class="card-body text-center py-4">
+          <div class="d-flex justify-content-center mb-3">
+            <div class="user-avatar-lg">{{ getUserInitials() }}</div>
+          </div>
+          <h4 class="mb-1">{{ user.fullName || (user.firstName + ' ' + user.lastName) }}</h4>
+          <p class="text-muted mb-2">
+            <i class="bi bi-at me-1"></i>{{ user.username }}
+          </p>
+          <span [class]="getStatusBadge().cssClass">{{ getStatusBadge().text }}</span>
+
+          <div class="mt-3">
+            <span class="badge bg-secondary">{{ user.role?.name || 'Sin rol' }}</span>
+            <span *ngIf="user.mustChangePassword" class="badge bg-warning text-dark ms-1">
+              <i class="bi bi-key me-1"></i>Debe cambiar contraseña
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Información de contacto -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-envelope me-2 text-muted"></i>Contacto</h6>
+        </div>
+        <div class="card-body">
+          <div class="info-item">
+            <div class="info-label text-muted">Email</div>
+            <div class="fw-semibold">{{ user.email }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label text-muted">Último Acceso</div>
+            <div>
+              <span *ngIf="user.lastLogin">{{ user.lastLogin | date:'dd/MM/yyyy HH:mm' }}</span>
+              <span *ngIf="!user.lastLogin" class="text-muted">Nunca</span>
+            </div>
+          </div>
+          <div class="info-item mb-0" *ngIf="user.loginAttempts > 0">
+            <div class="info-label text-muted">Intentos Fallidos</div>
+            <div class="text-warning fw-semibold">{{ user.loginAttempts }} intento(s)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metadatos -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-clock-history me-2 text-muted"></i>Registro</h6>
+        </div>
+        <div class="card-body">
+          <div class="info-item">
+            <div class="info-label text-muted">Creado</div>
+            <div>{{ user.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+          <div class="info-item mb-0">
+            <div class="info-label text-muted">Actualizado</div>
+            <div>{{ user.updatedAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── COLUMNA DERECHA ────────────────────────────────────────────── -->
+    <div class="col-lg-8">
+
+      <!-- Acciones administrativas -->
+      <div class="card mb-4" *ngIf="canEdit || isAdmin">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-gear me-2 text-muted"></i>Acciones Administrativas</h6>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+
+            <!-- Activar / Desactivar -->
+            <div class="col-md-6 col-lg-4" *ngIf="canEdit">
+              <button class="btn w-100"
+                      [class]="user.isActive ? 'btn-outline-warning' : 'btn-outline-success'"
+                      (click)="confirmStatusChange()">
+                <i [class]="'bi me-2 ' + (user.isActive ? 'bi-toggle-off' : 'bi-toggle-on')"></i>
+                {{ user.isActive ? 'Desactivar' : 'Activar' }}
+              </button>
+            </div>
+
+            <!-- Desbloquear -->
+            <div class="col-md-6 col-lg-4" *ngIf="canEdit && isLocked()">
+              <button class="btn btn-outline-info w-100" (click)="confirmUnlock()">
+                <i class="bi bi-unlock me-2"></i>
+                Desbloquear
+              </button>
+            </div>
+
+            <!-- Resetear contraseña -->
+            <div class="col-md-6 col-lg-4" *ngIf="isAdmin">
+              <button class="btn btn-outline-secondary w-100" (click)="confirmResetPassword()">
+                <i class="bi bi-key me-2"></i>
+                Resetear Contraseña
+              </button>
+            </div>
+
+            <!-- Cerrar sesiones -->
+            <div class="col-md-6 col-lg-4" *ngIf="isAdmin">
+              <button class="btn btn-outline-secondary w-100" (click)="confirmLogoutAll()">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                Cerrar Sesiones
+              </button>
+            </div>
+
+            <!-- Eliminar -->
+            <div class="col-md-6 col-lg-4" *ngIf="canDelete">
+              <button class="btn btn-outline-danger w-100" (click)="confirmDelete()">
+                <i class="bi bi-trash me-2"></i>
+                Eliminar Usuario
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerta cuenta bloqueada -->
+      <div *ngIf="isLocked()" class="alert alert-warning mb-4">
+        <i class="bi bi-lock-fill me-2"></i>
+        <strong>Cuenta bloqueada</strong> — bloqueada hasta
+        <strong>{{ user.lockUntil | date:'dd/MM/yyyy HH:mm' }}</strong>
+        debido a múltiples intentos fallidos.
+        <button *ngIf="canEdit" class="btn btn-sm btn-warning ms-3" (click)="confirmUnlock()">
+          Desbloquear ahora
+        </button>
+      </div>
+
+      <!-- Sesiones activas (solo admin) -->
+      <div *ngIf="isAdmin">
+        <app-session-list
+          [sessions]="sessions"
+          [isAdmin]="isAdmin"
+          [isLoading]="sessionsLoading"
+          (logoutAll)="onLogoutAll()">
+        </app-session-list>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     MODAL: CONFIRMACIÓN
+     ============================================================ -->
+<div class="modal-backdrop fade show" *ngIf="showConfirmModal" style="z-index:1040;"></div>
+<div class="modal fade show d-block" *ngIf="showConfirmModal" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i [class]="'bi me-2 ' + (confirmDanger ? 'bi-exclamation-triangle text-danger' : 'bi-question-circle text-warning')"></i>
+          {{ confirmTitle }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeConfirmModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">{{ confirmMessage }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeConfirmModal()">
+          <i class="bi bi-x-circle me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn" [class]="confirmDanger ? 'btn-danger' : 'btn-primary'" (click)="executeConfirm()">
+          <i class="bi bi-check-circle me-1"></i>Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: CONTRASEÑA TEMPORAL
+     ============================================================ -->
+<div class="modal-backdrop fade show" *ngIf="showPasswordModal" style="z-index:1040;"></div>
+<div class="modal fade show d-block" *ngIf="showPasswordModal" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-key me-2"></i>
+          Contraseña Reseteada
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePasswordModal()"></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <p class="text-muted mb-3">La nueva contraseña temporal es:</p>
+        <div class="input-group input-group-lg mb-3">
+          <input type="text" class="form-control text-center fw-bold font-monospace"
+                 [value]="temporaryPassword" readonly>
+          <button class="btn btn-outline-secondary" (click)="copyPassword()" title="Copiar">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
+        <div class="alert alert-warning mb-0">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          El usuario deberá cambiar esta contraseña al iniciar sesión.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" (click)="closePasswordModal()">
+          <i class="bi bi-check me-1"></i>Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

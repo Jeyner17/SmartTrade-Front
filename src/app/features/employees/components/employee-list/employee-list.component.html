@@ -1,0 +1,236 @@
+<!-- OVERLAY ACCIÓN -->
+<app-loader *ngIf="isActionLoading" message="Procesando..." [overlay]="true"></app-loader>
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-person-badge text-primary me-2"></i>
+      Gestión de Empleados
+    </h2>
+    <p class="text-muted mb-0">Administre el personal y el control de asistencia</p>
+  </div>
+  <a *ngIf="canCreate" routerLink="new" class="btn btn-primary">
+    <i class="bi bi-person-plus me-2"></i>
+    Nuevo Empleado
+  </a>
+</div>
+
+<!-- FILTROS -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+
+      <div class="col-md-4">
+        <label class="form-label fw-semibold">Buscar</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" placeholder="Nombre, apellido, documento..."
+                 [(ngModel)]="searchTerm" (ngModelChange)="onSearch($event)">
+          <button *ngIf="searchTerm" class="btn btn-outline-secondary" (click)="searchTerm=''; onSearch('')">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Área</label>
+        <select class="form-select" [(ngModel)]="selectedArea" (ngModelChange)="onAreaFilter()">
+          <option value="">Todas</option>
+          <option *ngFor="let opt of areaOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Turno</label>
+        <select class="form-select" [(ngModel)]="selectedShift" (ngModelChange)="onShiftFilter()">
+          <option value="">Todos</option>
+          <option *ngFor="let opt of shiftOptions" [value]="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Estado</label>
+        <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="onStatusFilter()">
+          <option value="true">Activos</option>
+          <option value="false">Inactivos</option>
+          <option value="">Todos</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          <i class="bi bi-x-circle me-1"></i>Limpiar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TABLA -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">
+      <i class="bi bi-list-ul me-2 text-muted"></i>
+      <ng-container *ngIf="pagination && !isLoading">
+        {{ getFirstItem() }} – {{ getLastItem() }} de {{ pagination.total }} empleados
+      </ng-container>
+      <ng-container *ngIf="isLoading">Cargando...</ng-container>
+    </span>
+  </div>
+
+  <div class="card-body p-0">
+
+    <!-- Spinner -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-2 mb-0">Cargando empleados...</p>
+    </div>
+
+    <div *ngIf="!isLoading">
+
+      <!-- Sin resultados -->
+      <div *ngIf="employees.length === 0" class="text-center py-5">
+        <i class="bi bi-person-badge text-muted" style="font-size: 3rem;"></i>
+        <p class="text-muted mt-3 mb-3">No se encontraron empleados</p>
+        <a *ngIf="canCreate" routerLink="new" class="btn btn-primary btn-sm">
+          <i class="bi bi-person-plus me-1"></i>Agregar empleado
+        </a>
+      </div>
+
+      <!-- Tabla con datos -->
+      <div *ngIf="employees.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Empleado</th>
+              <th>Documento</th>
+              <th>Área</th>
+              <th>Turno</th>
+              <th>Estado</th>
+              <th>Usuario vinculado</th>
+              <th class="text-end pe-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let emp of employees">
+
+              <!-- Empleado -->
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="employee-avatar">{{ getInitials(emp) }}</div>
+                  <div>
+                    <div class="fw-semibold">{{ emp.firstName }} {{ emp.lastName }}</div>
+                    <small class="text-muted" *ngIf="emp.email">{{ emp.email }}</small>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Documento -->
+              <td>
+                <small class="text-muted d-block">{{ emp.documentType | uppercase }}</small>
+                <code class="small">{{ emp.documentNumber }}</code>
+              </td>
+
+              <!-- Área -->
+              <td>
+                <span class="badge bg-primary">{{ getAreaLabel(emp.area) }}</span>
+              </td>
+
+              <!-- Turno -->
+              <td>
+                <span class="badge" [class]="getShiftBadgeClass(emp.shift)">
+                  {{ getShiftLabel(emp.shift) }}
+                </span>
+              </td>
+
+              <!-- Estado -->
+              <td>
+                <span *ngIf="emp.isActive"  class="badge bg-success">Activo</span>
+                <span *ngIf="!emp.isActive" class="badge bg-danger">Inactivo</span>
+              </td>
+
+              <!-- Usuario vinculado -->
+              <td>
+                <span *ngIf="emp.linkedUser" class="badge bg-info text-dark">
+                  <i class="bi bi-link-45deg me-1"></i>{{ emp.linkedUser.username }}
+                </span>
+                <span *ngIf="!emp.linkedUser" class="text-muted small">Sin vincular</span>
+              </td>
+
+              <!-- Acciones -->
+              <td class="text-end pe-3">
+                <div class="btn-group btn-group-sm">
+                  <a [routerLink]="[emp.id]" class="btn btn-outline-info" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a *ngIf="canEdit" [routerLink]="[emp.id, 'edit']" class="btn btn-outline-primary" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <button *ngIf="canDelete" class="btn btn-outline-danger" title="Eliminar" (click)="confirmDelete(emp)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Paginación -->
+  <div class="card-footer" *ngIf="pagination && pagination.pages > 1 && !isLoading">
+    <div class="d-flex justify-content-between align-items-center">
+      <small class="text-muted">Página {{ pagination.page }} de {{ pagination.pages }}</small>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="!pagination.hasPrev">
+            <button class="page-link" (click)="onPageChange(pagination.page - 1)" [disabled]="!pagination.hasPrev">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li *ngFor="let page of getPages()" class="page-item" [class.active]="page === pagination.page">
+            <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="!pagination.hasNext">
+            <button class="page-link" (click)="onPageChange(pagination.page + 1)" [disabled]="!pagination.hasNext">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL: CONFIRMACIÓN ELIMINAR -->
+<div class="modal-backdrop fade show" *ngIf="showConfirmModal" style="z-index:1040;"></div>
+<div class="modal fade show d-block" *ngIf="showConfirmModal" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-exclamation-triangle text-danger me-2"></i>
+          {{ confirmTitle }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeConfirmModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">{{ confirmMessage }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeConfirmModal()">
+          <i class="bi bi-x-circle me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-danger" (click)="executeConfirm()">
+          <i class="bi bi-trash me-1"></i>Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

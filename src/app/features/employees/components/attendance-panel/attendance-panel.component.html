@@ -1,0 +1,149 @@
+<div class="card">
+  <!-- Header dinámico según estado -->
+  <div class="card-header" [class]="getStatusConfig().headerClass">
+    <div class="d-flex justify-content-between align-items-center">
+      <h6 class="mb-0">
+        <i [class]="'bi me-2 ' + getStatusConfig().icon"></i>
+        Asistencia de Hoy — {{ getStatusConfig().label }}
+      </h6>
+      <button class="btn btn-sm btn-outline-light" (click)="loadTodayStatus()" [disabled]="isLoading || isRecording" title="Actualizar">
+        <i class="bi bi-arrow-clockwise"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Cargando -->
+    <div *ngIf="isLoading" class="text-center py-3">
+      <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+      <span class="text-muted ms-2">Cargando estado...</span>
+    </div>
+
+    <!-- Contenido -->
+    <div *ngIf="!isLoading && todayStatus">
+
+      <!-- ── Estado: ABSENT ──────────────────────────────────────── -->
+      <div *ngIf="todayStatus.status === 'absent'">
+        <p class="text-muted mb-3">
+          <i class="bi bi-info-circle me-1"></i>
+          {{ getStatusConfig().description }}
+        </p>
+
+        <!-- Formulario de confirmación -->
+        <div *ngIf="confirmingAction" class="border rounded p-3 bg-light mb-3">
+          <label class="form-label fw-semibold">
+            Notas <small class="text-muted fw-normal">(opcional)</small>
+          </label>
+          <textarea class="form-control mb-3" rows="2" placeholder="Observaciones..."
+                    [(ngModel)]="notes" maxlength="200"></textarea>
+          <div class="d-flex gap-2">
+            <button class="btn btn-success" (click)="confirmAttendance()" [disabled]="isRecording">
+              <i class="bi bi-check2 me-1"></i>
+              <span *ngIf="!isRecording">Confirmar Entrada</span>
+              <span *ngIf="isRecording">Registrando...</span>
+            </button>
+            <button class="btn btn-outline-secondary" (click)="cancelConfirm()">Cancelar</button>
+          </div>
+        </div>
+
+        <button *ngIf="!confirmingAction && canEdit"
+                class="btn btn-success"
+                (click)="showConfirmForm()">
+          <i class="bi bi-box-arrow-in-right me-2"></i>
+          Marcar Entrada
+        </button>
+        <p *ngIf="!canEdit" class="text-muted mb-0">
+          <i class="bi bi-lock me-1"></i>Sin permiso para registrar asistencia
+        </p>
+      </div>
+
+      <!-- ── Estado: PRESENT ────────────────────────────────────── -->
+      <div *ngIf="todayStatus.status === 'present'">
+        <div class="row g-2 mb-3">
+          <div class="col-auto">
+            <div class="border rounded p-2 text-center" style="min-width: 90px;">
+              <div class="text-muted small">Entrada</div>
+              <div class="fw-bold text-success">{{ formatTime(todayStatus.record?.entryTime || null) }}</div>
+            </div>
+          </div>
+          <div class="col-auto d-flex align-items-center">
+            <i class="bi bi-arrow-right text-muted"></i>
+          </div>
+          <div class="col-auto">
+            <div class="border rounded p-2 text-center" style="min-width: 90px;">
+              <div class="text-muted small">Salida</div>
+              <div class="fw-bold text-muted">Pendiente</div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="confirmingAction" class="border rounded p-3 bg-light mb-3">
+          <label class="form-label fw-semibold">
+            Notas <small class="text-muted fw-normal">(opcional)</small>
+          </label>
+          <textarea class="form-control mb-3" rows="2" placeholder="Observaciones..."
+                    [(ngModel)]="notes" maxlength="200"></textarea>
+          <div class="d-flex gap-2">
+            <button class="btn btn-warning" (click)="confirmAttendance()" [disabled]="isRecording">
+              <i class="bi bi-check2 me-1"></i>
+              <span *ngIf="!isRecording">Confirmar Salida</span>
+              <span *ngIf="isRecording">Registrando...</span>
+            </button>
+            <button class="btn btn-outline-secondary" (click)="cancelConfirm()">Cancelar</button>
+          </div>
+        </div>
+
+        <button *ngIf="!confirmingAction && canEdit"
+                class="btn btn-warning"
+                (click)="showConfirmForm()">
+          <i class="bi bi-box-arrow-right me-2"></i>
+          Marcar Salida
+        </button>
+      </div>
+
+      <!-- ── Estado: COMPLETED ──────────────────────────────────── -->
+      <div *ngIf="todayStatus.status === 'completed'">
+        <div class="row g-2 mb-2">
+          <div class="col-auto">
+            <div class="border rounded p-2 text-center" style="min-width: 90px;">
+              <div class="text-muted small">Entrada</div>
+              <div class="fw-bold text-success">{{ formatTime(todayStatus.record?.entryTime || null) }}</div>
+            </div>
+          </div>
+          <div class="col-auto d-flex align-items-center">
+            <i class="bi bi-arrow-right text-muted"></i>
+          </div>
+          <div class="col-auto">
+            <div class="border rounded p-2 text-center" style="min-width: 90px;">
+              <div class="text-muted small">Salida</div>
+              <div class="fw-bold text-danger">{{ formatTime(todayStatus.record?.exitTime || null) }}</div>
+            </div>
+          </div>
+          <div class="col-auto d-flex align-items-center">
+            <i class="bi bi-clock text-muted"></i>
+          </div>
+          <div class="col-auto">
+            <div class="border rounded p-2 text-center" style="min-width: 90px;">
+              <div class="text-muted small">Horas</div>
+              <div class="fw-bold text-primary">{{ todayStatus.record?.totalHours | number:'1.2-2' }}h</div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="todayStatus.record?.notes" class="alert alert-light py-2 mb-0">
+          <i class="bi bi-chat-left-text me-1 text-muted"></i>
+          <small>{{ todayStatus.record?.notes }}</small>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sin datos -->
+    <div *ngIf="!isLoading && !todayStatus" class="text-center text-muted py-2">
+      <i class="bi bi-exclamation-circle me-1"></i>
+      No se pudo cargar el estado de asistencia
+    </div>
+
+  </div>
+</div>

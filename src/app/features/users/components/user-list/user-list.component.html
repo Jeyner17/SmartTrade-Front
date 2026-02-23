@@ -1,0 +1,304 @@
+<!-- OVERLAY CARGANDO ACCIÓN -->
+<app-loader *ngIf="isActionLoading" message="Procesando..." [overlay]="true"></app-loader>
+
+<!-- HEADER -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-people text-primary me-2"></i>
+      Gestión de Usuarios
+    </h2>
+    <p class="text-muted mb-0">Administre los usuarios del sistema y sus roles</p>
+  </div>
+  <a *ngIf="canCreate" routerLink="new" class="btn btn-primary">
+    <i class="bi bi-person-plus me-2"></i>
+    Nuevo Usuario
+  </a>
+</div>
+
+<!-- FILTROS -->
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+
+      <div class="col-md-5">
+        <label class="form-label fw-semibold">Buscar</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Nombre, usuario o email..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearch($event)">
+          <button
+            *ngIf="searchTerm"
+            class="btn btn-outline-secondary"
+            type="button"
+            (click)="searchTerm = ''; onSearch('')">
+            <i class="bi bi-x"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label fw-semibold">Rol</label>
+        <select class="form-select" [(ngModel)]="selectedRole" (ngModelChange)="onRoleFilter()">
+          <option value="">Todos los roles</option>
+          <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label fw-semibold">Estado</label>
+        <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="onStatusFilter()">
+          <option value="">Todos</option>
+          <option value="true">Activo</option>
+          <option value="false">Inactivo</option>
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+          <i class="bi bi-x-circle me-1"></i>
+          Limpiar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TABLA -->
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">
+      <i class="bi bi-list-ul me-2 text-muted"></i>
+      <ng-container *ngIf="pagination && !isLoading">
+        {{ getFirstItem() }} – {{ getLastItem() }} de {{ pagination.total }} usuarios
+      </ng-container>
+      <ng-container *ngIf="isLoading">Cargando...</ng-container>
+    </span>
+  </div>
+
+  <div class="card-body p-0">
+
+    <!-- Spinner de tabla -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="text-muted mt-2 mb-0">Cargando usuarios...</p>
+    </div>
+
+    <!-- Contenido -->
+    <div *ngIf="!isLoading">
+
+      <!-- Sin resultados -->
+      <div *ngIf="users.length === 0" class="text-center py-5">
+        <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
+        <p class="text-muted mt-3 mb-3">No se encontraron usuarios</p>
+        <a *ngIf="canCreate" routerLink="new" class="btn btn-primary btn-sm">
+          <i class="bi bi-person-plus me-1"></i>
+          Crear primer usuario
+        </a>
+      </div>
+
+      <!-- Tabla con datos -->
+      <div *ngIf="users.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Usuario</th>
+              <th>Username</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Último Acceso</th>
+              <th class="text-end pe-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let user of users">
+              <!-- Nombre -->
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="user-avatar-table">{{ getUserInitials(user) }}</div>
+                  <div>
+                    <div class="fw-semibold">{{ user.fullName || (user.firstName + ' ' + user.lastName) }}</div>
+                    <small class="text-warning" *ngIf="user.mustChangePassword">
+                      <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                      Debe cambiar contraseña
+                    </small>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Username -->
+              <td><code class="text-primary">{{ user.username }}</code></td>
+
+              <!-- Email -->
+              <td class="text-muted">{{ user.email }}</td>
+
+              <!-- Rol -->
+              <td>
+                <span class="badge bg-secondary">{{ user.role?.name || 'Sin rol' }}</span>
+              </td>
+
+              <!-- Estado -->
+              <td>
+                <span [class]="getStatusBadge(user).cssClass">
+                  {{ getStatusBadge(user).text }}
+                </span>
+                <small *ngIf="user.loginAttempts > 0" class="d-block text-muted">
+                  {{ user.loginAttempts }} intento(s) fallido(s)
+                </small>
+              </td>
+
+              <!-- Último Acceso -->
+              <td>
+                <span *ngIf="user.lastLogin">{{ user.lastLogin | date:'dd/MM/yyyy HH:mm' }}</span>
+                <span *ngIf="!user.lastLogin" class="text-muted">Nunca</span>
+              </td>
+
+              <!-- Acciones -->
+              <td class="text-end pe-3">
+                <div class="btn-group btn-group-sm">
+                  <!-- Ver -->
+                  <a [routerLink]="[user.id]" class="btn btn-outline-info" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <!-- Editar -->
+                  <a *ngIf="canEdit"
+                     [routerLink]="[user.id, 'edit']"
+                     class="btn btn-outline-primary"
+                     title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <!-- Cambiar estado -->
+                  <button *ngIf="canEdit"
+                          class="btn btn-outline-warning"
+                          [title]="user.isActive ? 'Desactivar' : 'Activar'"
+                          (click)="confirmStatusChange(user)">
+                    <i [class]="'bi ' + (user.isActive ? 'bi-toggle-on' : 'bi-toggle-off')"></i>
+                  </button>
+                  <!-- Resetear password (solo admin) -->
+                  <button *ngIf="isAdmin"
+                          class="btn btn-outline-secondary"
+                          title="Resetear contraseña"
+                          (click)="confirmResetPassword(user)">
+                    <i class="bi bi-key"></i>
+                  </button>
+                  <!-- Eliminar -->
+                  <button *ngIf="canDelete"
+                          class="btn btn-outline-danger"
+                          title="Eliminar"
+                          (click)="confirmDelete(user)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PAGINACIÓN -->
+  <div class="card-footer" *ngIf="pagination && pagination.pages > 1 && !isLoading">
+    <div class="d-flex justify-content-between align-items-center">
+      <small class="text-muted">
+        Página {{ pagination.page }} de {{ pagination.pages }}
+      </small>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" [class.disabled]="!pagination.hasPrev">
+            <button class="page-link" (click)="onPageChange(pagination.page - 1)" [disabled]="!pagination.hasPrev">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li *ngFor="let page of getPages()"
+              class="page-item"
+              [class.active]="page === pagination.page">
+            <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+          </li>
+          <li class="page-item" [class.disabled]="!pagination.hasNext">
+            <button class="page-link" (click)="onPageChange(pagination.page + 1)" [disabled]="!pagination.hasNext">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: CONFIRMACIÓN
+     ============================================================ -->
+<div class="modal-backdrop fade show" *ngIf="showConfirmModal" style="z-index:1040;"></div>
+<div class="modal fade show d-block" *ngIf="showConfirmModal" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-question-circle text-warning me-2"></i>
+          {{ confirmTitle }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeConfirmModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">{{ confirmMessage }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeConfirmModal()">
+          <i class="bi bi-x-circle me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="executeConfirm()">
+          <i class="bi bi-check-circle me-1"></i>Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     MODAL: CONTRASEÑA TEMPORAL
+     ============================================================ -->
+<div class="modal-backdrop fade show" *ngIf="showPasswordModal" style="z-index:1040;"></div>
+<div class="modal fade show d-block" *ngIf="showPasswordModal" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-key me-2"></i>
+          Contraseña Reseteada
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closePasswordModal()"></button>
+      </div>
+      <div class="modal-body text-center py-4">
+        <p class="text-muted mb-3">La contraseña temporal del usuario es:</p>
+        <div class="input-group input-group-lg mb-3">
+          <input type="text" class="form-control text-center fw-bold font-monospace"
+                 [value]="temporaryPassword" readonly>
+          <button class="btn btn-outline-secondary" (click)="copyPassword()" title="Copiar contraseña">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
+        <div class="alert alert-warning mb-0">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          El usuario deberá cambiar esta contraseña al iniciar sesión.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success" (click)="closePasswordModal()">
+          <i class="bi bi-check me-1"></i>Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

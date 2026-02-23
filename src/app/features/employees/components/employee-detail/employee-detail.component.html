@@ -1,0 +1,219 @@
+<!-- LOADERS -->
+<app-loader *ngIf="isLoading"       message="Cargando empleado..." size="lg"></app-loader>
+<app-loader *ngIf="isActionLoading" message="Procesando..."        [overlay]="true"></app-loader>
+
+<div *ngIf="!isLoading && employee">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-person-badge text-primary me-2"></i>
+        Detalle de Empleado
+      </h2>
+      <p class="text-muted mb-0">Información completa, vinculación y asistencia</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a *ngIf="canEdit" [routerLink]="['/employees', employee.id, 'edit']" class="btn btn-primary">
+        <i class="bi bi-pencil me-1"></i>Editar
+      </a>
+      <a routerLink="/employees" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- ── COLUMNA IZQUIERDA ─────────────────────────────────────────────── -->
+    <div class="col-lg-4">
+
+      <!-- Tarjeta de perfil -->
+      <div class="card mb-4">
+        <div class="card-body text-center py-4">
+          <div class="d-flex justify-content-center mb-3">
+            <div class="employee-avatar-lg">{{ getInitials() }}</div>
+          </div>
+          <h4 class="mb-1">{{ employee.firstName }} {{ employee.lastName }}</h4>
+          <p class="text-muted mb-2">
+            <i class="bi bi-card-text me-1"></i>
+            {{ getDocLabel() }} · {{ employee.documentNumber }}
+          </p>
+          <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <span class="badge bg-primary">{{ getAreaLabel() }}</span>
+            <span class="badge" [class]="getShiftBadgeClass()">{{ getShiftLabel() }}</span>
+            <span *ngIf="employee.isActive"  class="badge bg-success">Activo</span>
+            <span *ngIf="!employee.isActive" class="badge bg-danger">Inactivo</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos de contacto -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-envelope me-2 text-muted"></i>Contacto</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-2" *ngIf="employee.email">
+            <div class="text-muted small">Email</div>
+            <div>{{ employee.email }}</div>
+          </div>
+          <div class="mb-2" *ngIf="employee.phone">
+            <div class="text-muted small">Teléfono</div>
+            <div>{{ employee.phone }}</div>
+          </div>
+          <div *ngIf="employee.address">
+            <div class="text-muted small">Dirección</div>
+            <div>{{ employee.address }}</div>
+          </div>
+          <div *ngIf="!employee.email && !employee.phone && !employee.address" class="text-muted small">
+            Sin información de contacto
+          </div>
+        </div>
+      </div>
+
+      <!-- Datos laborales -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-briefcase me-2 text-muted"></i>Información Laboral</h6>
+        </div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-5 text-muted">Fecha nac.</dt>
+            <dd class="col-7">{{ employee.birthDate ? (employee.birthDate | date:'dd/MM/yyyy') : '—' }}</dd>
+
+            <dt class="col-5 text-muted">Ingreso</dt>
+            <dd class="col-7">{{ employee.hireDate ? (employee.hireDate | date:'dd/MM/yyyy') : '—' }}</dd>
+
+            <dt class="col-5 text-muted">Salario</dt>
+            <dd class="col-7">
+              <span *ngIf="employee.salary !== null">${{ employee.salary | number:'1.2-2' }}</span>
+              <span *ngIf="employee.salary === null" class="text-muted">—</span>
+            </dd>
+
+            <dt class="col-5 text-muted">Registrado</dt>
+            <dd class="col-7">{{ employee.createdAt | date:'dd/MM/yyyy' }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <!-- Acciones (eliminar) -->
+      <div class="card mb-4" *ngIf="canDelete">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="bi bi-gear me-2 text-muted"></i>Acciones</h6>
+        </div>
+        <div class="card-body">
+          <button class="btn btn-outline-danger w-100" (click)="confirmDelete()">
+            <i class="bi bi-trash me-2"></i>Eliminar Empleado
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── COLUMNA DERECHA ─────────────────────────────────────────────── -->
+    <div class="col-lg-8">
+
+      <!-- Usuario del sistema vinculado (solo admin) -->
+      <div class="card mb-4" *ngIf="isAdmin">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h6 class="mb-0"><i class="bi bi-link-45deg me-2 text-muted"></i>Usuario del Sistema</h6>
+        </div>
+        <div class="card-body">
+
+          <!-- Usuario vinculado -->
+          <div *ngIf="employee.linkedUser && !showLinkForm">
+            <div class="d-flex align-items-center justify-content-between">
+              <div>
+                <div class="fw-semibold">
+                  <i class="bi bi-person-check text-success me-2"></i>
+                  {{ employee.linkedUser.username }}
+                </div>
+                <small class="text-muted">{{ employee.linkedUser.email }}</small>
+              </div>
+              <button class="btn btn-sm btn-outline-danger" (click)="confirmUnlinkUser()" [disabled]="isLinking">
+                <i class="bi bi-link-45deg me-1"></i>Desvincular
+              </button>
+            </div>
+          </div>
+
+          <!-- Sin usuario vinculado -->
+          <div *ngIf="!employee.linkedUser && !showLinkForm">
+            <p class="text-muted mb-3">
+              <i class="bi bi-person-x me-1"></i>Este empleado no tiene un usuario del sistema vinculado.
+            </p>
+            <button class="btn btn-outline-primary" (click)="openLinkForm()">
+              <i class="bi bi-link-45deg me-2"></i>Vincular Usuario
+            </button>
+          </div>
+
+          <!-- Formulario de vinculación -->
+          <div *ngIf="showLinkForm" class="border rounded p-3 bg-light">
+            <label class="form-label fw-semibold">Seleccionar usuario</label>
+
+            <div *ngIf="isLoadingUsers" class="text-center py-2">
+              <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+              <span class="ms-2 text-muted">Cargando usuarios...</span>
+            </div>
+
+            <div *ngIf="!isLoadingUsers">
+              <select class="form-select mb-3" [(ngModel)]="selectedLinkUserId">
+                <option [value]="null">-- Seleccione un usuario --</option>
+                <option *ngFor="let user of availableUsers" [value]="user.id">
+                  {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
+                </option>
+              </select>
+              <div class="d-flex gap-2">
+                <button class="btn btn-primary" (click)="linkUser()" [disabled]="isLinking || !selectedLinkUserId">
+                  <i class="bi bi-check2 me-1"></i>
+                  <span *ngIf="!isLinking">Vincular</span>
+                  <span *ngIf="isLinking">Vinculando...</span>
+                </button>
+                <button class="btn btn-outline-secondary" (click)="closeLinkForm()">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Panel de asistencia del día -->
+      <div class="mb-4">
+        <app-attendance-panel [employeeId]="employee.id"></app-attendance-panel>
+      </div>
+
+      <!-- Historial de asistencia -->
+      <app-attendance-history [employeeId]="employee.id"></app-attendance-history>
+
+    </div>
+  </div>
+
+</div>
+
+
+<!-- MODAL: CONFIRMACIÓN -->
+<div class="modal-backdrop fade show" *ngIf="showConfirmModal" style="z-index:1040;"></div>
+<div class="modal fade show d-block" *ngIf="showConfirmModal" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i [class]="'bi me-2 ' + (confirmDanger ? 'bi-exclamation-triangle text-danger' : 'bi-question-circle text-warning')"></i>
+          {{ confirmTitle }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeConfirmModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">{{ confirmMessage }}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeConfirmModal()">
+          <i class="bi bi-x-circle me-1"></i>Cancelar
+        </button>
+        <button type="button" class="btn" [class]="confirmDanger ? 'btn-danger' : 'btn-primary'" (click)="executeConfirm()">
+          <i class="bi bi-check-circle me-1"></i>Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

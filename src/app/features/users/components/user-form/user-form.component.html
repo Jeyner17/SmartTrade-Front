@@ -1,0 +1,304 @@
+<!-- LOADER INICIAL (edición) -->
+<app-loader *ngIf="isLoading" message="Cargando usuario..." size="lg"></app-loader>
+
+<!-- OVERLAY GUARDANDO -->
+<app-loader *ngIf="isSaving" message="Guardando..." [overlay]="true"></app-loader>
+
+<!-- CONTENIDO -->
+<div *ngIf="!isLoading">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-person-gear text-primary me-2"></i>
+        {{ isEditMode ? 'Editar Usuario' : 'Nuevo Usuario' }}
+      </h2>
+      <p class="text-muted mb-0">
+        {{ isEditMode ? 'Modifique los datos del usuario' : 'Complete el formulario para crear un nuevo usuario' }}
+      </p>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left me-1"></i>
+      Volver
+    </button>
+  </div>
+
+  <!-- FORMULARIO -->
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="row g-4">
+
+      <!-- ── COLUMNA IZQUIERDA: Datos principales ───────────────────────── -->
+      <div class="col-lg-8">
+
+        <!-- Datos personales -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-person me-2 text-primary"></i>
+              Datos Personales
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+
+              <!-- Nombre -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Nombre <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" formControlName="firstName"
+                       placeholder="Ej: Juan"
+                       [class.is-invalid]="isFieldInvalid('firstName')"
+                       [class.is-valid]="isFieldValid('firstName')">
+                <div class="invalid-feedback">{{ getErrorMessage('firstName') }}</div>
+              </div>
+
+              <!-- Apellido -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Apellido <span class="text-danger">*</span>
+                </label>
+                <input type="text" class="form-control" formControlName="lastName"
+                       placeholder="Ej: Pérez"
+                       [class.is-invalid]="isFieldInvalid('lastName')"
+                       [class.is-valid]="isFieldValid('lastName')">
+                <div class="invalid-feedback">{{ getErrorMessage('lastName') }}</div>
+              </div>
+
+              <!-- Rol -->
+              <div class="col-md-12">
+                <label class="form-label fw-semibold">
+                  Rol <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" formControlName="roleId"
+                        [class.is-invalid]="isFieldInvalid('roleId')"
+                        [class.is-valid]="isFieldValid('roleId')">
+                  <option value="">-- Seleccione un rol --</option>
+                  <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
+                </select>
+                <div class="invalid-feedback">{{ getErrorMessage('roleId') }}</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Datos de acceso -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-shield-lock me-2 text-primary"></i>
+              Datos de Acceso
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+
+              <!-- Username -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Nombre de Usuario <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-at"></i></span>
+                  <input type="text" class="form-control" formControlName="username"
+                         placeholder="Ej: juan_perez"
+                         autocomplete="username"
+                         [class.is-invalid]="isFieldInvalid('username') || usernameAvailable === false"
+                         [class.is-valid]="isFieldValid('username') && usernameAvailable === true">
+                  <span class="input-group-text" *ngIf="checkingUsername">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                  </span>
+                </div>
+                <div *ngIf="isFieldInvalid('username')" class="text-danger small mt-1">
+                  {{ getErrorMessage('username') }}
+                </div>
+                <div *ngIf="!isFieldInvalid('username') && usernameAvailable === true" class="text-success small mt-1">
+                  <i class="bi bi-check-circle me-1"></i>Nombre de usuario disponible
+                </div>
+                <div *ngIf="usernameAvailable === false" class="text-danger small mt-1">
+                  <i class="bi bi-x-circle me-1"></i>El nombre de usuario ya está en uso
+                </div>
+              </div>
+
+              <!-- Email -->
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">
+                  Email <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input type="email" class="form-control" formControlName="email"
+                         placeholder="juan@ejemplo.com"
+                         autocomplete="email"
+                         [class.is-invalid]="isFieldInvalid('email') || emailAvailable === false"
+                         [class.is-valid]="isFieldValid('email') && emailAvailable === true">
+                  <span class="input-group-text" *ngIf="checkingEmail">
+                    <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
+                  </span>
+                </div>
+                <div *ngIf="isFieldInvalid('email')" class="text-danger small mt-1">
+                  {{ getErrorMessage('email') }}
+                </div>
+                <div *ngIf="!isFieldInvalid('email') && emailAvailable === true" class="text-success small mt-1">
+                  <i class="bi bi-check-circle me-1"></i>Email disponible
+                </div>
+                <div *ngIf="emailAvailable === false" class="text-danger small mt-1">
+                  <i class="bi bi-x-circle me-1"></i>El email ya está registrado
+                </div>
+              </div>
+
+              <!-- Contraseña (solo en creación) -->
+              <div class="col-md-12" *ngIf="!isEditMode">
+                <label class="form-label fw-semibold">
+                  Contraseña
+                  <small class="text-muted fw-normal">(opcional — se generará automáticamente si está vacío)</small>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                  <input [type]="showPassword ? 'text' : 'password'"
+                         class="form-control" formControlName="password"
+                         placeholder="Dejar vacío para generar automáticamente"
+                         autocomplete="new-password">
+                  <button type="button" class="btn btn-outline-secondary" (click)="togglePassword()">
+                    <i [class]="'bi ' + (showPassword ? 'bi-eye-slash' : 'bi-eye')"></i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── COLUMNA DERECHA: Opciones ──────────────────────────────────── -->
+      <div class="col-lg-4">
+
+        <!-- Opciones (solo en creación) -->
+        <div class="card mb-4" *ngIf="!isEditMode">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-sliders me-2 text-primary"></i>
+              Opciones
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="mustChangePassword"
+                     formControlName="mustChangePassword" role="switch">
+              <label class="form-check-label" for="mustChangePassword">
+                Forzar cambio de contraseña al ingresar
+              </label>
+              <div class="form-text">
+                El usuario deberá cambiar su contraseña en el primer inicio de sesión.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado (solo en edición) -->
+        <div class="card mb-4" *ngIf="isEditMode">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-toggles me-2 text-primary"></i>
+              Estado de la Cuenta
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="isActive"
+                     formControlName="isActive" role="switch">
+              <label class="form-check-label" for="isActive">
+                Cuenta activa
+              </label>
+              <div class="form-text">
+                Las cuentas inactivas no pueden iniciar sesión.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info del usuario actual (edición) -->
+        <div class="card mb-4" *ngIf="isEditMode && currentUser">
+          <div class="card-header">
+            <h5 class="mb-0">
+              <i class="bi bi-info-circle me-2 text-primary"></i>
+              Información
+            </h5>
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-sm-5 text-muted">Creado</dt>
+              <dd class="col-sm-7">{{ currentUser.createdAt | date:'dd/MM/yyyy' }}</dd>
+              <dt class="col-sm-5 text-muted">Actualizado</dt>
+              <dd class="col-sm-7">{{ currentUser.updatedAt | date:'dd/MM/yyyy' }}</dd>
+              <dt class="col-sm-5 text-muted">Último acceso</dt>
+              <dd class="col-sm-7">
+                <span *ngIf="currentUser.lastLogin">{{ currentUser.lastLogin | date:'dd/MM/yyyy HH:mm' }}</span>
+                <span *ngIf="!currentUser.lastLogin" class="text-muted">Nunca</span>
+              </dd>
+            </dl>
+          </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary btn-lg" [disabled]="isSaving">
+            <i class="bi bi-check-circle me-2"></i>
+            <span *ngIf="!isSaving">{{ isEditMode ? 'Guardar Cambios' : 'Crear Usuario' }}</span>
+            <span *ngIf="isSaving">Guardando...</span>
+          </button>
+          <button type="button" class="btn btn-outline-secondary" (click)="cancel()" [disabled]="isSaving">
+            <i class="bi bi-x-circle me-1"></i>
+            Cancelar
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </form>
+</div>
+
+
+<!-- ============================================================
+     MODAL: CONTRASEÑA TEMPORAL (solo en creación)
+     ============================================================ -->
+<div class="modal-backdrop fade show" *ngIf="showPasswordModal" style="z-index:1040;"></div>
+<div class="modal fade show d-block" *ngIf="showPasswordModal" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">
+          <i class="bi bi-person-check me-2"></i>
+          ¡Usuario Creado Exitosamente!
+        </h5>
+      </div>
+      <div class="modal-body text-center py-4">
+        <div class="mb-3">
+          <i class="bi bi-key-fill text-success" style="font-size: 3rem;"></i>
+        </div>
+        <p class="text-muted mb-3">La contraseña temporal del nuevo usuario es:</p>
+        <div class="input-group input-group-lg mb-3">
+          <input type="text" class="form-control text-center fw-bold font-monospace"
+                 [value]="temporaryPassword" readonly>
+          <button class="btn btn-outline-secondary" (click)="copyPassword()" title="Copiar">
+            <i class="bi bi-clipboard"></i>
+          </button>
+        </div>
+        <div class="alert alert-warning text-start mb-0">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          <strong>Importante:</strong> Comparta esta contraseña con el usuario de forma segura.
+          Deberá cambiarla al iniciar sesión por primera vez.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-success w-100" (click)="closePasswordModal()">
+          <i class="bi bi-check me-1"></i>
+          Entendido, ir a la lista
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -44,6 +44,22 @@ export const routes: Routes = [
         title: 'Configuración del Sistema'
       },
 
+      // Sprint 3: Gestión de Usuarios
+      {
+        path: 'users',
+        loadChildren: () => import('./features/users/users.routes')
+          .then(m => m.USERS_ROUTES),
+        data: { module: MODULES.USERS }
+      },
+
+      // Sprint 4: Gestión de Empleados
+      {
+        path: 'employees',
+        loadChildren: () => import('./features/employees/employees.routes')
+          .then(m => m.EMPLOYEES_ROUTES),
+        data: { module: MODULES.EMPLOYEES }
+      },
+
       // Dashboard (ejemplo futuro)
       // {
       //   path: 'dashboard',

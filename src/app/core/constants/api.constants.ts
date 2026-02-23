@@ -30,7 +30,23 @@ export const API_CONSTANTS = {
     ROLES_BY_ID: (roleId: number) => `/roles/${roleId}`,
     ROLES_PERMISSIONS: (roleId: number) => `/roles/${roleId}/permissions`,
     ROLES_MODULES: (roleId: number) => `/roles/${roleId}/modules`,
-    ROLES_CHECK_PERMISSION: (roleId: number) => `/roles/${roleId}/check-permission`
+    ROLES_CHECK_PERMISSION: (roleId: number) => `/roles/${roleId}/check-permission`,
+
+    // Sprint 3: Usuarios
+    USERS: '/users',
+    USERS_BY_ID: (id: number) => `/users/${id}`,
+    USERS_STATUS: (id: number) => `/users/${id}/status`,
+    USERS_RESET_PASSWORD: (id: number) => `/users/${id}/reset-password`,
+    USERS_SESSIONS: (id: number) => `/users/${id}/sessions`,
+    USERS_LOGOUT_ALL: (id: number) => `/users/${id}/logout-all`,
+    USERS_CHECK_AVAILABILITY: '/users/check-availability',
+
+    // Sprint 4: Empleados
+    EMPLOYEES: '/employees',
+    EMPLOYEES_BY_ID: (id: number) => `/employees/${id}`,
+    EMPLOYEES_LINK_USER: (id: number) => `/employees/${id}/link-user`,
+    EMPLOYEES_ATTENDANCE: (id: number) => `/employees/${id}/attendance`,
+    EMPLOYEES_ATTENDANCE_TODAY: (id: number) => `/employees/${id}/attendance/today`
   },
   
   TIMEOUT: 30000 // 30 segundos
