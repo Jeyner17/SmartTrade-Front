@@ -160,7 +160,7 @@
               <select class="form-select mb-3" [(ngModel)]="selectedLinkUserId">
                 <option [value]="null">-- Seleccione un usuario --</option>
                 <option *ngFor="let user of availableUsers" [value]="user.id">
-                  {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
+                  {{ user.firstName }} {{ user.lastName }} (&#64;{{ user.username }})
                 </option>
               </select>
               <div class="d-flex gap-2">

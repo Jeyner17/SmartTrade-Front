@@ -186,7 +186,7 @@
             <select class="form-select" formControlName="userId">
               <option [value]="null">Sin vincular</option>
               <option *ngFor="let user of users" [value]="user.id">
-                {{ user.firstName }} {{ user.lastName }} (@{{ user.username }})
+                {{ user.firstName }} {{ user.lastName }} (&#64;{{ user.username }})
               </option>
             </select>
             <div class="form-text">El usuario podrá acceder al sistema con los permisos de su rol.</div>

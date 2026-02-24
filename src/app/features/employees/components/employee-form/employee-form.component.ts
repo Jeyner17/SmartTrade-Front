@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 
 import { EmployeeService } from '../../services/employee.service';
 import { AlertService } from '../../../../core/services/alert.service';
@@ -27,7 +27,7 @@ import {
 @Component({
   selector: 'app-employee-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, LoaderComponent],
+  imports: [CommonModule, ReactiveFormsModule, LoaderComponent],
   templateUrl: './employee-form.component.html',
   styles: []
 })
