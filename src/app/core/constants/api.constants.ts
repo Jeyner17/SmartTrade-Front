@@ -40,6 +40,7 @@ export const API_CONSTANTS = {
     USERS_SESSIONS: (id: number) => `/users/${id}/sessions`,
     USERS_LOGOUT_ALL: (id: number) => `/users/${id}/logout-all`,
     USERS_CHECK_AVAILABILITY: '/users/check-availability',
+    USERS_ROLES: '/users/roles',
 
     // Sprint 4: Empleados
     EMPLOYEES: '/employees',

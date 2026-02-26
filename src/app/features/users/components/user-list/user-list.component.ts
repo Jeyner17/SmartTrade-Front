@@ -110,7 +110,7 @@ export class UserListComponent implements OnInit, OnDestroy {
     this.userService.getRoles().subscribe({
       next: response => {
         if (response.success && response.data) {
-          this.roles = response.data.roles;
+          this.roles = response.data;
         }
       },
       error: () => {}

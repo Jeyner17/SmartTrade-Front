@@ -96,8 +96,8 @@ export class UserService {
     return this.httpService.post<AvailabilityResult>(url, body);
   }
 
-  getRoles(): Observable<ApiResponse<{ roles: Role[] }>> {
-    const url = this.config.getEndpointUrl(API_CONSTANTS.ENDPOINTS.ROLES);
-    return this.httpService.get<{ roles: Role[] }>(url);
+  getRoles(): Observable<ApiResponse<Role[]>> {
+    const url = this.config.getEndpointUrl(API_CONSTANTS.ENDPOINTS.USERS_ROLES);
+    return this.httpService.get<Role[]>(url);
   }
 }

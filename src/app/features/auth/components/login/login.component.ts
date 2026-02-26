@@ -6,6 +6,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../../core/services/auth.service';
 import { AlertService } from '../../../../core/services/alert.service';
 import { APP_CONSTANTS } from '../../../../core/constants/app.constants';
+import { AUTH_CONSTANTS } from '../../../../core/constants/auth.constants';
 
 /**
  * Componente de Login
@@ -119,28 +120,26 @@ export class LoginComponent implements OnInit {
   }
 
   /**
-   * Redirigir según el rol del usuario
+   * Redirigir según los módulos accesibles del usuario
    */
   private redirectByRole(roleName: string): void {
-    // Por ahora todos van a settings
-    // En futuros sprints se puede personalizar:
+    const { MODULES } = AUTH_CONSTANTS;
 
-    // switch (roleName) {
-    //   case 'Administrador':
-    //     this.router.navigate(['/dashboard']);
-    //     break;
-    //   case 'Cajero':
-    //     this.router.navigate(['/pos']);
-    //     break;
-    //   case 'Bodeguero':
-    //     this.router.navigate(['/inventory']);
-    //     break;
-    //   default:
-    //     this.router.navigate(['/']);
-    // }
+    // Módulos con ruta frontend, en orden de prioridad
+    const moduleRoutes = [
+      { module: MODULES.SETTINGS,   route: '/settings' },
+      { module: MODULES.USERS,      route: '/users' },
+      { module: MODULES.EMPLOYEES,  route: '/employees' },
+    ];
 
-    // Por ahora todos van a settings
-    this.router.navigate(['/settings']);
+    for (const entry of moduleRoutes) {
+      if (this.authService.hasModuleAccess(entry.module)) {
+        this.router.navigate([entry.route]);
+        return;
+      }
+    }
+
+    this.alertService.warning('No tiene acceso a ningún módulo disponible. Contacte al administrador.');
   }
 
   /**

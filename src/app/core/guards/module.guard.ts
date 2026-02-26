@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { Router, CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { AlertService } from '../services/alert.service';
+import { AUTH_CONSTANTS } from '../constants/auth.constants';
 
 /**
  * Module Guard
@@ -46,7 +47,24 @@ export const moduleGuard: CanActivateFn = (
     user: authService.getCurrentUser()?.username
   });
 
-  alertService.error(`No tiene acceso al módulo: ${requiredModule}`);
-  router.navigate(['/']);
+  alertService.error(`No tiene permisos para acceder a este módulo`);
+
+  // Navegar al primer módulo accesible para evitar bucle infinito
+  const { MODULES } = AUTH_CONSTANTS;
+  const moduleRoutes = [
+    { module: MODULES.SETTINGS,   route: '/settings' },
+    { module: MODULES.USERS,      route: '/users' },
+    { module: MODULES.EMPLOYEES,  route: '/employees' },
+  ];
+
+  for (const entry of moduleRoutes) {
+    if (entry.module !== requiredModule && authService.hasModuleAccess(entry.module)) {
+      router.navigate([entry.route]);
+      return false;
+    }
+  }
+
+  // Sin ningún módulo accesible — cerrar sesión
+  authService.logoutLocal();
   return false;
 };

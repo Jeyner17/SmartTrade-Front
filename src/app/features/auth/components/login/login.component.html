@@ -1,138 +1,129 @@
-<!-- CONTENEDOR PRINCIPAL DE LOGIN -->
-<div class="login-container">
-  
-  <!-- CARD DE LOGIN -->
+<!-- CONTENEDOR PRINCIPAL -->
+<div class="login-wrapper">
+
   <div class="login-card">
-    
-    <!-- HEADER DEL CARD -->
-    <div class="login-header">
-      <!-- Logo de la empresa -->
-      <div class="logo-container">
-        <img 
-          *ngIf="companyLogo" 
-          [src]="companyLogo" 
-          alt="Logo" 
-          class="company-logo">
-        <i *ngIf="!companyLogo" class="bi bi-shop logo-icon"></i>
+
+    <!-- PANEL IZQUIERDO -->
+    <div class="panel-left">
+      <div class="circle circle-top"></div>
+      <div class="circle circle-bottom"></div>
+
+      <div class="panel-left-content">
+        <div class="app-icon">
+          <i class="bi bi-shop-window"></i>
+        </div>
+        <h2 class="brand-name">{{ appName }}</h2>
+        <p class="brand-description">
+          Solución integral para la gestión de ventas,
+          inventario y crecimiento de su negocio.
+        </p>
+        <div class="brand-tags">
+          <span class="brand-tag">
+            <i class="bi bi-shield-check"></i> Seguro
+          </span>
+          <span class="brand-tag">
+            <i class="bi bi-building"></i> Empresarial
+          </span>
+        </div>
       </div>
-      
-      <!-- Título -->
-      <h1 class="login-title">{{ appName }}</h1>
-      <p class="login-subtitle">Iniciar Sesión</p>
     </div>
 
-    <!-- FORMULARIO DE LOGIN -->
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
-      
-      <!-- Campo: Usuario -->
-      <div class="form-group">
-        <label for="username" class="form-label">
-          <i class="bi bi-person-fill me-2"></i>
-          Usuario
-        </label>
-        <input
-          type="text"
-          id="username"
-          class="form-control"
-          [class.is-invalid]="hasError('username', 'required') || hasError('username', 'minlength')"
-          formControlName="username"
-          placeholder="Ingrese su usuario"
-          autocomplete="username"
-          [disabled]="isLoading">
-        
-        <div class="invalid-feedback" *ngIf="loginForm.get('username')?.touched">
-          {{ getErrorMessage('username') }}
+    <!-- PANEL DERECHO -->
+    <div class="panel-right">
+
+      <div class="form-header">
+        <h1 class="form-title">Acceso al Sistema</h1>
+        <p class="form-subtitle">Ingrese sus credenciales para continuar</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form" novalidate>
+
+        <!-- Campo: Usuario -->
+        <div class="field-wrapper" [class.has-error]="hasError('username', 'required') || hasError('username', 'minlength')">
+          <label class="field-label">Usuario *</label>
+          <div class="field-input-group">
+            <i class="bi bi-envelope-fill field-icon"></i>
+            <input
+              type="text"
+              class="field-input"
+              formControlName="username"
+              placeholder="Ingrese su usuario"
+              autocomplete="username"
+              [disabled]="isLoading">
+          </div>
+          <span class="field-error-msg" *ngIf="loginForm.get('username')?.touched">
+            {{ getErrorMessage('username') }}
+          </span>
+        </div>
+
+        <!-- Campo: Contraseña -->
+        <div class="field-wrapper" [class.has-error]="hasError('password', 'required') || hasError('password', 'minlength')">
+          <label class="field-label">Contraseña *</label>
+          <div class="field-input-group">
+            <i class="bi bi-lock-fill field-icon"></i>
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="field-input"
+              formControlName="password"
+              placeholder="Ingrese su contraseña"
+              autocomplete="current-password"
+              [disabled]="isLoading">
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="togglePasswordVisibility()"
+              [disabled]="isLoading"
+              tabindex="-1">
+              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+          <span class="field-error-msg" *ngIf="loginForm.get('password')?.touched">
+            {{ getErrorMessage('password') }}
+          </span>
+        </div>
+
+        <!-- Botón: Iniciar Sesión -->
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="isLoading || loginForm.invalid">
+          <span *ngIf="!isLoading">Iniciar Sesión</span>
+          <span *ngIf="isLoading" class="loading-state">
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+            Iniciando sesión...
+          </span>
+        </button>
+
+      </form>
+
+      <!-- Sección Soporte -->
+      <div class="support-section">
+        <div class="support-divider"><span>Soporte</span></div>
+        <div class="support-links">
+          <a href="javascript:void(0)" class="support-link" (click)="onForgotPassword()">
+            <i class="bi bi-question-circle"></i> Recuperar contraseña
+          </a>
+          <a href="javascript:void(0)" class="support-link">
+            <i class="bi bi-headset"></i> Soporte técnico
+          </a>
         </div>
       </div>
 
-      <!-- Campo: Contraseña -->
-      <div class="form-group">
-        <label for="password" class="form-label">
-          <i class="bi bi-lock-fill me-2"></i>
-          Contraseña
-        </label>
-        <div class="input-group">
-          <input
-            [type]="showPassword ? 'text' : 'password'"
-            id="password"
-            class="form-control"
-            [class.is-invalid]="hasError('password', 'required') || hasError('password', 'minlength')"
-            formControlName="password"
-            placeholder="Ingrese su contraseña"
-            autocomplete="current-password"
-            [disabled]="isLoading">
-          
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            (click)="togglePasswordVisibility()"
-            [disabled]="isLoading"
-            tabindex="-1">
-            <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
-          </button>
-        </div>
-        
-        <div class="invalid-feedback" *ngIf="loginForm.get('password')?.touched">
-          {{ getErrorMessage('password') }}
-        </div>
+      <!-- Footer -->
+      <div class="panel-footer">
+        <i class="bi bi-shop-window"></i>
+        {{ appName }} v{{ appVersion }} &copy; 2025
       </div>
 
-      <!-- Checkbox: Recordar sesión -->
-      <div class="form-group">
-        <div class="form-check">
-          <input
-            type="checkbox"
-            id="rememberMe"
-            class="form-check-input"
-            formControlName="rememberMe"
-            [disabled]="isLoading">
-          <label for="rememberMe" class="form-check-label">
-            Recordar sesión
-          </label>
-        </div>
-      </div>
-
-      <!-- Botón: Iniciar Sesión -->
-      <button
-        type="submit"
-        class="btn btn-primary btn-login"
-        [disabled]="isLoading || loginForm.invalid">
-        <span *ngIf="!isLoading">
-          <i class="bi bi-box-arrow-in-right me-2"></i>
-          Iniciar Sesión
-        </span>
-        <span *ngIf="isLoading">
-          <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-          Iniciando sesión...
-        </span>
-      </button>
-
-      <!-- Enlace: ¿Olvidaste tu contraseña? -->
-      <div class="text-center mt-3">
-        <a 
-          href="javascript:void(0)" 
-          class="forgot-password-link"
-          (click)="onForgotPassword()"
-          [class.disabled]="isLoading">
-          ¿Olvidaste tu contraseña?
-        </a>
-      </div>
-    </form>
-
-    <!-- FOOTER DEL CARD -->
-    <div class="login-footer">
-      <small class="text-muted">
-        {{ appName }} v{{ appVersion }}
-      </small>
     </div>
   </div>
 
-  <!-- INFO DE DESARROLLO (solo visible en dev) -->
+  <!-- INFO DE DESARROLLO -->
   <div class="dev-info">
-    <div class="alert alert-info">
-      <strong>Credenciales de prueba:</strong><br>
-      <code>Usuario: admin</code><br>
-      <code>Contraseña: Admin123</code>
+    <div class="dev-info-card">
+      <strong>Credenciales de prueba:</strong>
+      <code>admin</code> / <code>Admin123</code>
     </div>
   </div>
+
 </div>
