@@ -132,3 +132,41 @@
 .form-text i {
   margin-right: 0.25rem;
 }
+
+/* ========================
+   VISTA LECTURA (read mode)
+   ======================== */
+
+.config-view {
+  padding: 0.25rem 0;
+}
+
+.config-item {
+  margin-bottom: 1.25rem;
+}
+
+.config-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c757d;
+  margin-bottom: 0.2rem;
+}
+
+.config-value {
+  display: block;
+  font-size: 1rem;
+  color: #212529;
+}
+
+.config-value.empty {
+  color: #adb5bd;
+  font-style: italic;
+}
+
+.config-logo {
+  max-height: 120px;
+  width: auto;
+}

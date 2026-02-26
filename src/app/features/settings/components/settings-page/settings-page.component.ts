@@ -19,9 +19,10 @@ import { COUNTRIES, CURRENCIES, TAX_REGIMES, BACKUP_FREQUENCIES, DATE_FORMATS, T
   styleUrl: './settings-page.component.css'
 })
 export class SettingsPageComponent implements OnInit {
-  // Estados de carga
+  // Estados de carga y edición
   isLoading = false;
   isSaving = false;
+  isEditing = false;
 
   // Formularios
   companyForm!: FormGroup;
@@ -37,26 +38,28 @@ export class SettingsPageComponent implements OnInit {
 
   // Datos para selects
   countries = Object.entries(COUNTRIES).map(([code, name]) => ({ code, name }));
-  currencies = Object.entries(CURRENCIES).map(([code, info]) => ({ 
-    code: code, 
-    symbol: info.symbol, 
-    name: info.name 
+  currencies = Object.entries(CURRENCIES).map(([code, info]) => ({
+    code: code,
+    symbol: info.symbol,
+    name: info.name
   }));
   taxRegimes = Array.from(TAX_REGIMES);
   backupFrequencies = [
-    { value: 'daily', label: 'Diario' },
-    { value: 'weekly', label: 'Semanal' },
-    { value: 'monthly', label: 'Mensual' }
+    { value: 'daily',   label: 'Diario'   },
+    { value: 'weekly',  label: 'Semanal'  },
+    { value: 'monthly', label: 'Mensual'  }
   ];
   dateFormats = Object.keys(DATE_FORMATS);
   timeFormats = Array.from(Object.values(TIME_FORMATS));
+
+  // Snapshot para revertir en Cancelar
+  private configSnapshot: any = null;
 
   constructor(
     private fb: FormBuilder,
     private settingsService: SettingsService,
     private alertService: AlertService,
     private confirmationService: ConfirmationService
-
   ) {
     this.initializeForms();
   }
@@ -65,54 +68,50 @@ export class SettingsPageComponent implements OnInit {
     this.loadConfiguration();
   }
 
+  // ============================================================
+  // INICIALIZACIÓN
+  // ============================================================
 
-  /**
-   * Inicializar todos los formularios
-   */
   private initializeForms(): void {
-    // Formulario de Empresa
     this.companyForm = this.fb.group({
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      ruc: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(13)]],
+      name:    ['', [Validators.required, Validators.minLength(3)]],
+      ruc:     ['', [Validators.required, Validators.minLength(10), Validators.maxLength(13)]],
       address: ['', [Validators.required]],
-      phone: ['', [Validators.required, Validators.minLength(7)]],
-      email: ['', [Validators.required, Validators.email]]
+      phone:   ['', [Validators.required, Validators.minLength(7)]],
+      email:   ['', [Validators.required, Validators.email]]
     });
 
-    // Formulario Fiscal
     this.fiscalForm = this.fb.group({
-      country: ['EC', Validators.required],
-      currency: ['USD', Validators.required],
-      taxRegime: ['Régimen General', Validators.required],
-      ivaPercentage: [15, [Validators.required, Validators.min(0), Validators.max(100)]]
+      country:       ['EC',              Validators.required],
+      currency:      ['USD',             Validators.required],
+      taxRegime:     ['Régimen General', Validators.required],
+      ivaPercentage: [15,                [Validators.required, Validators.min(0), Validators.max(100)]]
     });
 
-    // Formulario de Negocio
     this.businessForm = this.fb.group({
-      minStock: [10, [Validators.required, Validators.min(0)]],
-      defaultCreditDays: [30, [Validators.required, Validators.min(0)]],
-      maxDiscountPercentage: [20, [Validators.required, Validators.min(0), Validators.max(100)]]
+      minStock:               [10, [Validators.required, Validators.min(0)]],
+      defaultCreditDays:      [30, [Validators.required, Validators.min(0)]],
+      maxDiscountPercentage:  [20, [Validators.required, Validators.min(0), Validators.max(100)]]
     });
 
-    // Formulario Técnico
     this.technicalForm = this.fb.group({
-      sessionTimeoutMinutes: [120, [Validators.required, Validators.min(15)]],
-      logRetentionDays: [90, [Validators.required, Validators.min(7)]],
-      dateFormat: ['DD/MM/YYYY', Validators.required],
-      timeFormat: ['24h', Validators.required]
+      sessionTimeoutMinutes: [120,         [Validators.required, Validators.min(15)]],
+      logRetentionDays:      [90,          [Validators.required, Validators.min(7)]],
+      dateFormat:            ['DD/MM/YYYY', Validators.required],
+      timeFormat:            ['24h',        Validators.required]
     });
 
-    // Formulario de Backups
     this.backupForm = this.fb.group({
-      enabled: [true, Validators.required],
+      enabled:   [true,    Validators.required],
       frequency: ['daily', Validators.required],
-      time: ['02:00', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]]
+      time:      ['02:00', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]]
     });
   }
 
-  /**
-   * Cargar configuración del servidor
-   */
+  // ============================================================
+  // CARGA DE DATOS
+  // ============================================================
+
   loadConfiguration(): void {
     this.isLoading = true;
 
@@ -120,6 +119,7 @@ export class SettingsPageComponent implements OnInit {
       next: (response) => {
         if (response.success && response.data) {
           this.populateForms(response.data);
+          this.saveSnapshot();
         }
         this.isLoading = false;
       },
@@ -131,81 +131,118 @@ export class SettingsPageComponent implements OnInit {
     });
   }
 
-  /**
-   * Poblar formularios con datos del servidor
-   */
   private populateForms(config: SystemConfiguration): void {
-    // Empresa
     if (config.company) {
       this.companyForm.patchValue(config.company);
       this.currentLogo = config.company.logo;
     }
-
-    // Fiscal
-    if (config.fiscal) {
-      this.fiscalForm.patchValue(config.fiscal);
-    }
-
-    // Negocio
-    if (config.business) {
-      this.businessForm.patchValue(config.business);
-    }
-
-    // Técnico
-    if (config.technical) {
-      this.technicalForm.patchValue(config.technical);
-    }
-
-    // Backup
-    if (config.backup) {
-      this.backupForm.patchValue(config.backup);
-    }
+    if (config.fiscal)    this.fiscalForm.patchValue(config.fiscal);
+    if (config.business)  this.businessForm.patchValue(config.business);
+    if (config.technical) this.technicalForm.patchValue(config.technical);
+    if (config.backup)    this.backupForm.patchValue(config.backup);
   }
 
-saveAllConfiguration(): void {
-  if (!this.validateAllForms()) {
-    this.alertService.error('Por favor corrija los errores en el formulario');
-    return;
+  private saveSnapshot(): void {
+    this.configSnapshot = {
+      company:   { ...this.companyForm.value },
+      fiscal:    { ...this.fiscalForm.value },
+      business:  { ...this.businessForm.value },
+      technical: { ...this.technicalForm.value },
+      backup:    { ...this.backupForm.value }
+    };
   }
 
-  this.isSaving = true;
+  // ============================================================
+  // CONTROL DE MODO EDICIÓN
+  // ============================================================
 
-  const configData = {
-    company: this.companyForm.value,
-    fiscal: this.fiscalForm.value,
-    business: this.businessForm.value,
-    technical: this.technicalForm.value
-  };
+  startEditing(): void {
+    this.saveSnapshot();
+    this.isEditing = true;
+  }
 
-  this.settingsService.updateConfiguration(configData).subscribe({
-    next: (response) => {
-      if (response.success) {
-        this.alertService.success('Configuración guardada exitosamente');
-        if (this.selectedFile) this.uploadLogo();
-      }
-    },
-    error: (error) => {
-      const errors = error?.error?.errors;
-
-      if (errors?.length) {
-        const message = errors
-          .map((err: any) => `${err.field || 'Campo'}: ${err.message}`)
-          .join('\n');
-        this.alertService.error(`Errores de validación:\n${message}`);
-      } else {
-        this.alertService.error('Error al guardar la configuración');
-      }
-    },
-    complete: () => {
-      this.isSaving = false;
+  cancelEditing(): void {
+    if (this.configSnapshot) {
+      this.companyForm.patchValue(this.configSnapshot.company);
+      this.fiscalForm.patchValue(this.configSnapshot.fiscal);
+      this.businessForm.patchValue(this.configSnapshot.business);
+      this.technicalForm.patchValue(this.configSnapshot.technical);
+      this.backupForm.patchValue(this.configSnapshot.backup);
+      this.companyForm.markAsUntouched();
+      this.fiscalForm.markAsUntouched();
+      this.businessForm.markAsUntouched();
+      this.technicalForm.markAsUntouched();
+      this.backupForm.markAsUntouched();
     }
-  });
-}
+    this.selectedFile = null;
+    this.logoPreview = null;
+    this.isEditing = false;
+  }
 
-  
-  /**
-   * Validar todos los formularios
-   */
+  // ============================================================
+  // GUARDADO
+  // ============================================================
+
+  saveAllConfiguration(): void {
+    if (!this.validateAllForms()) {
+      this.alertService.error('Por favor corrija los errores en el formulario');
+      return;
+    }
+
+    this.isSaving = true;
+
+    const configData = {
+      company:   this.companyForm.value,
+      fiscal:    this.fiscalForm.value,
+      business:  this.businessForm.value,
+      technical: this.technicalForm.value
+    };
+
+    this.settingsService.updateConfiguration(configData).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.saveSnapshot();
+          this.isEditing = false;
+          this.alertService.success('Configuración guardada exitosamente');
+          if (this.selectedFile) this.uploadLogo();
+        }
+        this.isSaving = false;
+      },
+      error: (error) => {
+        this.isSaving = false;
+        const errors = error?.error?.errors;
+        if (errors?.length) {
+          const message = errors
+            .map((err: any) => `${err.field || 'Campo'}: ${err.message}`)
+            .join('\n');
+          this.alertService.error(`Errores de validación:\n${message}`);
+        } else {
+          this.alertService.error('Error al guardar la configuración');
+        }
+      }
+    });
+  }
+
+  saveBackupConfiguration(): void {
+    if (!this.backupForm.valid) {
+      this.backupForm.markAllAsTouched();
+      this.alertService.error('Por favor corrija los errores en la configuración de backup');
+      return;
+    }
+
+    this.settingsService.configureBackups(this.backupForm.value).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.alertService.success('Configuración de backups guardada exitosamente');
+        }
+      },
+      error: (error) => {
+        console.error('Error al configurar backups:', error);
+        this.alertService.error('Error al configurar backups');
+      }
+    });
+  }
+
   private validateAllForms(): boolean {
     this.companyForm.markAllAsTouched();
     this.fiscalForm.markAllAsTouched();
@@ -220,46 +257,32 @@ saveAllConfiguration(): void {
            this.backupForm.valid;
   }
 
-  /**
-   * Manejar selección de archivo de logo
-   */
+  // ============================================================
+  // LOGO
+  // ============================================================
+
   onFileSelected(event: any): void {
     const file = event.target.files[0];
-    
-    if (file) {
-      // Validar tipo de archivo
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
-        this.alertService.error('Formato de imagen no válido. Use JPG o PNG');
-        return;
-      }
+    if (!file) return;
 
-      // Validar tamaño (2MB)
-      const maxSize = 2 * 1024 * 1024;
-      if (file.size > maxSize) {
-        this.alertService.error('El archivo es demasiado grande. Máximo 2MB');
-        return;
-      }
-
-      this.selectedFile = file;
-
-      // Mostrar preview
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.logoPreview = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
-  /**
-   * Subir logo al servidor
-   */
-  uploadLogo(): void {
-    if (!this.selectedFile) {
-      this.isSaving = false;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!allowedTypes.includes(file.type)) {
+      this.alertService.error('Formato de imagen no válido. Use JPG o PNG');
       return;
     }
+    if (file.size > 2 * 1024 * 1024) {
+      this.alertService.error('El archivo es demasiado grande. Máximo 2MB');
+      return;
+    }
+
+    this.selectedFile = file;
+    const reader = new FileReader();
+    reader.onload = (e: any) => { this.logoPreview = e.target.result; };
+    reader.readAsDataURL(file);
+  }
+
+  uploadLogo(): void {
+    if (!this.selectedFile) return;
 
     this.settingsService.uploadLogo(this.selectedFile).subscribe({
       next: (response) => {
@@ -269,120 +292,74 @@ saveAllConfiguration(): void {
           this.selectedFile = null;
           this.alertService.success('Logo actualizado exitosamente');
         }
-        this.isSaving = false;
       },
       error: (error) => {
         console.error('Error al subir logo:', error);
         this.alertService.error('Error al subir el logo');
-        this.isSaving = false;
       }
     });
   }
 
-  /**
-   * Cancelar selección de logo
-   */
   cancelLogoSelection(): void {
     this.selectedFile = null;
     this.logoPreview = null;
   }
 
-  /**
-   * Configurar backups
-   */
-  saveBackupConfiguration(): void {
-    if (!this.backupForm.valid) {
-      this.backupForm.markAllAsTouched();
-      this.alertService.error('Por favor corrija los errores en la configuración de backup');
-      return;
-    }
+  // ============================================================
+  // HELPERS DE VISUALIZACIÓN (modo lectura)
+  // ============================================================
 
-    const backupConfig = this.backupForm.value;
-
-    this.settingsService.configureBackups(backupConfig).subscribe({
-      next: (response) => {
-        if (response.success) {
-          this.alertService.success('Configuración de backups guardada exitosamente');
-        }
-      },
-      error: (error) => {
-        console.error('Error al configurar backups:', error);
-        this.alertService.error('Error al configurar backups');
-      }
-    });
+  getCountryName(code: string): string {
+    return (COUNTRIES as any)[code] ?? code;
   }
 
-  /**
-   * Helper para obtener FormControl de un FormGroup
-   */
+  getCurrencyDisplay(code: string): string {
+    const c = (CURRENCIES as any)[code];
+    return c ? `${c.name} (${c.symbol})` : code;
+  }
+
+  getFrequencyLabel(value: string): string {
+    return this.backupFrequencies.find(f => f.value === value)?.label ?? value;
+  }
+
+  // ============================================================
+  // HELPERS DE FORMULARIO
+  // ============================================================
+
   getControl(form: FormGroup, fieldName: string): FormControl {
     return form.get(fieldName) as FormControl;
   }
 
-  /**
-   * Helper para verificar errores en campos
-   */
   hasError(form: FormGroup, field: string, error: string): boolean {
     const control = form.get(field);
     return !!(control && control.hasError(error) && control.touched);
   }
 
-  /**
-   * Helper para obtener mensaje de error
-   */
   getErrorMessage(form: FormGroup, field: string): string {
     const control = form.get(field);
-    
-    if (!control || !control.errors || !control.touched) {
-      return '';
-    }
+    if (!control || !control.errors || !control.touched) return '';
 
-    if (control.hasError('required')) {
-      return 'Este campo es requerido';
-    }
+    if (control.hasError('required'))  return 'Este campo es requerido';
+    if (control.hasError('email'))     return 'Email inválido';
+    if (control.hasError('pattern'))   return 'Formato inválido';
 
-    if (control.hasError('email')) {
-      return 'Email inválido';
-    }
-
-    if (control.hasError('minlength')) {
-      const minLength = control.errors['minlength'].requiredLength;
-      return `Mínimo ${minLength} caracteres`;
-    }
-
-    if (control.hasError('maxlength')) {
-      const maxLength = control.errors['maxlength'].requiredLength;
-      return `Máximo ${maxLength} caracteres`;
-    }
-
-    if (control.hasError('min')) {
-      const min = control.errors['min'].min;
-      return `Valor mínimo: ${min}`;
-    }
-
-    if (control.hasError('max')) {
-      const max = control.errors['max'].max;
-      return `Valor máximo: ${max}`;
-    }
-
-    if (control.hasError('pattern')) {
-      return 'Formato inválido';
-    }
+    if (control.hasError('minlength'))
+      return `Mínimo ${control.errors['minlength'].requiredLength} caracteres`;
+    if (control.hasError('maxlength'))
+      return `Máximo ${control.errors['maxlength'].requiredLength} caracteres`;
+    if (control.hasError('min'))
+      return `Valor mínimo: ${control.errors['min'].min}`;
+    if (control.hasError('max'))
+      return `Valor máximo: ${control.errors['max'].max}`;
 
     return 'Campo inválido';
   }
 
-  /**
-   * Helper para verificar si un campo es válido
-   */
   isFieldValid(form: FormGroup, field: string): boolean {
     const control = form.get(field);
     return !!(control && control.valid && control.touched);
   }
 
-  /**
-   * Helper para verificar si un campo es inválido
-   */
   isFieldInvalid(form: FormGroup, field: string): boolean {
     const control = form.get(field);
     return !!(control && control.invalid && control.touched);

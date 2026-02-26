@@ -82,6 +82,14 @@ export const routes: Routes = [
       //   title: 'Productos'
       // },
 
+      // Cambiar contraseña (accesible para cualquier usuario autenticado)
+      {
+        path: 'change-password',
+        loadComponent: () => import('./features/auth/components/change-password/change-password.component')
+          .then(m => m.ChangePasswordComponent),
+        title: 'Cambiar Contraseña'
+      },
+
       // Ruta por defecto dentro del layout
       {
         path: '',

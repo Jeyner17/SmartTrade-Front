@@ -219,6 +219,33 @@
 
 .sidebar.collapsed .user-info {
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Botón de cerrar sesión en el sidebar */
+.btn-logout {
+  background: transparent;
+  border: none;
+  color: #a0aec0;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 18px;
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.btn-logout:hover {
+  background: rgba(229, 62, 62, 0.15);
+  color: #fc8181;
+}
+
+.sidebar.collapsed .btn-logout {
+  margin-left: 0;
 }
 
 .user-details {

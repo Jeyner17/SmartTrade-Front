@@ -5,6 +5,7 @@ import { Subject, takeUntil } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { AlertService } from '../../../core/services/alert.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { APP_CONSTANTS } from '../../../core/constants/app.constants';
 import { AUTH_CONSTANTS } from '../../../core/constants/auth.constants';
 import { User, UserPermissions } from '../../../core/models/auth.model';
@@ -54,6 +55,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private alertService: AlertService,
+    private confirmationService: ConfirmationService,
     private router: Router
   ) {}
 
@@ -259,18 +261,24 @@ export class LayoutComponent implements OnInit, OnDestroy {
    * Cerrar sesión
    */
   logout(): void {
-    if (confirm('¿Está seguro que desea cerrar sesión?')) {
-      this.authService.logout().subscribe({
-        next: () => {
-          this.alertService.success('Sesión cerrada exitosamente');
-        },
-        error: (error) => {
-          console.error('Error al cerrar sesión:', error);
-          // Cerrar sesión local de todas formas
-          this.authService.logoutLocal();
-        }
-      });
-    }
+    this.confirmationService.confirm({
+      title: 'Cerrar sesión',
+      message: '¿Está seguro que desea cerrar sesión?',
+      confirmText: 'Cerrar sesión',
+      cancelText: 'Cancelar',
+      type: 'warning'
+    }).subscribe(confirmed => {
+      if (confirmed) {
+        this.authService.logout().subscribe({
+          next: () => {
+            this.alertService.success('Sesión cerrada exitosamente');
+          },
+          error: () => {
+            this.authService.logoutLocal();
+          }
+        });
+      }
+    });
   }
 
   /**

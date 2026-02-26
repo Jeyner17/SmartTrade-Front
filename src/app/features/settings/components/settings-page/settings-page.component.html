@@ -1,19 +1,20 @@
 <!-- LOADER -->
-<app-loader 
-  *ngIf="isLoading" 
+<app-loader
+  *ngIf="isLoading"
   [message]="'Cargando configuración...'"
   [size]="'lg'">
 </app-loader>
 
-<!-- Y para el overlay al guardar: -->
-<app-loader 
-  *ngIf="isSaving" 
+<!-- Overlay al guardar -->
+<app-loader
+  *ngIf="isSaving"
   [message]="'Guardando configuración...'"
   [overlay]="true">
 </app-loader>
 
 <!-- CONTENIDO PRINCIPAL -->
 <div *ngIf="!isLoading">
+
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -25,17 +26,35 @@
                 Administre la configuración general de su negocio
             </p>
         </div>
-        <button class="btn btn-primary btn-lg" [disabled]="isSaving" (click)="saveAllConfiguration()">
-            <i class="bi bi-check-circle me-2"></i>
-            <span *ngIf="!isSaving">Guardar Todo</span>
-            <span *ngIf="isSaving">Guardando...</span>
-        </button>
+
+        <!-- Botones vista lectura -->
+        <div *ngIf="!isEditing">
+            <button class="btn btn-primary btn-lg" (click)="startEditing()">
+                <i class="bi bi-pencil-square me-2"></i>
+                Editar
+            </button>
+        </div>
+
+        <!-- Botones modo edición -->
+        <div *ngIf="isEditing" class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-lg" (click)="cancelEditing()" [disabled]="isSaving">
+                <i class="bi bi-x-circle me-2"></i>
+                Cancelar
+            </button>
+            <button class="btn btn-primary btn-lg" (click)="saveAllConfiguration()" [disabled]="isSaving">
+                <i class="bi bi-check-circle me-2"></i>
+                <span *ngIf="!isSaving">Guardar Todo</span>
+                <span *ngIf="isSaving">
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Guardando...
+                </span>
+            </button>
+        </div>
     </div>
 
-    <!-- FORMULARIO PRINCIPAL -->
     <form>
 
-        <!-- ==================== SECCIÓN: DATOS DE EMPRESA ==================== -->
+        <!-- ==================== DATOS DE EMPRESA ==================== -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -44,110 +63,136 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <!-- Nombre de Empresa -->
-                    <div class="col-md-6 mb-3">
-                        <label for="companyName" class="form-label">
-                            Nombre de Empresa <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" class="form-control" id="companyName"
-                            [formControl]="getControl(companyForm, 'name')"
-                            [class.is-invalid]="isFieldInvalid(companyForm, 'name')" placeholder="Ej: SuperBar S.A.">
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(companyForm, 'name') }}
-                        </div>
+
+                <!-- Vista lectura -->
+                <div *ngIf="!isEditing" class="config-view">
+                    <div *ngIf="currentLogo" class="mb-4">
+                        <img [src]="currentLogo" alt="Logo de la empresa" class="img-thumbnail config-logo">
                     </div>
-
-                    <!-- RUC -->
-                    <div class="col-md-6 mb-3">
-                        <label for="companyRuc" class="form-label">
-                            RUC <span class="text-danger">*</span>
-                        </label>
-                        <input type="text" class="form-control" id="companyRuc"
-                            [formControl]="getControl(companyForm, 'ruc')"
-                            [class.is-invalid]="isFieldInvalid(companyForm, 'ruc')" placeholder="Ej: 1799999999001"
-                            maxlength="13">
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(companyForm, 'ruc') }}
+                    <div class="row">
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Nombre de Empresa</span>
+                            <span class="config-value" [class.empty]="!companyForm.value.name">
+                                {{ companyForm.value.name || '—' }}
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Dirección -->
-                    <div class="col-md-12 mb-3">
-                        <label for="companyAddress" class="form-label">
-                            Dirección <span class="text-danger">*</span>
-                        </label>
-                        <textarea class="form-control" id="companyAddress"
-                            [formControl]="getControl(companyForm, 'address')"
-                            [class.is-invalid]="isFieldInvalid(companyForm, 'address')" rows="2"
-                            placeholder="Ej: Av. Principal 123, Quito"></textarea>
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(companyForm, 'address') }}
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">RUC</span>
+                            <span class="config-value" [class.empty]="!companyForm.value.ruc">
+                                {{ companyForm.value.ruc || '—' }}
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Teléfono -->
-                    <div class="col-md-6 mb-3">
-                        <label for="companyPhone" class="form-label">
-                            Teléfono <span class="text-danger">*</span>
-                        </label>
-                        <input type="tel" class="form-control" id="companyPhone"
-                            [formControl]="getControl(companyForm, 'phone')"
-                            [class.is-invalid]="isFieldInvalid(companyForm, 'phone')" placeholder="Ej: +593991234567">
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(companyForm, 'phone') }}
+                        <div class="col-md-12 config-item">
+                            <span class="config-label">Dirección</span>
+                            <span class="config-value" [class.empty]="!companyForm.value.address">
+                                {{ companyForm.value.address || '—' }}
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Email -->
-                    <div class="col-md-6 mb-3">
-                        <label for="companyEmail" class="form-label">
-                            Correo Electrónico <span class="text-danger">*</span>
-                        </label>
-                        <input type="email" class="form-control" id="companyEmail"
-                            [formControl]="getControl(companyForm, 'email')"
-                            [class.is-invalid]="isFieldInvalid(companyForm, 'email')"
-                            placeholder="Ej: info@empresa.com">
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(companyForm, 'email') }}
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Teléfono</span>
+                            <span class="config-value" [class.empty]="!companyForm.value.phone">
+                                {{ companyForm.value.phone || '—' }}
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Logo -->
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label">Logo de la Empresa</label>
-
-                        <!-- Logo Actual -->
-                        <div *ngIf="currentLogo && !logoPreview" class="mb-3">
-                            <p class="text-muted small mb-2">Logo actual:</p>
-                            <img [src]="currentLogo" alt="Logo actual" class="img-thumbnail" style="max-height: 150px;">
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Correo Electrónico</span>
+                            <span class="config-value" [class.empty]="!companyForm.value.email">
+                                {{ companyForm.value.email || '—' }}
+                            </span>
                         </div>
-
-                        <!-- Preview del nuevo logo -->
-                        <div *ngIf="logoPreview" class="mb-3">
-                            <p class="text-muted small mb-2">Nuevo logo seleccionado:</p>
-                            <img [src]="logoPreview" alt="Preview" class="img-thumbnail" style="max-height: 150px;">
-                        </div>
-
-                        <!-- Input de archivo -->
-                        <div class="input-group">
-                            <input type="file" class="form-control" id="logoInput"
-                                accept="image/jpeg,image/png,image/jpg" (change)="onFileSelected($event)">
-                            <button *ngIf="logoPreview" class="btn btn-outline-secondary" type="button"
-                                (click)="cancelLogoSelection()">
-                                <i class="bi bi-x-circle me-1"></i>
-                                Cancelar
-                            </button>
-                        </div>
-                        <div class="form-text">
-                            Formatos permitidos: JPG, PNG. Tamaño máximo: 2MB
+                        <div *ngIf="!currentLogo" class="col-md-12 config-item">
+                            <span class="config-label">Logo</span>
+                            <span class="config-value empty">Sin logo configurado</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Modo edición -->
+                <div *ngIf="isEditing">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="companyName" class="form-label">
+                                Nombre de Empresa <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="companyName"
+                                [formControl]="getControl(companyForm, 'name')"
+                                [class.is-invalid]="isFieldInvalid(companyForm, 'name')"
+                                placeholder="Ej: SuperBar S.A.">
+                            <div class="invalid-feedback">{{ getErrorMessage(companyForm, 'name') }}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="companyRuc" class="form-label">
+                                RUC <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="companyRuc"
+                                [formControl]="getControl(companyForm, 'ruc')"
+                                [class.is-invalid]="isFieldInvalid(companyForm, 'ruc')"
+                                placeholder="Ej: 1799999999001" maxlength="13">
+                            <div class="invalid-feedback">{{ getErrorMessage(companyForm, 'ruc') }}</div>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label for="companyAddress" class="form-label">
+                                Dirección <span class="text-danger">*</span>
+                            </label>
+                            <textarea class="form-control" id="companyAddress"
+                                [formControl]="getControl(companyForm, 'address')"
+                                [class.is-invalid]="isFieldInvalid(companyForm, 'address')"
+                                rows="2" placeholder="Ej: Av. Principal 123, Quito"></textarea>
+                            <div class="invalid-feedback">{{ getErrorMessage(companyForm, 'address') }}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="companyPhone" class="form-label">
+                                Teléfono <span class="text-danger">*</span>
+                            </label>
+                            <input type="tel" class="form-control" id="companyPhone"
+                                [formControl]="getControl(companyForm, 'phone')"
+                                [class.is-invalid]="isFieldInvalid(companyForm, 'phone')"
+                                placeholder="Ej: +593991234567">
+                            <div class="invalid-feedback">{{ getErrorMessage(companyForm, 'phone') }}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="companyEmail" class="form-label">
+                                Correo Electrónico <span class="text-danger">*</span>
+                            </label>
+                            <input type="email" class="form-control" id="companyEmail"
+                                [formControl]="getControl(companyForm, 'email')"
+                                [class.is-invalid]="isFieldInvalid(companyForm, 'email')"
+                                placeholder="Ej: info@empresa.com">
+                            <div class="invalid-feedback">{{ getErrorMessage(companyForm, 'email') }}</div>
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Logo de la Empresa</label>
+                            <div *ngIf="currentLogo && !logoPreview" class="mb-3">
+                                <p class="text-muted small mb-2">Logo actual:</p>
+                                <img [src]="currentLogo" alt="Logo actual" class="img-thumbnail" style="max-height: 150px;">
+                            </div>
+                            <div *ngIf="logoPreview" class="mb-3">
+                                <p class="text-muted small mb-2">Nuevo logo seleccionado:</p>
+                                <img [src]="logoPreview" alt="Preview" class="img-thumbnail" style="max-height: 150px;">
+                            </div>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="logoInput"
+                                    accept="image/jpeg,image/png,image/jpg"
+                                    (change)="onFileSelected($event)">
+                                <button *ngIf="logoPreview" class="btn btn-outline-secondary" type="button"
+                                    (click)="cancelLogoSelection()">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelar
+                                </button>
+                            </div>
+                            <div class="form-text">Formatos permitidos: JPG, PNG. Tamaño máximo: 2MB</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- ==================== SECCIÓN: CONFIGURACIÓN FISCAL ==================== -->
+        <!-- ==================== CONFIGURACIÓN FISCAL ==================== -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -156,63 +201,85 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <!-- País -->
-                    <div class="col-md-6 mb-3">
-                        <label for="fiscalCountry" class="form-label">
-                            País <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="fiscalCountry"
-                            [formControl]="getControl(fiscalForm, 'country')">
-                            <option *ngFor="let country of countries" [value]="country.code">
-                                {{ country.name }}
-                            </option>
-                        </select>
-                    </div>
 
-                    <!-- Moneda -->
-                    <div class="col-md-6 mb-3">
-                        <label for="fiscalCurrency" class="form-label">
-                            Moneda <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="fiscalCurrency"
-                            [formControl]="getControl(fiscalForm, 'currency')">
-                            <option *ngFor="let currency of currencies" [value]="currency.code">
-                                {{ currency.name }} ({{ currency.symbol }})
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Régimen Fiscal -->
-                    <div class="col-md-6 mb-3">
-                        <label for="taxRegime" class="form-label">
-                            Régimen Fiscal <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="taxRegime" [formControl]="getControl(fiscalForm, 'taxRegime')">
-                            <option *ngFor="let regime of taxRegimes" [value]="regime">
-                                {{ regime }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- IVA -->
-                    <div class="col-md-6 mb-3">
-                        <label for="ivaPercentage" class="form-label">
-                            Porcentaje de IVA (%) <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" class="form-control" id="ivaPercentage"
-                            [formControl]="getControl(fiscalForm, 'ivaPercentage')"
-                            [class.is-invalid]="isFieldInvalid(fiscalForm, 'ivaPercentage')" min="0" max="100"
-                            step="0.01">
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(fiscalForm, 'ivaPercentage') }}
+                <!-- Vista lectura -->
+                <div *ngIf="!isEditing" class="config-view">
+                    <div class="row">
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">País</span>
+                            <span class="config-value">{{ getCountryName(fiscalForm.value.country) }}</span>
+                        </div>
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Moneda</span>
+                            <span class="config-value">{{ getCurrencyDisplay(fiscalForm.value.currency) }}</span>
+                        </div>
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Régimen Fiscal</span>
+                            <span class="config-value" [class.empty]="!fiscalForm.value.taxRegime">
+                                {{ fiscalForm.value.taxRegime || '—' }}
+                            </span>
+                        </div>
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">IVA</span>
+                            <span class="config-value">{{ fiscalForm.value.ivaPercentage }}%</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Modo edición -->
+                <div *ngIf="isEditing">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="fiscalCountry" class="form-label">
+                                País <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="fiscalCountry"
+                                [formControl]="getControl(fiscalForm, 'country')">
+                                <option *ngFor="let country of countries" [value]="country.code">
+                                    {{ country.name }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="fiscalCurrency" class="form-label">
+                                Moneda <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="fiscalCurrency"
+                                [formControl]="getControl(fiscalForm, 'currency')">
+                                <option *ngFor="let currency of currencies" [value]="currency.code">
+                                    {{ currency.name }} ({{ currency.symbol }})
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="taxRegime" class="form-label">
+                                Régimen Fiscal <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="taxRegime"
+                                [formControl]="getControl(fiscalForm, 'taxRegime')">
+                                <option *ngFor="let regime of taxRegimes" [value]="regime">{{ regime }}</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="ivaPercentage" class="form-label">
+                                Porcentaje de IVA (%) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="ivaPercentage"
+                                [formControl]="getControl(fiscalForm, 'ivaPercentage')"
+                                [class.is-invalid]="isFieldInvalid(fiscalForm, 'ivaPercentage')"
+                                min="0" max="100" step="0.01">
+                            <div class="invalid-feedback">{{ getErrorMessage(fiscalForm, 'ivaPercentage') }}</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- ==================== SECCIÓN: PARÁMETROS DE NEGOCIO ==================== -->
+        <!-- ==================== PARÁMETROS DE NEGOCIO ==================== -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -221,54 +288,68 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <!-- Stock Mínimo -->
-                    <div class="col-md-4 mb-3">
-                        <label for="minStock" class="form-label">
-                            Stock Mínimo Predeterminado <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" class="form-control" id="minStock"
-                            [formControl]="getControl(businessForm, 'minStock')"
-                            [class.is-invalid]="isFieldInvalid(businessForm, 'minStock')" min="0">
-                        <div class="form-text">Alerta cuando el stock esté por debajo de este valor</div>
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(businessForm, 'minStock') }}
-                        </div>
-                    </div>
 
-                    <!-- Días de Crédito -->
-                    <div class="col-md-4 mb-3">
-                        <label for="creditDays" class="form-label">
-                            Días de Crédito por Defecto <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" class="form-control" id="creditDays"
-                            [formControl]="getControl(businessForm, 'defaultCreditDays')"
-                            [class.is-invalid]="isFieldInvalid(businessForm, 'defaultCreditDays')" min="0">
-                        <div class="form-text">Plazo estándar para ventas a crédito</div>
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(businessForm, 'defaultCreditDays') }}
+                <!-- Vista lectura -->
+                <div *ngIf="!isEditing" class="config-view">
+                    <div class="row">
+                        <div class="col-md-4 config-item">
+                            <span class="config-label">Stock Mínimo Predeterminado</span>
+                            <span class="config-value">{{ businessForm.value.minStock }} unidades</span>
                         </div>
-                    </div>
-
-                    <!-- Descuento Máximo -->
-                    <div class="col-md-4 mb-3">
-                        <label for="maxDiscount" class="form-label">
-                            Descuento Máximo Permitido (%) <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" class="form-control" id="maxDiscount"
-                            [formControl]="getControl(businessForm, 'maxDiscountPercentage')"
-                            [class.is-invalid]="isFieldInvalid(businessForm, 'maxDiscountPercentage')" min="0" max="100"
-                            step="0.01">
-                        <div class="form-text">Descuento máximo en ventas</div>
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(businessForm, 'maxDiscountPercentage') }}
+                        <div class="col-md-4 config-item">
+                            <span class="config-label">Días de Crédito por Defecto</span>
+                            <span class="config-value">{{ businessForm.value.defaultCreditDays }} días</span>
+                        </div>
+                        <div class="col-md-4 config-item">
+                            <span class="config-label">Descuento Máximo Permitido</span>
+                            <span class="config-value">{{ businessForm.value.maxDiscountPercentage }}%</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Modo edición -->
+                <div *ngIf="isEditing">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="minStock" class="form-label">
+                                Stock Mínimo Predeterminado <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="minStock"
+                                [formControl]="getControl(businessForm, 'minStock')"
+                                [class.is-invalid]="isFieldInvalid(businessForm, 'minStock')" min="0">
+                            <div class="form-text">Alerta cuando el stock esté por debajo de este valor</div>
+                            <div class="invalid-feedback">{{ getErrorMessage(businessForm, 'minStock') }}</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="creditDays" class="form-label">
+                                Días de Crédito por Defecto <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="creditDays"
+                                [formControl]="getControl(businessForm, 'defaultCreditDays')"
+                                [class.is-invalid]="isFieldInvalid(businessForm, 'defaultCreditDays')" min="0">
+                            <div class="form-text">Plazo estándar para ventas a crédito</div>
+                            <div class="invalid-feedback">{{ getErrorMessage(businessForm, 'defaultCreditDays') }}</div>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="maxDiscount" class="form-label">
+                                Descuento Máximo Permitido (%) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="maxDiscount"
+                                [formControl]="getControl(businessForm, 'maxDiscountPercentage')"
+                                [class.is-invalid]="isFieldInvalid(businessForm, 'maxDiscountPercentage')"
+                                min="0" max="100" step="0.01">
+                            <div class="form-text">Descuento máximo en ventas</div>
+                            <div class="invalid-feedback">{{ getErrorMessage(businessForm, 'maxDiscountPercentage') }}</div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- ==================== SECCIÓN: CONFIGURACIÓN TÉCNICA ==================== -->
+        <!-- ==================== CONFIGURACIÓN TÉCNICA ==================== -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -277,63 +358,78 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <!-- Tiempo de Sesión -->
-                    <div class="col-md-6 mb-3">
-                        <label for="sessionTimeout" class="form-label">
-                            Tiempo de Expiración de Sesión (minutos) <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" class="form-control" id="sessionTimeout"
-                            [formControl]="getControl(technicalForm, 'sessionTimeoutMinutes')"
-                            [class.is-invalid]="isFieldInvalid(technicalForm, 'sessionTimeoutMinutes')" min="15">
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(technicalForm, 'sessionTimeoutMinutes') }}
+
+                <!-- Vista lectura -->
+                <div *ngIf="!isEditing" class="config-view">
+                    <div class="row">
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Tiempo de Expiración de Sesión</span>
+                            <span class="config-value">{{ technicalForm.value.sessionTimeoutMinutes }} minutos</span>
                         </div>
-                    </div>
-
-                    <!-- Retención de Logs -->
-                    <div class="col-md-6 mb-3">
-                        <label for="logRetention" class="form-label">
-                            Días de Retención de Logs <span class="text-danger">*</span>
-                        </label>
-                        <input type="number" class="form-control" id="logRetention"
-                            [formControl]="getControl(technicalForm, 'logRetentionDays')"
-                            [class.is-invalid]="isFieldInvalid(technicalForm, 'logRetentionDays')" min="7">
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(technicalForm, 'logRetentionDays') }}
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Retención de Logs</span>
+                            <span class="config-value">{{ technicalForm.value.logRetentionDays }} días</span>
                         </div>
-                    </div>
-
-                    <!-- Formato de Fecha -->
-                    <div class="col-md-6 mb-3">
-                        <label for="dateFormat" class="form-label">
-                            Formato de Fecha <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="dateFormat"
-                            [formControl]="getControl(technicalForm, 'dateFormat')">
-                            <option *ngFor="let format of dateFormats" [value]="format">
-                                {{ format }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Formato de Hora -->
-                    <div class="col-md-6 mb-3">
-                        <label for="timeFormat" class="form-label">
-                            Formato de Hora <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="timeFormat"
-                            [formControl]="getControl(technicalForm, 'timeFormat')">
-                            <option *ngFor="let format of timeFormats" [value]="format">
-                                {{ format }}
-                            </option>
-                        </select>
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Formato de Fecha</span>
+                            <span class="config-value">{{ technicalForm.value.dateFormat }}</span>
+                        </div>
+                        <div class="col-md-6 config-item">
+                            <span class="config-label">Formato de Hora</span>
+                            <span class="config-value">{{ technicalForm.value.timeFormat }}</span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Modo edición -->
+                <div *ngIf="isEditing">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="sessionTimeout" class="form-label">
+                                Tiempo de Expiración de Sesión (minutos) <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="sessionTimeout"
+                                [formControl]="getControl(technicalForm, 'sessionTimeoutMinutes')"
+                                [class.is-invalid]="isFieldInvalid(technicalForm, 'sessionTimeoutMinutes')" min="15">
+                            <div class="invalid-feedback">{{ getErrorMessage(technicalForm, 'sessionTimeoutMinutes') }}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="logRetention" class="form-label">
+                                Días de Retención de Logs <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" class="form-control" id="logRetention"
+                                [formControl]="getControl(technicalForm, 'logRetentionDays')"
+                                [class.is-invalid]="isFieldInvalid(technicalForm, 'logRetentionDays')" min="7">
+                            <div class="invalid-feedback">{{ getErrorMessage(technicalForm, 'logRetentionDays') }}</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="dateFormat" class="form-label">
+                                Formato de Fecha <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="dateFormat"
+                                [formControl]="getControl(technicalForm, 'dateFormat')">
+                                <option *ngFor="let format of dateFormats" [value]="format">{{ format }}</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="timeFormat" class="form-label">
+                                Formato de Hora <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="timeFormat"
+                                [formControl]="getControl(technicalForm, 'timeFormat')">
+                                <option *ngFor="let format of timeFormats" [value]="format">{{ format }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
-        <!-- ==================== SECCIÓN: BACKUPS AUTOMÁTICOS ==================== -->
+        <!-- ==================== BACKUPS AUTOMÁTICOS ==================== -->
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -342,69 +438,83 @@
                 </h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <!-- Habilitar Backups -->
-                    <div class="col-md-12 mb-3">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="backupEnabled"
-                                [formControl]="getControl(backupForm, 'enabled')">
-                            <label class="form-check-label" for="backupEnabled">
-                                Habilitar backups automáticos
-                            </label>
+
+                <!-- Vista lectura -->
+                <div *ngIf="!isEditing" class="config-view">
+                    <div class="row">
+                        <div class="col-md-4 config-item">
+                            <span class="config-label">Estado</span>
+                            <span class="config-value">
+                                <span class="badge fs-6"
+                                    [class.bg-success]="backupForm.value.enabled"
+                                    [class.bg-secondary]="!backupForm.value.enabled">
+                                    {{ backupForm.value.enabled ? 'Activo' : 'Inactivo' }}
+                                </span>
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Frecuencia -->
-                    <div class="col-md-6 mb-3">
-                        <label for="backupFrequency" class="form-label">
-                            Frecuencia <span class="text-danger">*</span>
-                        </label>
-                        <select class="form-select" id="backupFrequency"
-                            [formControl]="getControl(backupForm, 'frequency')"
-                            [disabled]="!getControl(backupForm, 'enabled').value">
-                            <option *ngFor="let freq of backupFrequencies" [value]="freq.value">
-                                {{ freq.label }}
-                            </option>
-                        </select>
-                    </div>
-
-                    <!-- Hora -->
-                    <div class="col-md-6 mb-3">
-                        <label for="backupTime" class="form-label">
-                            Hora <span class="text-danger">*</span>
-                        </label>
-                        <input type="time" class="form-control" id="backupTime"
-                            [formControl]="getControl(backupForm, 'time')"
-                            [class.is-invalid]="isFieldInvalid(backupForm, 'time')"
-                            [disabled]="!getControl(backupForm, 'enabled').value">
-                        <div class="form-text">Hora en formato 24h (ej: 02:00)</div>
-                        <div class="invalid-feedback">
-                            {{ getErrorMessage(backupForm, 'time') }}
+                        <div class="col-md-4 config-item">
+                            <span class="config-label">Frecuencia</span>
+                            <span class="config-value" [class.empty]="!backupForm.value.enabled">
+                                {{ backupForm.value.enabled ? getFrequencyLabel(backupForm.value.frequency) : '—' }}
+                            </span>
                         </div>
-                    </div>
-
-                    <!-- Botón para guardar solo backups -->
-                    <div class="col-md-12">
-                        <button type="button" class="btn btn-outline-primary" (click)="saveBackupConfiguration()">
-                            <i class="bi bi-save me-2"></i>
-                            Guardar Configuración de Backups
-                        </button>
+                        <div class="col-md-4 config-item">
+                            <span class="config-label">Hora Programada</span>
+                            <span class="config-value" [class.empty]="!backupForm.value.enabled">
+                                {{ backupForm.value.enabled ? backupForm.value.time : '—' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- BOTÓN FINAL DE GUARDAR TODO -->
-        <div class="text-end mt-4 mb-5">
-            <button type="button" class="btn btn-primary btn-lg px-5" [disabled]="isSaving"
-                (click)="saveAllConfiguration()">
-                <i class="bi bi-check-circle me-2"></i>
-                <span *ngIf="!isSaving">Guardar Toda la Configuración</span>
-                <span *ngIf="isSaving">
-                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Guardando...
-                </span>
-            </button>
+                <!-- Modo edición -->
+                <div *ngIf="isEditing">
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="backupEnabled"
+                                    [formControl]="getControl(backupForm, 'enabled')">
+                                <label class="form-check-label" for="backupEnabled">
+                                    Habilitar backups automáticos
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="backupFrequency" class="form-label">
+                                Frecuencia <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="backupFrequency"
+                                [formControl]="getControl(backupForm, 'frequency')"
+                                [attr.disabled]="!getControl(backupForm, 'enabled').value ? '' : null">
+                                <option *ngFor="let freq of backupFrequencies" [value]="freq.value">
+                                    {{ freq.label }}
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="backupTime" class="form-label">
+                                Hora <span class="text-danger">*</span>
+                            </label>
+                            <input type="time" class="form-control" id="backupTime"
+                                [formControl]="getControl(backupForm, 'time')"
+                                [class.is-invalid]="isFieldInvalid(backupForm, 'time')"
+                                [attr.disabled]="!getControl(backupForm, 'enabled').value ? '' : null">
+                            <div class="form-text">Hora en formato 24h (ej: 02:00)</div>
+                            <div class="invalid-feedback">{{ getErrorMessage(backupForm, 'time') }}</div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <button type="button" class="btn btn-outline-primary" (click)="saveBackupConfiguration()">
+                                <i class="bi bi-save me-2"></i>
+                                Guardar Configuración de Backups
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
     </form>

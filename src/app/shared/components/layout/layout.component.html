@@ -52,6 +52,9 @@
           <div class="user-name">{{ getUserFullName() }}</div>
           <div class="user-role">{{ getUserRole() }}</div>
         </div>
+        <button class="btn-logout" (click)="logout()" title="Cerrar sesión">
+          <i class="bi bi-box-arrow-right"></i>
+        </button>
       </div>
     </div>
   </aside>
@@ -97,9 +100,9 @@
             </li>
             <li><hr class="dropdown-divider"></li>
             <li>
-              <a class="dropdown-item" href="javascript:void(0)">
-                <i class="bi bi-person me-2"></i>
-                Mi Perfil
+              <a class="dropdown-item" routerLink="/change-password">
+                <i class="bi bi-key me-2"></i>
+                Cambiar Contraseña
               </a>
             </li>
             <li>
