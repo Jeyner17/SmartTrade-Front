@@ -60,6 +60,22 @@ export const routes: Routes = [
         data: { module: MODULES.EMPLOYEES }
       },
 
+      // Sprint 5: Gestión de Categorías
+      {
+        path: 'categories',
+        loadChildren: () => import('./features/categories/categories.routes')
+          .then(m => m.CATEGORIES_ROUTES),
+        data: { module: MODULES.CATEGORIES }
+      },
+
+      // Sprint 6: Gestión de Productos
+      {
+        path: 'products',
+        loadChildren: () => import('./features/products/products.routes')
+          .then(m => m.PRODUCTS_ROUTES),
+        data: { module: MODULES.PRODUCTS }
+      },
+
       // Dashboard (ejemplo futuro)
       // {
       //   path: 'dashboard',
@@ -67,19 +83,6 @@ export const routes: Routes = [
       //     .then(m => m.DashboardComponent),
       //   canActivate: [authGuard],
       //   title: 'Dashboard'
-      // },
-
-      // Productos (ejemplo futuro con permisos específicos)
-      // {
-      //   path: 'products',
-      //   loadComponent: () => import('./features/products/products.component')
-      //     .then(m => m.ProductsComponent),
-      //   canActivate: [permissionGuard],
-      //   data: {
-      //     module: MODULES.PRODUCTS,
-      //     action: ACTIONS.VIEW
-      //   },
-      //   title: 'Productos'
       // },
 
       // Cambiar contraseña (accesible para cualquier usuario autenticado)

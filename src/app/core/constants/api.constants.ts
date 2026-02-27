@@ -47,7 +47,21 @@ export const API_CONSTANTS = {
     EMPLOYEES_BY_ID: (id: number) => `/employees/${id}`,
     EMPLOYEES_LINK_USER: (id: number) => `/employees/${id}/link-user`,
     EMPLOYEES_ATTENDANCE: (id: number) => `/employees/${id}/attendance`,
-    EMPLOYEES_ATTENDANCE_TODAY: (id: number) => `/employees/${id}/attendance/today`
+    EMPLOYEES_ATTENDANCE_TODAY: (id: number) => `/employees/${id}/attendance/today`,
+
+    // Sprint 5: Categorías
+    CATEGORIES: '/categories',
+    CATEGORIES_BY_ID: (id: number) => `/categories/${id}`,
+    CATEGORIES_STATUS: (id: number) => `/categories/${id}/status`,
+    CATEGORIES_PRODUCTS: (id: number) => `/categories/${id}/products`,
+
+    // Sprint 6: Productos
+    PRODUCTS: '/products',
+    PRODUCTS_BY_ID:   (id: number)   => `/products/${id}`,
+    PRODUCTS_STATUS:  (id: number)   => `/products/${id}/status`,
+    PRODUCTS_PRICE:   (id: number)   => `/products/${id}/price`,
+    PRODUCTS_IMAGE:   (id: number)   => `/products/${id}/image`,
+    PRODUCTS_BARCODE: (code: string) => `/products/barcode/${code}`
   },
   
   TIMEOUT: 30000 // 30 segundos
