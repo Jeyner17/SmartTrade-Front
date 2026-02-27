@@ -1,0 +1,98 @@
+<!-- ============================================
+     HEADER / BREADCRUMB
+     ============================================ -->
+<div class="d-flex align-items-center mb-4 gap-3">
+  <a routerLink="/categories" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Volver
+  </a>
+  <div>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+          <a routerLink="/categories" class="text-decoration-none">Categorías</a>
+        </li>
+        <li class="breadcrumb-item active">
+          {{ category?.name ?? 'Cargando...' }}
+        </li>
+      </ol>
+    </nav>
+    <h2 class="mb-0 mt-1">
+      <i class="bi bi-box-seam text-primary me-2"></i>
+      Productos — <span class="text-muted fw-normal">{{ category?.name ?? '' }}</span>
+    </h2>
+  </div>
+</div>
+
+<!-- Info de la categoría -->
+<div *ngIf="category" class="card mb-4">
+  <div class="card-body d-flex flex-wrap gap-4 py-3">
+    <div>
+      <small class="text-muted d-block">Nivel</small>
+      <span class="fw-medium">{{ getLevelLabel(category.level) }}</span>
+    </div>
+    <div>
+      <small class="text-muted d-block">Estado</small>
+      <span class="badge" [class.bg-success]="category.isActive" [class.bg-secondary]="!category.isActive">
+        {{ category.isActive ? 'Activa' : 'Inactiva' }}
+      </span>
+    </div>
+    <div *ngIf="category.description">
+      <small class="text-muted d-block">Descripción</small>
+      <span>{{ category.description }}</span>
+    </div>
+    <div class="ms-auto">
+      <small class="text-muted d-block">Total productos</small>
+      <span class="fw-semibold fs-5">{{ total }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     TABLA PRODUCTOS
+     ============================================ -->
+<div class="card">
+  <div class="card-body p-0">
+
+    <!-- Cargando -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-2">Cargando productos...</p>
+    </div>
+
+    <!-- Sin productos -->
+    <div *ngIf="!isLoading && products.length === 0" class="text-center py-5">
+      <i class="bi bi-box2 text-muted fs-1 d-block mb-3"></i>
+      <p class="text-muted mb-1">Aún no hay productos en esta categoría.</p>
+      <small class="text-muted">Los productos aparecerán aquí cuando sean asignados a esta categoría.</small>
+    </div>
+
+    <!-- Tabla de productos (se pobla en Sprint de Productos) -->
+    <div *ngIf="!isLoading && products.length > 0" class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Nombre</th>
+            <th>Código</th>
+            <th>Precio</th>
+            <th>Stock</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of products">
+            <td class="fw-medium">{{ product.name }}</td>
+            <td class="text-muted font-monospace">{{ product.code }}</td>
+            <td>{{ product.price | currency:'USD' }}</td>
+            <td>{{ product.stock }}</td>
+            <td>
+              <span class="badge" [class.bg-success]="product.isActive" [class.bg-secondary]="!product.isActive">
+                {{ product.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>

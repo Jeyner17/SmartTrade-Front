@@ -1,0 +1,7 @@
+.breadcrumb {
+  font-size: 0.85rem;
+}
+
+.card-body.d-flex {
+  flex-wrap: wrap;
+}

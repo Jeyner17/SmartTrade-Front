@@ -1,0 +1,348 @@
+<!-- ============================================
+     HEADER
+     ============================================ -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-tags text-primary me-2"></i>
+      Categorías
+    </h2>
+    <p class="text-muted mb-0">Gestión jerárquica de categorías de productos</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <!-- Toggle vista -->
+    <div class="btn-group" role="group" aria-label="Cambiar vista">
+      <button type="button" class="btn btn-sm"
+        [class.btn-primary]="viewMode === 'tree'"
+        [class.btn-outline-secondary]="viewMode !== 'tree'"
+        (click)="setView('tree')"
+        title="Vista árbol">
+        <i class="bi bi-diagram-3"></i>
+      </button>
+      <button type="button" class="btn btn-sm"
+        [class.btn-primary]="viewMode === 'grid'"
+        [class.btn-outline-secondary]="viewMode !== 'grid'"
+        (click)="setView('grid')"
+        title="Vista grid">
+        <i class="bi bi-grid-3x3-gap"></i>
+      </button>
+    </div>
+    <button *ngIf="canCreate" class="btn btn-primary btn-sm" (click)="openCreateModal()">
+      <i class="bi bi-plus-lg me-1"></i>Nueva Categoría
+    </button>
+  </div>
+</div>
+
+<!-- ============================================
+     FILTROS
+     ============================================ -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+
+      <!-- Búsqueda -->
+      <div class="input-group input-group-sm" style="max-width: 300px;">
+        <span class="input-group-text bg-white border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" class="form-control border-start-0 ps-0"
+          placeholder="Buscar por nombre o descripción…"
+          [value]="searchTerm"
+          (input)="onSearchInput($any($event.target).value)">
+        <button *ngIf="searchTerm" class="btn btn-outline-secondary" type="button"
+          (click)="onSearchInput('')">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <!-- Estado -->
+      <div class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0 text-muted small">Estado:</label>
+        <select class="form-select form-select-sm w-auto" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+          <option value="all">Todas</option>
+          <option value="active">Solo activas</option>
+          <option value="inactive">Solo inactivas</option>
+        </select>
+      </div>
+
+      <!-- Contador -->
+      <span class="text-muted small ms-auto">
+        {{ displayList.length }} categor{{ displayList.length === 1 ? 'ía' : 'ías' }}
+      </span>
+
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     CONTENIDO
+     ============================================ -->
+<div class="card">
+  <div class="card-body p-0">
+
+    <!-- Cargando -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="text-muted mt-2">Cargando categorías...</p>
+    </div>
+
+    <!-- Sin datos -->
+    <div *ngIf="!isLoading && displayList.length === 0" class="text-center py-5 text-muted">
+      <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+      <span *ngIf="searchTerm">No se encontraron categorías para "<strong>{{ searchTerm }}</strong>"</span>
+      <span *ngIf="!searchTerm">No hay categorías para mostrar</span>
+    </div>
+
+    <!-- ========================
+         VISTA ÁRBOL
+         ======================== -->
+    <div *ngIf="!isLoading && displayList.length > 0 && viewMode === 'tree'" class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="min-width: 280px;">Categoría</th>
+            <th>Nivel</th>
+            <th>Categoría padre</th>
+            <th class="text-center">Productos</th>
+            <th class="text-center">Estado</th>
+            <th class="text-end pe-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of displayList; trackBy: trackById">
+
+            <!-- Nombre con indentación -->
+            <td>
+              <div class="d-flex align-items-center" [style.paddingLeft]="getIndent(item.level)">
+                <button *ngIf="item.hasChildren"
+                  class="btn btn-sm btn-link p-0 me-2 text-secondary toggle-btn"
+                  (click)="toggleExpand(item)"
+                  [title]="item.isExpanded ? 'Colapsar' : 'Expandir'">
+                  <i [class]="item.isExpanded ? 'bi bi-chevron-down' : 'bi bi-chevron-right'"></i>
+                </button>
+                <span *ngIf="!item.hasChildren" class="me-2 spacer-btn"></span>
+
+                <i class="bi me-2 text-muted"
+                  [class.bi-folder2]="item.level === 0 && !item.isExpanded"
+                  [class.bi-folder2-open]="item.level === 0 && item.isExpanded"
+                  [class.bi-tag]="item.level > 0"></i>
+
+                <span class="fw-medium">{{ item.name }}</span>
+                <small *ngIf="item.description" class="text-muted ms-2 d-none d-md-inline">
+                  — {{ item.description | slice:0:40 }}{{ item.description!.length > 40 ? '…' : '' }}
+                </small>
+              </div>
+            </td>
+
+            <!-- Nivel -->
+            <td>
+              <span class="badge level-badge">
+                {{ item.level === 0 ? 'Raíz' : 'Nivel ' + item.level }}
+              </span>
+            </td>
+
+            <!-- Padre -->
+            <td class="text-muted">{{ getParentName(item.parentId) }}</td>
+
+            <!-- Productos -->
+            <td class="text-center">
+              <span class="text-muted">{{ item.productCount }}</span>
+            </td>
+
+            <!-- Estado -->
+            <td class="text-center">
+              <span class="badge" [class.bg-success]="item.isActive" [class.bg-secondary]="!item.isActive">
+                {{ item.isActive ? 'Activa' : 'Inactiva' }}
+              </span>
+            </td>
+
+            <!-- Acciones -->
+            <td class="text-end pe-3">
+              <div class="btn-group btn-group-sm">
+                <a [routerLink]="[item.id, 'products']"
+                  class="btn btn-outline-info"
+                  title="Ver productos">
+                  <i class="bi bi-box-seam"></i>
+                </a>
+                <button *ngIf="canEdit"
+                  class="btn btn-outline-primary"
+                  title="Editar"
+                  (click)="openEditModal(item)">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button *ngIf="canEdit"
+                  class="btn"
+                  [class.btn-outline-warning]="item.isActive"
+                  [class.btn-outline-success]="!item.isActive"
+                  [title]="item.isActive ? 'Desactivar' : 'Activar'"
+                  (click)="toggleStatus(item)">
+                  <i [class]="item.isActive ? 'bi bi-toggle-on' : 'bi bi-toggle-off'"></i>
+                </button>
+                <button *ngIf="canDelete"
+                  class="btn btn-outline-danger"
+                  title="Eliminar"
+                  (click)="deleteCategory(item)">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ========================
+         VISTA GRID (cards)
+         ======================== -->
+    <div *ngIf="!isLoading && displayList.length > 0 && viewMode === 'grid'" class="p-3">
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-3">
+
+        <div class="col" *ngFor="let item of displayList; trackBy: trackById">
+          <div class="cat-card" [class.cat-card-inactive]="!item.isActive">
+
+            <!-- Cabecera con icono y badges -->
+            <div class="cat-card-head">
+              <div class="cat-card-icon">
+                <i class="bi"
+                  [class.bi-folder2]="item.level === 0"
+                  [class.bi-tag]="item.level > 0"></i>
+              </div>
+              <div class="d-flex gap-1 flex-wrap">
+                <span class="badge level-badge">
+                  {{ item.level === 0 ? 'Raíz' : 'Nivel ' + item.level }}
+                </span>
+                <span class="badge" [class.bg-success]="item.isActive" [class.bg-secondary]="!item.isActive">
+                  {{ item.isActive ? 'Activa' : 'Inactiva' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Nombre -->
+            <div class="cat-card-name">{{ item.name }}</div>
+
+            <!-- Descripción -->
+            <p *ngIf="item.description" class="cat-card-desc">
+              {{ item.description | slice:0:60 }}{{ item.description!.length > 60 ? '…' : '' }}
+            </p>
+
+            <!-- Meta -->
+            <div class="cat-card-meta">
+              <span title="Categoría padre">
+                <i class="bi bi-diagram-2 me-1"></i>
+                {{ getParentName(item.parentId) }}
+              </span>
+              <span title="Productos">
+                <i class="bi bi-box-seam me-1"></i>
+                {{ item.productCount }} productos
+              </span>
+            </div>
+
+            <!-- Acciones -->
+            <div class="cat-card-actions">
+              <a [routerLink]="[item.id, 'products']"
+                class="btn btn-outline-info btn-sm"
+                title="Ver productos">
+                <i class="bi bi-box-seam"></i>
+              </a>
+              <button *ngIf="canEdit"
+                class="btn btn-outline-primary btn-sm"
+                title="Editar"
+                (click)="openEditModal(item)">
+                <i class="bi bi-pencil"></i>
+              </button>
+              <button *ngIf="canEdit"
+                class="btn btn-sm"
+                [class.btn-outline-warning]="item.isActive"
+                [class.btn-outline-success]="!item.isActive"
+                [title]="item.isActive ? 'Desactivar' : 'Activar'"
+                (click)="toggleStatus(item)">
+                <i [class]="item.isActive ? 'bi bi-toggle-on' : 'bi bi-toggle-off'"></i>
+              </button>
+              <button *ngIf="canDelete"
+                class="btn btn-outline-danger btn-sm"
+                title="Eliminar"
+                (click)="deleteCategory(item)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================================
+     MODAL CREAR / EDITAR (inline)
+     ============================================ -->
+<div *ngIf="showModal" class="modal-backdrop-custom" (click)="closeModal()"></div>
+
+<div *ngIf="showModal" class="modal-custom">
+  <div class="modal-dialog-custom" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h5 class="modal-title">
+        <i class="bi me-2"
+          [class.bi-plus-circle]="modalMode === 'create'"
+          [class.bi-pencil-square]="modalMode === 'edit'"></i>
+        {{ modalMode === 'create' ? 'Nueva Categoría' : 'Editar Categoría' }}
+      </h5>
+      <button type="button" class="btn-close" (click)="closeModal()"></button>
+    </div>
+
+    <div class="modal-body">
+      <form [formGroup]="form" (ngSubmit)="submitForm()" novalidate>
+
+        <div class="mb-3">
+          <label class="form-label">Nombre <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" formControlName="name"
+            [class.is-invalid]="isFormInvalid('name')"
+            placeholder="Nombre de la categoría">
+          <div class="invalid-feedback">
+            <span *ngIf="form.get('name')?.errors?.['required']">El nombre es requerido.</span>
+            <span *ngIf="form.get('name')?.errors?.['maxlength']">Máximo 200 caracteres.</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea class="form-control" formControlName="description" rows="2"
+            placeholder="Descripción opcional"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Categoría padre</label>
+          <select class="form-select" formControlName="parentId">
+            <option [ngValue]="null">— Sin categoría padre (raíz) —</option>
+            <option *ngFor="let opt of parentOptions" [ngValue]="opt.id">
+              {{ '—'.repeat(opt.level) }} {{ opt.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" formControlName="isActive" id="isActiveSwitch">
+            <label class="form-check-label" for="isActiveSwitch">Categoría activa</label>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button type="button" class="btn btn-outline-secondary" (click)="closeModal()" [disabled]="isSubmitting">
+            Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSubmitting">
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            {{ modalMode === 'create' ? 'Crear' : 'Guardar' }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
