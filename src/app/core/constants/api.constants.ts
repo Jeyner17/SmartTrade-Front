@@ -5,7 +5,7 @@
 
 export const API_CONSTANTS = {
   BASE_URL: 'http://localhost:3000/api/v1',
-  
+
   ENDPOINTS: {
     // Sprint 1: Settings
     SETTINGS: '/settings',
@@ -13,7 +13,7 @@ export const API_CONSTANTS = {
     SETTINGS_LOGO: '/settings/logo',
     SETTINGS_BACKUP: '/settings/backup/configure',
     SETTINGS_TECHNICAL: '/settings/technical/parameters',
-    
+
     // Sprint 2: Auth
     AUTH_LOGIN: '/auth/login',
     AUTH_LOGOUT: '/auth/logout',
@@ -24,7 +24,7 @@ export const API_CONSTANTS = {
     AUTH_CHECK: '/auth/check',
     AUTH_VERIFY_PERMISSION: '/auth/verify-permission',
     AUTH_CHANGE_PASSWORD: '/auth/change-password',
-    
+
     // Sprint 2: Roles
     ROLES: '/roles',
     ROLES_BY_ID: (roleId: number) => `/roles/${roleId}`,
@@ -57,13 +57,20 @@ export const API_CONSTANTS = {
 
     // Sprint 6: Productos
     PRODUCTS: '/products',
-    PRODUCTS_BY_ID:   (id: number)   => `/products/${id}`,
-    PRODUCTS_STATUS:  (id: number)   => `/products/${id}/status`,
-    PRODUCTS_PRICE:   (id: number)   => `/products/${id}/price`,
-    PRODUCTS_IMAGE:   (id: number)   => `/products/${id}/image`,
-    PRODUCTS_BARCODE: (code: string) => `/products/barcode/${code}`
+    PRODUCTS_BY_ID: (id: number) => `/products/${id}`,
+    PRODUCTS_STATUS: (id: number) => `/products/${id}/status`,
+    PRODUCTS_PRICE: (id: number) => `/products/${id}/price`,
+    PRODUCTS_IMAGE: (id: number) => `/products/${id}/image`,
+    PRODUCTS_BARCODE: (code: string) => `/products/barcode/${code}`,
+
+    // Sprint 8: Proveedores
+    SUPPLIERS: '/suppliers',
+    SUPPLIERS_BY_ID: (id: number) => `/suppliers/${id}`,
+    SUPPLIERS_STATUS: (id: number) => `/suppliers/${id}/status`,
+    SUPPLIERS_EVALUATE: (id: number) => `/suppliers/${id}/evaluate`,
+    SUPPLIERS_PURCHASES: (id: number) => `/suppliers/${id}/purchases`
   },
-  
+
   TIMEOUT: 30000 // 30 segundos
 };
 

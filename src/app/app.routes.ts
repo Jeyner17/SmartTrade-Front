@@ -76,14 +76,13 @@ export const routes: Routes = [
         data: { module: MODULES.PRODUCTS }
       },
 
-      // Dashboard (ejemplo futuro)
-      // {
-      //   path: 'dashboard',
-      //   loadComponent: () => import('./features/dashboard/dashboard.component')
-      //     .then(m => m.DashboardComponent),
-      //   canActivate: [authGuard],
-      //   title: 'Dashboard'
-      // },
+      // Sprint 8: Gestión de Proveedores
+      {
+        path: 'suppliers',
+        loadChildren: () => import('./features/suppliers/suppliers.routes')
+          .then(m => m.SUPPLIERS_ROUTES),
+        data: { module: MODULES.SUPPLIERS }
+      },
 
       // Cambiar contraseña (accesible para cualquier usuario autenticado)
       {

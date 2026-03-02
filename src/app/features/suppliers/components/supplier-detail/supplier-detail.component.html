@@ -1,0 +1,282 @@
+<section class="container-fluid py-4">
+
+    @if (isLoading) { <app-loader /> }
+
+    @if (!isLoading && supplier) {
+
+    <!-- Encabezado -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <button class="btn btn-outline-secondary btn-sm" (click)="goBack()">
+            <i class="bi bi-arrow-left"></i>
+        </button>
+        <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                <h2 class="fw-bold mb-0">{{ supplier.tradeName }}</h2>
+                <span class="badge rounded-pill px-3 {{ getStatusBadge(supplier.status) }}">
+                    {{ SUPPLIER_STATUS_LABELS[supplier.status] }}
+                </span>
+            </div>
+            <p class="text-muted small mb-0 mt-1">
+                @if (supplier.legalName) { {{ supplier.legalName }} &bull; }
+                RUC: {{ supplier.ruc }}
+            </p>
+        </div>
+        <!-- Calificación -->
+        <div class="text-end">
+            <div class="d-flex align-items-center gap-1 justify-content-end">
+                @for (star of getStarRange(); track star) {
+                <i class="bi" [class.bi-star-fill]="star <= (supplier.overallRating ?? 0)"
+                    [class.bi-star]="star > (supplier.overallRating ?? 0)"
+                    [class.star-display]="star <= (supplier.overallRating ?? 0)"
+                    [class.star-empty]="star > (supplier.overallRating ?? 0)">
+                </i>
+                }
+                <span class="ms-1 fw-bold">
+                    {{ supplier.overallRating ? (supplier.overallRating | number:'1.1-1') : 'Sin calificar' }}
+                </span>
+            </div>
+            <small class="text-muted">
+                Calificación general
+                @if (supplier.evaluationsCount > 0) {
+                ({{ supplier.evaluationsCount }} {{ supplier.evaluationsCount === 1 ? 'evaluación' : 'evaluaciones' }})
+                }
+            </small>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        @if (canEdit) {
+        <a [routerLink]="['/suppliers', supplier.id, 'edit']" class="btn btn-outline-primary">
+            <i class="bi bi-pencil me-1"></i> Editar
+        </a>
+        <button class="btn btn-outline-warning" (click)="openEvalModal()">
+            <i class="bi bi-star me-1"></i> Calificar
+        </button>
+        }
+        <a routerLink="/suppliers" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Volver
+        </a>
+    </div>
+
+    <div class="row g-4">
+
+        <!-- ── Columna izquierda ──────────────────────────────────────────── -->
+        <div class="col-12 col-lg-4">
+
+            <!-- Contactos -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="fw-semibold mb-0">
+                        <i class="bi bi-person-lines-fill me-2 text-primary"></i>Contacto
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (supplier.address) {
+                    <div class="mb-3">
+                        <p class="text-muted small mb-1"><i class="bi bi-geo-alt me-1"></i>Dirección</p>
+                        <p class="mb-0 fw-semibold small">{{ supplier.address }}</p>
+                    </div>
+                    }
+                    @if (supplier.phone) {
+                    <div class="mb-3">
+                        <p class="text-muted small mb-1"><i class="bi bi-telephone me-1"></i>Teléfono</p>
+                        <p class="mb-0 fw-semibold small">{{ supplier.phone }}</p>
+                    </div>
+                    }
+                    @if (supplier.email) {
+                    <div class="mb-3">
+                        <p class="text-muted small mb-1"><i class="bi bi-envelope me-1"></i>Email</p>
+                        <p class="mb-0 fw-semibold small">{{ supplier.email }}</p>
+                    </div>
+                    }
+
+                    @if (supplier.contacts && supplier.contacts.length > 0) {
+                    <hr class="my-3">
+                    @for (contact of supplier.contacts; track $index) {
+                    <div class="border rounded-3 p-3 mb-2">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <p class="fw-semibold mb-0 small">{{ contact.name }}</p>
+                            @if (contact.isPrimary) {
+                            <span class="badge bg-primary-subtle text-primary rounded-pill small">Principal</span>
+                            }
+                        </div>
+                        @if (contact.position) {
+                        <p class="text-muted small mb-1"><i class="bi bi-briefcase me-1"></i>{{ contact.position }}</p>
+                        }
+                        @if (contact.phone) {
+                        <p class="text-muted small mb-1"><i class="bi bi-telephone me-1"></i>{{ contact.phone }}</p>
+                        }
+                        @if (contact.email) {
+                        <p class="text-muted small mb-0"><i class="bi bi-envelope me-1"></i>{{ contact.email }}</p>
+                        }
+                    </div>
+                    }
+                    } @else {
+                    <p class="text-muted small mb-0">Sin contactos registrados</p>
+                    }
+                </div>
+            </div>
+
+            <!-- Datos de Pago -->
+            @if (supplier.bankName || supplier.bankAccount || supplier.paymentTerms) {
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="fw-semibold mb-0">
+                        <i class="bi bi-credit-card me-2 text-primary"></i>Datos de Pago
+                    </h6>
+                </div>
+                <div class="card-body">
+                    @if (supplier.bankName) {
+                    <div class="mb-2">
+                        <span class="text-muted small">Banco</span>
+                        <p class="mb-0 fw-semibold small">{{ supplier.bankName }}</p>
+                    </div>
+                    }
+                    @if (supplier.bankAccount) {
+                    <div class="mb-2">
+                        <span class="text-muted small">N° de Cuenta</span>
+                        <p class="mb-0 fw-semibold small">{{ supplier.bankAccount }}</p>
+                    </div>
+                    }
+                    @if (supplier.bankAccountType) {
+                    <div class="mb-2">
+                        <span class="text-muted small">Tipo de Cuenta</span>
+                        <p class="mb-0 fw-semibold small">{{ supplier.bankAccountType }}</p>
+                    </div>
+                    }
+                    @if (supplier.paymentTerms) {
+                    <div>
+                        <span class="text-muted small">Términos de Pago</span>
+                        <p class="mb-0 fw-semibold small">{{ getPaymentTermLabel(supplier.paymentTerms) }}</p>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+        </div>
+
+        <!-- ── Columna derecha ─────────────────────────────────────────────── -->
+        <div class="col-12 col-lg-8">
+
+            <!-- Estadísticas -->
+            @if (stats) {
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm stat-card h-100" style="border-color:#0d6efd!important">
+                        <div class="card-body text-center py-3">
+                            <div class="fs-3 fw-bold text-primary">{{ stats.totalPurchases }}</div>
+                            <div class="text-muted small">Total Compras</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm stat-card h-100" style="border-color:#198754!important">
+                        <div class="card-body text-center py-3">
+                            <div class="fs-5 fw-bold text-success">{{ formatCurrency(stats.totalAmount) }}</div>
+                            <div class="text-muted small">Monto Total</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm stat-card h-100" style="border-color:#fd7e14!important">
+                        <div class="card-body text-center py-3">
+                            <div class="fs-3 fw-bold text-warning">{{ stats.onTimeDeliveryPercent }}%</div>
+                            <div class="text-muted small">Entregas a Tiempo</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="card border-0 shadow-sm stat-card h-100" style="border-color:#6610f2!important">
+                        <div class="card-body text-center py-3">
+                            <div class="fs-3 fw-bold" style="color:#6610f2">{{ stats.purchasesLastMonth }}</div>
+                            <div class="text-muted small">Compras este mes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (stats.lastPurchaseDate) {
+            <div class="alert alert-light border d-flex gap-3 align-items-center mb-4 py-2">
+                <i class="bi bi-calendar-check text-primary fs-5"></i>
+                <div>
+                    <span class="fw-semibold small">Última compra:</span>
+                    <span class="text-muted small ms-2">{{ stats.lastPurchaseDate | date:'dd/MM/yyyy' }}</span>
+                    @if (stats.lastPurchaseAmount) {
+                    <span class="ms-2 fw-semibold small text-success">
+                        {{ formatCurrency(stats.lastPurchaseAmount) }}
+                    </span>
+                    }
+                </div>
+            </div>
+            }
+            }
+
+            <!-- Historial de compras -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="fw-semibold mb-0">
+                        <i class="bi bi-clock-history me-2 text-primary"></i>Historial de Compras (últimas 10)
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    @if (isLoadingHistory) {
+                    <div class="text-center py-4">
+                        <div class="spinner-border spinner-border-sm text-primary"></div>
+                    </div>
+                    } @else if (recentPurchases.length === 0) {
+                    <div class="text-center py-5">
+                        <i class="bi bi-cart-x fs-1 text-muted d-block mb-2"></i>
+                        <p class="text-muted mb-0">No hay compras registradas</p>
+                    </div>
+                    } @else {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">N° Orden</th>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Monto</th>
+                                    <th class="text-center pe-4">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (purchase of recentPurchases; track purchase.id) {
+                                <tr>
+                                    <td class="ps-4 fw-semibold small">{{ purchase.orderNumber }}</td>
+                                    <td class="text-muted small">{{ purchase.date | date:'dd/MM/yyyy' }}</td>
+                                    <td class="text-end fw-semibold small">{{ formatCurrency(purchase.amount) }}</td>
+                                    <td class="text-center pe-4">
+                                        <span class="badge rounded-pill px-3 {{ getPurchaseBadge(purchase.status) }}">
+                                            {{ getPurchaseLabel(purchase.status) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </div>
+    }
+
+    @if (!isLoading && !supplier) {
+    <div class="text-center py-5">
+        <i class="bi bi-exclamation-triangle fs-1 text-warning d-block mb-3"></i>
+        <p class="text-muted">Proveedor no encontrado</p>
+        <a routerLink="/suppliers" class="btn btn-outline-primary btn-sm">Volver a Proveedores</a>
+    </div>
+    }
+</section>
+
+<!-- Modal Evaluación -->
+@if (showEvalModal && supplier) {
+<app-supplier-evaluation-modal [supplier]="supplier" [visible]="showEvalModal" (closed)="closeEvalModal()"
+    (evaluated)="onEvaluated()">
+</app-supplier-evaluation-modal>
+}

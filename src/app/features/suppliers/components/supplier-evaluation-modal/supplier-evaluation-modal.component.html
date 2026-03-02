@@ -1,0 +1,102 @@
+@if (visible) {
+<div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.55)">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
+        <div class="modal-content border-0 shadow-lg">
+
+            <!-- Header -->
+            <div class="modal-header border-0 pb-0">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">
+                        <i class="bi bi-star-fill text-warning me-2"></i>Calificar Proveedor
+                    </h5>
+                    <p class="text-muted small mb-0 mt-1">{{ supplier.tradeName }}</p>
+                </div>
+                <button type="button" class="btn-close" (click)="close()" [disabled]="isSaving"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body px-4 py-3">
+
+                <!-- Calificación actual -->
+                @if (supplier.overallRating) {
+                <div class="alert alert-light border rounded-3 d-flex align-items-center gap-2 mb-4 py-2">
+                    <i class="bi bi-info-circle text-primary"></i>
+                    <span class="small">Calificación actual:
+                        <strong>{{ supplier.overallRating | number:'1.1-1' }}</strong> / 5
+                        <span class="text-muted">({{ supplier.evaluationsCount }} evaluaciones)</span>
+                    </span>
+                </div>
+                }
+
+                <!-- Calidad de productos -->
+                <div class="mb-4">
+                    <p class="fw-semibold small mb-2">
+                        Calidad de Productos
+                        @if (qualityRating) {
+                        <span class="text-muted fw-normal ms-2">— {{ getRatingLabel(qualityRating) }}</span>
+                        }
+                    </p>
+                    <div class="d-flex gap-1" (mouseleave)="clearHoverQ()">
+                        @for (star of stars; track star) {
+                        <button type="button" class="star-btn" [class]="getQualityClass(star)"
+                            (mouseenter)="hoverQ(star)" (click)="setQuality(star)" [title]="getRatingLabel(star)"
+                            [id]="'qual-star-' + star">
+                            <i class="bi bi-star-fill"></i>
+                        </button>
+                        }
+                    </div>
+                    @if (!qualityRating) {
+                    <div class="text-muted small mt-1">Haz clic en una estrella para calificar</div>
+                    }
+                </div>
+
+                <!-- Puntualidad en entregas -->
+                <div class="mb-4">
+                    <p class="fw-semibold small mb-2">
+                        Puntualidad en Entregas
+                        @if (punctualityRating) {
+                        <span class="text-muted fw-normal ms-2">— {{ getRatingLabel(punctualityRating) }}</span>
+                        }
+                    </p>
+                    <div class="d-flex gap-1" (mouseleave)="clearHoverP()">
+                        @for (star of stars; track star) {
+                        <button type="button" class="star-btn" [class]="getPunctualityClass(star)"
+                            (mouseenter)="hoverP(star)" (click)="setPunctuality(star)" [title]="getRatingLabel(star)"
+                            [id]="'punct-star-' + star">
+                            <i class="bi bi-star-fill"></i>
+                        </button>
+                        }
+                    </div>
+                    @if (!punctualityRating) {
+                    <div class="text-muted small mt-1">Haz clic en una estrella para calificar</div>
+                    }
+                </div>
+
+                <!-- Observaciones -->
+                <div>
+                    <label class="form-label fw-semibold small">Observaciones <span
+                            class="text-muted fw-normal">(opcional)</span></label>
+                    <textarea class="form-control" rows="3" placeholder="Escribe tus comentarios sobre el proveedor..."
+                        [(ngModel)]="observations" id="eval-observations" maxlength="500">
+            </textarea>
+                    <div class="text-muted small text-end mt-1">{{ observations.length }}/500</div>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer border-0 pt-0">
+                <button class="btn btn-outline-secondary" (click)="close()" [disabled]="isSaving">
+                    Cancelar
+                </button>
+                <button class="btn btn-warning fw-semibold" (click)="save()"
+                    [disabled]="isSaving || !qualityRating || !punctualityRating">
+                    @if (isSaving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                    <i class="bi bi-check-circle me-1"></i> Guardar Evaluación
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+}

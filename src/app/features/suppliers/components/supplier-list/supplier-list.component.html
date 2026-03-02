@@ -1,0 +1,224 @@
+<section class="container-fluid py-4">
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-truck me-2 text-primary"></i>Gestión de Proveedores
+      </h2>
+      <p class="text-muted small mb-0 mt-1">Administra los proveedores registrados en el sistema</p>
+    </div>
+    @if (canCreate) {
+    <a routerLink="new" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i> Nuevo Proveedor
+    </a>
+    }
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-6 col-lg-5">
+          <label class="form-label fw-semibold small">Buscar</label>
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" class="form-control border-start-0 ps-0" placeholder="Nombre comercial o RUC..."
+              [(ngModel)]="searchTerm" (ngModelChange)="onSearch($event)" id="supplier-search">
+          </div>
+        </div>
+
+        <div class="col-12 col-md-3 col-lg-3">
+          <label class="form-label fw-semibold small">Estado</label>
+          <select class="form-select" [(ngModel)]="selectedStatus" (ngModelChange)="onStatusFilter()"
+            id="supplier-status-filter">
+            <option value="">Todos</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+            <option value="suspended">Suspendidos</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-3 col-lg-2">
+          <button class="btn btn-outline-secondary w-100" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-1"></i> Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (isLoading) { <app-loader /> }
+
+  @if (!isLoading) {
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      @if (suppliers.length === 0) {
+      <div class="text-center py-5">
+        <i class="bi bi-truck fs-1 text-muted d-block mb-3"></i>
+        <p class="text-muted mb-0">No se encontraron proveedores</p>
+        @if (canCreate) {
+        <a routerLink="new" class="btn btn-primary btn-sm mt-3">
+          <i class="bi bi-plus-circle me-1"></i> Agregar Proveedor
+        </a>
+        }
+      </div>
+      } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Proveedor</th>
+              <th>RUC</th>
+              <th>Contacto Principal</th>
+              <th>Teléfono</th>
+              <th>Calificación</th>
+              <th>Estado</th>
+              <th class="text-center pe-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (supplier of suppliers; track supplier.id) {
+            <tr>
+              <td class="ps-4">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="supplier-avatar">{{ getInitials(supplier) }}</div>
+                  <div>
+                    <div class="fw-semibold">{{ supplier.tradeName }}</div>
+                    @if (supplier.legalName) {
+                    <div class="text-muted small">{{ supplier.legalName }}</div>
+                    }
+                  </div>
+                </div>
+              </td>
+
+              <td class="text-muted small">{{ supplier.ruc }}</td>
+              <td class="small">{{ getPrimaryContact(supplier) }}</td>
+              <td class="text-muted small">{{ getPrimaryPhone(supplier) }}</td>
+
+              <!-- Calificación estrellas -->
+              <td>
+                <div class="d-flex align-items-center gap-1">
+                  @for (star of getStarRange(); track star) {
+                  <i class="bi" [class.bi-star-fill]="star <= (supplier.overallRating ?? 0)"
+                    [class.bi-star]="star > (supplier.overallRating ?? 0)"
+                    [class.star-display]="star <= (supplier.overallRating ?? 0)"
+                    [class.star-empty]="star > (supplier.overallRating ?? 0)">
+                  </i>
+                  }
+                  @if (supplier.overallRating) {
+                  <span class="text-muted small ms-1">{{ supplier.overallRating | number:'1.1-1' }}</span>
+                  } @else {
+                  <span class="text-muted small ms-1">Sin calificar</span>
+                  }
+                </div>
+              </td>
+
+              <!-- Estado -->
+              <td>
+                <span class="badge rounded-pill px-3 {{ getStatusBadge(supplier.status) }}">
+                  @if (supplier.status === 'active') { <i class="bi bi-check-circle-fill me-1"></i> }
+                  @else if (supplier.status === 'suspended') { <i class="bi bi-exclamation-triangle-fill me-1"></i> }
+                  @else { <i class="bi bi-x-circle-fill me-1"></i> }
+                  {{ getStatusLabel(supplier.status) }}
+                </span>
+              </td>
+
+              <!-- Acciones -->
+              <td class="text-center pe-4">
+                <div class="btn-group btn-group-sm">
+                  <a [routerLink]="[supplier.id]" class="btn btn-outline-info" title="Ver detalles">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  @if (canEdit) {
+                  <a [routerLink]="[supplier.id, 'edit']" class="btn btn-outline-primary" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <button class="btn btn-outline-warning" title="Calificar" (click)="openEvalModal(supplier)">
+                    <i class="bi bi-star"></i>
+                  </button>
+                  <button class="btn" [class.btn-outline-success]="!isActive(supplier)"
+                    [class.btn-outline-secondary]="isActive(supplier)"
+                    [title]="isActive(supplier) ? 'Desactivar' : 'Activar'"
+                    [attr.disabled]="isActionLoading ? true : null" (click)="confirmToggleStatus(supplier)">
+                    <i class="bi" [class.bi-toggle-on]="isActive(supplier)" [class.bi-toggle-off]="!isActive(supplier)">
+                    </i>
+                  </button>
+                  }
+                  @if (canDelete) {
+                  <button class="btn btn-outline-danger" title="Eliminar"
+                    [attr.disabled]="isActionLoading ? true : null" (click)="confirmDelete(supplier)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  }
+                </div>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      @if (pagination && pagination.pages > 1) {
+      <div class="d-flex justify-content-between align-items-center px-4 py-3 border-top">
+        <span class="text-muted small">
+          Mostrando {{ getFirstItem() }} – {{ getLastItem() }} de {{ pagination.total }} proveedores
+        </span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="!pagination.hasPrev">
+              <button class="page-link" (click)="onPageChange(pagination.page - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            @for (page of getPages(); track page) {
+            <li class="page-item" [class.active]="page === pagination.page">
+              <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+            </li>
+            }
+            <li class="page-item" [class.disabled]="!pagination.hasNext">
+              <button class="page-link" (click)="onPageChange(pagination.page + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+      }
+      }
+    </div>
+  </div>
+  }
+</section>
+
+<!-- Modal Confirmación -->
+@if (showConfirmModal) {
+<div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,.5)">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0">
+        <h5 class="modal-title fw-bold">{{ confirmTitle }}</h5>
+        <button type="button" class="btn-close" (click)="closeConfirmModal()"></button>
+      </div>
+      <div class="modal-body text-muted">{{ confirmMessage }}</div>
+      <div class="modal-footer border-0">
+        <button class="btn btn-outline-secondary" (click)="closeConfirmModal()">Cancelar</button>
+        <button class="btn btn-danger" (click)="executeConfirm()" [attr.disabled]="isActionLoading ? true : null">
+          @if (isActionLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Modal Evaluación -->
+@if (showEvalModal && selectedSupplierForEval) {
+<app-supplier-evaluation-modal [supplier]="selectedSupplierForEval" [visible]="showEvalModal"
+  (closed)="onEvalModalClosed()" (evaluated)="onEvaluated()">
+</app-supplier-evaluation-modal>
+}
