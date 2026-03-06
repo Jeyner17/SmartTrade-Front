@@ -1,0 +1,188 @@
+<!-- Pantalla 2: Historial de Movimientos -->
+<div class="container-fluid py-4">
+  <!-- Header con info del producto -->
+  <div class="card border-0 shadow-sm mb-4" *ngIf="productStock">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <h2 class="mb-2">
+            <i class="bi bi-clock-history me-2"></i>
+            Historial de Movimientos
+          </h2>
+          <h4 class="text-primary mb-3">{{ productStock.product.name }}</h4>
+          <div class="row g-3">
+            <div class="col-auto" *ngIf="productStock.product.sku">
+              <span class="badge bg-secondary">SKU: {{ productStock.product.sku }}</span>
+            </div>
+            <div class="col-auto" *ngIf="productStock.product.barcode">
+              <span class="badge bg-secondary">Código: {{ productStock.product.barcode }}</span>
+            </div>
+            <div class="col-auto">
+              <span class="badge bg-primary">Stock Actual: {{ productStock.product.stock }}</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <button class="btn btn-outline-secondary" (click)="goBack()">
+            <i class="bi bi-arrow-left me-2"></i>
+            Volver
+          </button>
+          <button class="btn btn-outline-secondary ms-2" (click)="refresh()">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Fecha Desde</label>
+          <input
+            type="date"
+            class="form-control"
+            [(ngModel)]="filters.startDate"
+            (change)="applyFilters()">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Fecha Hasta</label>
+          <input
+            type="date"
+            class="form-control"
+            [(ngModel)]="filters.endDate"
+            (change)="applyFilters()">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tipo de Movimiento</label>
+          <select class="form-select" [(ngModel)]="filters.movementType" (change)="applyFilters()">
+            <option [ngValue]="undefined">Todos</option>
+            <option value="entrada">Solo Entradas</option>
+            <option value="salida">Solo Salidas</option>
+            <option value="ajuste">Solo Ajustes</option>
+            <option value="inicial">Solo Iniciales</option>
+          </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+          <button class="btn btn-secondary w-100" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-2"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Movimientos -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body">
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2 text-muted">Cargando historial...</p>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="error" class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ error }}
+      </div>
+
+      <!-- Tabla -->
+      <div *ngIf="!loading && !error" class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Tipo</th>
+              <th class="text-center">Cantidad</th>
+              <th>Motivo</th>
+              <th>Usuario</th>
+              <th class="text-center">Stock Antes</th>
+              <th class="text-center">Stock Después</th>
+              <th>Observaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let movement of movements">
+              <td class="text-nowrap">
+                <div>{{ movement.createdAt | date:'dd/MM/yyyy' }}</div>
+                <div class="small text-muted">{{ movement.createdAt | date:'HH:mm:ss' }}</div>
+              </td>
+              <td>
+                <span [class]="'badge ' + getMovementTypeBadge(movement)">
+                  {{ getMovementTypeLabel(movement) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <strong [ngClass]="getMovementTypeClass(movement)">
+                  <span *ngIf="movement.movementType === 'entrada'">+</span>
+                  <span *ngIf="movement.movementType === 'salida'">-</span>
+                  {{ movement.quantity }}
+                </strong>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark">{{ movement.reason }}</span>
+              </td>
+              <td>
+                <div *ngIf="movement.performedByUser">
+                  {{ movement.performedByUser.username }}
+                  <div class="small text-muted" *ngIf="movement.performedByUser.firstName">
+                    {{ movement.performedByUser.firstName }} {{ movement.performedByUser.lastName }}
+                  </div>
+                </div>
+                <span *ngIf="!movement.performedByUser" class="text-muted">-</span>
+              </td>
+              <td class="text-center text-muted">{{ movement.stockBefore }}</td>
+              <td class="text-center">
+                <strong>{{ movement.stockAfter }}</strong>
+              </td>
+              <td>
+                <span *ngIf="movement.notes" class="text-muted small">
+                  {{ movement.notes }}
+                </span>
+                <span *ngIf="!movement.notes" class="text-muted">-</span>
+              </td>
+            </tr>
+            <tr *ngIf="movements.length === 0">
+              <td colspan="8" class="text-center text-muted py-5">
+                <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                No se encontraron movimientos
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div *ngIf="pagination.pages > 1" class="d-flex justify-content-between align-items-center mt-3">
+        <div class="text-muted">
+          Mostrando {{ movements.length }} de {{ pagination.total }} movimientos
+        </div>
+        <nav>
+          <ul class="pagination mb-0">
+            <li class="page-item" [class.disabled]="!pagination.hasPrev">
+              <a class="page-link" (click)="changePage(pagination.page - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </a>
+            </li>
+            <li class="page-item active">
+              <span class="page-link">
+                {{ pagination.page }} de {{ pagination.pages }}
+              </span>
+            </li>
+            <li class="page-item" [class.disabled]="!pagination.hasNext">
+              <a class="page-link" (click)="changePage(pagination.page + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+</div>

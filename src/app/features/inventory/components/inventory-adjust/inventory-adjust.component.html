@@ -1,0 +1,181 @@
+<!-- Pantalla 5: Ajuste de Inventario Físico -->
+<div class="container-fluid py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Header -->
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2 class="mb-0">
+            <i class="bi bi-pencil-square me-2"></i>
+            Ajuste de Inventario Físico
+          </h2>
+          <p class="text-muted mb-0">Corregir diferencias detectadas en conteo físico</p>
+        </div>
+        <button class="btn btn-outline-secondary" (click)="cancel()">
+          <i class="bi bi-x-lg me-2"></i>
+          Cancelar
+        </button>
+      </div>
+
+      <!-- Alertas -->
+      <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        {{ successMessage }}
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        {{ errorMessage }}
+      </div>
+
+      <!-- Formulario -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <!-- Búsqueda de Producto -->
+          <div class="mb-4">
+            <label class="form-label fw-bold">
+              <i class="bi bi-search me-2"></i>
+              Buscar Producto
+            </label>
+            <div class="position-relat">
+              <input
+                type="text"
+                class="form-control form-control-lg"
+                placeholder="Buscar por nombre, SKU o código de barras..."
+                [(ngModel)]="searchTerm"
+                (input)="searchProducts()"
+                [disabled]="!!selectedProduct">
+
+              <!-- Resultados de búsqueda -->
+              <div *ngIf="searchResults.length > 0" class="search-results">
+                <div class="list-group">
+                  <button
+                    *ngFor="let product of searchResults"
+                    type="button"
+                    class="list-group-item list-group-item-action"
+                    (click)="selectProduct(product)">
+                    <div class="d-flex w-100 justify-content-between">
+                      <div>
+                        <strong>{{ product.name }}</strong>
+                        <div class="small text-muted">
+                          <span *ngIf="product.sku">SKU: {{ product.sku }}</span>
+                          <span *ngIf="product.barcode" class="ms-2">Código: {{ product.barcode }}</span>
+                        </div>
+                      </div>
+                      <span class="badge bg-primary align-self-center">
+                        Stock: {{ product.stock }}
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div *ngIf="searching" class="text-center mt-2">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Buscando...
+              </div>
+            </div>
+          </div>
+
+          <!-- Producto Seleccionado -->
+          <div *ngIf="selectedProduct" class="alert alert-info mb-4">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <h5 class="alert-heading mb-2">
+                  <i class="bi bi-box-seam me-2"></i>
+                  {{ selectedProduct.name }}
+                </h5>
+                <p class="mb-1" *ngIf="selectedProduct.sku">
+                  <strong>SKU:</strong> {{ selectedProduct.sku }}
+                </p>
+                <p class="mb-1" *ngIf="selectedProduct.barcode">
+                  <strong>Código:</strong> {{ selectedProduct.barcode }}
+                </p>
+                <p class="mb-0">
+                  <strong>Stock en Sistema:</strong>
+                  <span class="badge bg-primary ms-2">{{ selectedProduct.stock }} unidades</span>
+                </p>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" (click)="clearSelection()">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Formulario de Ajuste -->
+          <div *ngIf="selectedProduct">
+            <div class="row g-3">
+              <!-- Stock Contado -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Stock Contado Físicamente</label>
+                <input
+                  type="number"
+                  class="form-control form-control-lg"
+                  min="0"
+                  [(ngModel)]="adjustDto.newStock"
+                  (ngModelChange)="calculateDifference()"
+                  placeholder="Cantidad real contada">
+              </div>
+
+              <!-- Diferencia -->
+              <div class="col-md-6">
+                <label class="form-label fw-bold">Diferencia</label>
+                <div class="form-control form-control-lg bg-light" [ngClass]="getDifferenceClass()">
+                  <strong>{{ getDifferenceLabel() }}</strong>
+                </div>
+              </div>
+
+              <!-- Motivo -->
+              <div class="col-12">
+                <label class="form-label fw-bold">Motivo del Ajuste</label>
+                <select
+                  class="form-select form-select-lg"
+                  [(ngModel)]="adjustDto.reason">
+                  <option value="">Seleccione un motivo...</option>
+                  <option *ngFor="let reason of adjustReasons" [value]="reason.value">
+                    {{ reason.label }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Observaciones -->
+              <div class="col-12">
+                <label class="form-label fw-bold">Observaciones Detalladas</label>
+                <textarea
+                  class="form-control"
+                  rows="4"
+                  [(ngModel)]="adjustDto.notes"
+                  placeholder="Describe la situación que originó el ajuste..."></textarea>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button
+                class="btn btn-secondary btn-lg"
+                (click)="cancel()"
+                [disabled]="loading">
+                <i class="bi bi-x-lg me-2"></i>
+                Cancelar
+              </button>
+              <button
+                class="btn btn-primary btn-lg"
+                (click)="adjustInventory()"
+                [disabled]="!canSubmit() || loading">
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!loading" class="bi bi-check-lg me-2"></i>
+                Ajustar Inventario
+              </button>
+            </div>
+          </div>
+
+          <!-- Mensaje cuando no hay producto seleccionado -->
+          <div *ngIf="!selectedProduct" class="text-center text-muted py-5">
+            <i class="bi bi-search fs-1 d-block mb-3"></i>
+            <p class="mb-0">Busca un producto para comenzar el ajuste de inventario</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

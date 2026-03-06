@@ -1,0 +1,184 @@
+<div class="modal fade" [class.show]="isVisible" [style.display]="isVisible ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-sliders me-2"></i>
+          Configurar Límites de Stock
+        </h5>
+        <button type="button" class="btn-close" (click)="close()" [disabled]="isSubmitting"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Loading State -->
+        <div *ngIf="isLoadingProduct" class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="text-muted mt-2">Cargando información del producto...</p>
+        </div>
+
+        <!-- Mensajes de Error -->
+        <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ errorMessage }}
+          <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+        </div>
+
+        <!-- Product Info Card -->
+        <div class="card mb-3" *ngIf="product && !isLoadingProduct">
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h6 class="mb-1">{{ product.name }}</h6>
+                <div class="text-muted small">
+                  <span class="me-3"><strong>SKU:</strong> {{ product.sku }}</span>
+                  <span *ngIf="product.barcode">
+                    <strong>Código:</strong> {{ product.barcode }}
+                  </span>
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="mb-1">
+                  <small class="text-muted">Stock Actual</small>
+                  <h5 class="mb-0" [ngClass]="getStockStatus().class">
+                    {{ currentStock }}
+                  </h5>
+                  <small [ngClass]="getStockStatus().class">
+                    {{ getStockStatus().label }}
+                  </small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form #limitsForm="ngForm" (ngSubmit)="onSubmit()" *ngIf="!isLoadingProduct">
+          <!-- Stock Mínimo -->
+          <div class="mb-3">
+            <label for="minStock" class="form-label">
+              Stock Mínimo <span class="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="minStock"
+              [(ngModel)]="limitsDto.minStock"
+              name="minStock"
+              [disabled]="isSubmitting"
+              min="0"
+              required
+            >
+            <div class="form-text">
+              <i class="bi bi-info-circle me-1"></i>
+              Se generará una alerta cuando el stock esté por debajo de este valor
+            </div>
+          </div>
+
+          <!-- Stock Máximo -->
+          <div class="mb-3">
+            <label for="maxStock" class="form-label">
+              Stock Máximo <small class="text-muted">(Opcional)</small>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="maxStock"
+              [(ngModel)]="limitsDto.maxStock"
+              name="maxStock"
+              [disabled]="isSubmitting"
+              [min]="limitsDto.minStock"
+              placeholder="Sin límite máximo"
+            >
+            <div class="form-text">
+              <i class="bi bi-info-circle me-1"></i>
+              Indica el stock máximo recomendado para este producto
+            </div>
+            <div class="text-danger small mt-1"
+                 *ngIf="limitsDto.maxStock && limitsDto.maxStock < limitsDto.minStock">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              El stock máximo debe ser mayor o igual al stock mínimo
+            </div>
+          </div>
+
+          <!-- Ubicación -->
+          <div class="mb-3">
+            <label for="location" class="form-label">
+              Ubicación en Bodega
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              id="location"
+              [(ngModel)]="limitsDto.location"
+              name="location"
+              [disabled]="isSubmitting"
+              placeholder="Ej: Estante A3, Pasillo 2, etc."
+              maxlength="100"
+            >
+            <div class="form-text">
+              <i class="bi bi-info-circle me-1"></i>
+              Ubicación física del producto en el almacén
+            </div>
+          </div>
+
+          <!-- Preview de configuración -->
+          <div class="card bg-light">
+            <div class="card-body">
+              <h6 class="card-title mb-3">
+                <i class="bi bi-eye me-2"></i>
+                Vista Previa de Límites
+              </h6>
+              <div class="row text-center">
+                <div class="col-4">
+                  <div class="border rounded p-2 bg-white">
+                    <small class="text-muted d-block">Mínimo</small>
+                    <strong class="text-warning">{{ limitsDto.minStock || 0 }}</strong>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="border rounded p-2 bg-white">
+                    <small class="text-muted d-block">Actual</small>
+                    <strong [ngClass]="getStockStatus().class">{{ currentStock }}</strong>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="border rounded p-2 bg-white">
+                    <small class="text-muted d-block">Máximo</small>
+                    <strong class="text-info">{{ limitsDto.maxStock || '∞' }}</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="text-center mt-3" *ngIf="limitsDto.location">
+                <small class="text-muted">
+                  <i class="bi bi-geo-alt me-1"></i>
+                  <strong>Ubicación:</strong> {{ limitsDto.location }}
+                </small>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="isSubmitting">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          (click)="onSubmit()"
+          [disabled]="isSubmitting || isLoadingProduct"
+        >
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!isSubmitting" class="bi bi-check-circle me-2"></i>
+          {{ isSubmitting ? 'Guardando...' : 'Guardar Límites' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop del modal -->
+<div class="modal-backdrop fade" [class.show]="isVisible" *ngIf="isVisible"></div>

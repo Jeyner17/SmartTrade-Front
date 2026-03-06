@@ -63,6 +63,16 @@ export const API_CONSTANTS = {
     PRODUCTS_IMAGE: (id: number) => `/products/${id}/image`,
     PRODUCTS_BARCODE: (code: string) => `/products/barcode/${code}`,
 
+    // Sprint 7: Inventario
+    INVENTORY: '/inventory',
+    INVENTORY_ALERTS: '/inventory/alerts',
+    INVENTORY_VALUE: '/inventory/value',
+    INVENTORY_BY_ID: (id: number) => `/inventory/${id}`,
+    INVENTORY_MOVEMENTS: (id: number) => `/inventory/${id}/movements`,
+    INVENTORY_LIMITS: (id: number) => `/inventory/${id}/limits`,
+    INVENTORY_MOVEMENT: '/inventory/movement',
+    INVENTORY_ADJUST: '/inventory/adjust',
+
     // Sprint 8: Proveedores
     SUPPLIERS: '/suppliers',
     SUPPLIERS_BY_ID: (id: number) => `/suppliers/${id}`,

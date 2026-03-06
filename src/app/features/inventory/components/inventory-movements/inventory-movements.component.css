@@ -1,0 +1,7 @@
+.text-nowrap {
+  white-space: nowrap;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}

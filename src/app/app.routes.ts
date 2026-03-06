@@ -76,6 +76,14 @@ export const routes: Routes = [
         data: { module: MODULES.PRODUCTS }
       },
 
+      // Sprint 7: Gestión de Inventario
+      {
+        path: 'inventory',
+        loadChildren: () => import('./features/inventory/inventory.routes')
+          .then(m => m.INVENTORY_ROUTES),
+        data: { module: MODULES.INVENTORY }
+      },
+
       // Sprint 8: Gestión de Proveedores
       {
         path: 'suppliers',

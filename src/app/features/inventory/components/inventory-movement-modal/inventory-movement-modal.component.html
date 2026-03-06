@@ -1,0 +1,214 @@
+<div class="modal fade" [class.show]="isVisible" [style.display]="isVisible ? 'block' : 'none'" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-arrow-left-right me-2"></i>
+          Registrar Movimiento Manual
+        </h5>
+        <button type="button" class="btn-close" (click)="close()" [disabled]="isSubmitting"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Mensajes de Error -->
+        <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          {{ errorMessage }}
+          <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+        </div>
+
+        <form #movementForm="ngForm" (ngSubmit)="onSubmit()">
+          <!-- Búsqueda y Selección de Producto -->
+          <div class="mb-3" *ngIf="!productId">
+            <label for="productSearch" class="form-label">
+              Buscar Producto <span class="text-danger">*</span>
+            </label>
+            <div class="position-relative">
+              <input
+                type="text"
+                class="form-control"
+                id="productSearch"
+                [(ngModel)]="productSearch"
+                name="productSearch"
+                (input)="searchProducts()"
+                placeholder="Buscar por nombre, SKU o código de barras..."
+                [disabled]="isSubmitting"
+                autocomplete="off"
+              >
+              <div class="spinner-border spinner-border-sm position-absolute top-50 end-0 translate-middle-y me-2"
+                   *ngIf="isLoadingProducts">
+              </div>
+
+              <!-- Resultados de búsqueda -->
+              <div class="dropdown-menu w-100" [class.show]="showProductDropdown && products.length > 0">
+                <button
+                  type="button"
+                  class="dropdown-item"
+                  *ngFor="let product of products"
+                  (click)="selectProduct(product)"
+                >
+                  <div class="d-flex justify-content-between">
+                    <div>
+                      <strong>{{ product.name }}</strong>
+                      <small class="text-muted d-block">{{ product.sku }}</small>
+                    </div>
+                    <span class="badge bg-info">Stock: {{ product.stock }}</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Producto Seleccionado -->
+          <div class="card mb-3" *ngIf="selectedProduct">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-8">
+                  <h6 class="mb-1">{{ selectedProduct.name }}</h6>
+                  <div class="text-muted small">
+                    <span class="me-3"><strong>SKU:</strong> {{ selectedProduct.sku }}</span>
+                    <span *ngIf="selectedProduct.barcode">
+                      <strong>Código:</strong> {{ selectedProduct.barcode }}
+                    </span>
+                  </div>
+                </div>
+                <div class="col-md-4 text-end">
+                  <div class="mb-1">
+                    <small class="text-muted">Stock Actual</small>
+                    <h5 class="mb-0">{{ currentStock }}</h5>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tipo de Movimiento -->
+          <div class="mb-3">
+            <label class="form-label d-block">
+              Tipo de Movimiento <span class="text-danger">*</span>
+            </label>
+            <div class="btn-group w-100" role="group">
+              <input
+                type="radio"
+                class="btn-check"
+                name="movementType"
+                id="entrada"
+                value="entrada"
+                [(ngModel)]="movement.movementType"
+                (change)="onMovementTypeChange()"
+                [disabled]="isSubmitting"
+              >
+              <label class="btn btn-outline-success" for="entrada">
+                <i class="bi bi-arrow-down-circle me-2"></i>
+                Entrada
+              </label>
+
+              <input
+                type="radio"
+                class="btn-check"
+                name="movementType"
+                id="salida"
+                value="salida"
+                [(ngModel)]="movement.movementType"
+                (change)="onMovementTypeChange()"
+                [disabled]="isSubmitting"
+              >
+              <label class="btn btn-outline-danger" for="salida">
+                <i class="bi bi-arrow-up-circle me-2"></i>
+                Salida
+              </label>
+            </div>
+          </div>
+
+          <!-- Cantidad -->
+          <div class="mb-3">
+            <label for="quantity" class="form-label">
+              Cantidad <span class="text-danger">*</span>
+            </label>
+            <input
+              type="number"
+              class="form-control"
+              id="quantity"
+              [(ngModel)]="movement.quantity"
+              name="quantity"
+              (input)="onQuantityChange()"
+              [disabled]="isSubmitting || !selectedProduct"
+              min="1"
+              required
+            >
+            <div class="form-text" *ngIf="selectedProduct && movement.quantity">
+              Stock resultante:
+              <strong [class.text-success]="newStock >= 0" [class.text-danger]="newStock < 0">
+                {{ newStock }}
+              </strong>
+              <span class="text-danger ms-2" *ngIf="newStock < 0">
+                <i class="bi bi-exclamation-triangle"></i>
+                Stock insuficiente
+              </span>
+            </div>
+          </div>
+
+          <!-- Motivo -->
+          <div class="mb-3">
+            <label for="reason" class="form-label">
+              Motivo <span class="text-danger">*</span>
+            </label>
+            <select
+              class="form-select"
+              id="reason"
+              [(ngModel)]="movement.reason"
+              name="reason"
+              [disabled]="isSubmitting || !selectedProduct"
+              required
+            >
+              <option value="">Seleccione un motivo...</option>
+              <optgroup *ngIf="movement.movementType === 'entrada'" label="Motivos de Entrada">
+                <option *ngFor="let reason of movementReasons.entrada" [value]="reason.value">
+                  {{ reason.label }}
+                </option>
+              </optgroup>
+              <optgroup *ngIf="movement.movementType === 'salida'" label="Motivos de Salida">
+                <option *ngFor="let reason of movementReasons.salida" [value]="reason.value">
+                  {{ reason.label }}
+                </option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Notas -->
+          <div class="mb-3">
+            <label for="notes" class="form-label">Observaciones</label>
+            <textarea
+              class="form-control"
+              id="notes"
+              [(ngModel)]="movement.notes"
+              name="notes"
+              rows="3"
+              [disabled]="isSubmitting || !selectedProduct"
+              placeholder="Información adicional sobre el movimiento..."
+            ></textarea>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="isSubmitting">
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          (click)="onSubmit()"
+          [disabled]="isSubmitting || !selectedProduct || !movementForm.form.valid"
+        >
+          <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+          <i *ngIf="!isSubmitting" class="bi bi-check-circle me-2"></i>
+          {{ isSubmitting ? 'Registrando...' : 'Registrar Movimiento' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop del modal -->
+<div class="modal-backdrop fade" [class.show]="isVisible" *ngIf="isVisible"></div>

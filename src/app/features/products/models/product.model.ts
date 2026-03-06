@@ -26,6 +26,9 @@ export interface Product {
   taxPercent: number;
   imageUrl?: string;
   stock: number;
+  minStock?: number;
+  maxStock?: number;
+  location?: string;
   categoryId?: number;
   category?: { id: number; name: string; level?: number };
   isActive: boolean;

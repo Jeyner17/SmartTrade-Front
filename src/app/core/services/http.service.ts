@@ -88,7 +88,7 @@ export class HttpService {
 
     if (params) {
       Object.keys(params).forEach(key => {
-        if (params[key] !== null && params[key] !== undefined) {
+        if (params[key] !== null && params[key] !== undefined && params[key] !== '') {
           httpParams = httpParams.set(key, params[key].toString());
         }
       });
@@ -99,25 +99,11 @@ export class HttpService {
 
   /**
    * Manejo de errores
+   * Propaga el HttpErrorResponse original para que los componentes puedan
+   * acceder a err.status, err.error y demás propiedades HTTP.
    */
   private handleError(error: any): Observable<never> {
-    let errorMessage = 'Ocurrió un error en la petición';
-
-    if (error.error instanceof ErrorEvent) {
-      // Error del lado del cliente
-      errorMessage = `Error: ${error.error.message}`;
-    } else {
-      // Error del lado del servidor
-      if (error.error?.message) {
-        errorMessage = error.error.message;
-      } else if (error.status === 0) {
-        errorMessage = 'No se pudo conectar con el servidor';
-      } else {
-        errorMessage = `Error ${error.status}: ${error.message}`;
-      }
-    }
-
     console.error('HTTP Error:', error);
-    return throwError(() => new Error(errorMessage));
+    return throwError(() => error);
   }
 }
