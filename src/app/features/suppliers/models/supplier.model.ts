@@ -9,7 +9,7 @@ export type BankAccountType = string;    // libre: 'ahorros' | 'corriente' | etc
 
 // Términos de pago aceptados por el backend
 export type PaymentTerms =
-  'contado' | 'credito_15' | 'credito_30' | 'credito_60' | 'credito_90';
+  'transferencia' | 'cheque' | 'efectivo';
 
 // ─── Sub-entidades ─────────────────────────────────────────────────────────────
 
@@ -99,6 +99,7 @@ export interface CreateSupplierDto {
   phone?: string | null;
   email?: string | null;
   website?: string | null;
+  status?: SupplierStatus;
   paymentTerms?: PaymentTerms | null;
   bankName?: string | null;
   bankAccount?: string | null;
@@ -146,11 +147,9 @@ export interface SupplierListResponse {
 // ─── Labels en español ────────────────────────────────────────────────────────
 
 export const PAYMENT_TERMS_LABELS: Record<PaymentTerms, string> = {
-  contado: 'Contado',
-  credito_15: 'Crédito 15 días',
-  credito_30: 'Crédito 30 días',
-  credito_60: 'Crédito 60 días',
-  credito_90: 'Crédito 90 días'
+  transferencia: 'Transferencia',
+  cheque: 'Cheque',
+  efectivo: 'Efectivo'
 };
 
 export const SUPPLIER_STATUS_LABELS: Record<SupplierStatus, string> = {

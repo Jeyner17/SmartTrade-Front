@@ -1,6 +1,6 @@
 <!-- LOADER -->
 <app-loader *ngIf="isLoading" message="Cargando empleado..." size="lg"></app-loader>
-<app-loader *ngIf="isSaving"  message="Guardando..."        [overlay]="true"></app-loader>
+<app-loader *ngIf="isSaving" message="Guardando..." [overlay]="true"></app-loader>
 
 <div *ngIf="!isLoading">
 
@@ -37,23 +37,21 @@
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" formControlName="firstName" placeholder="Ej: Juan"
-                       [class.is-invalid]="isFieldInvalid('firstName')"
-                       [class.is-valid]="isFieldValid('firstName')">
+                  [class.is-invalid]="isFieldInvalid('firstName')" [class.is-valid]="isFieldValid('firstName')">
                 <div class="invalid-feedback">{{ getErrorMessage('firstName') }}</div>
               </div>
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Apellido <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" formControlName="lastName" placeholder="Ej: Pérez"
-                       [class.is-invalid]="isFieldInvalid('lastName')"
-                       [class.is-valid]="isFieldValid('lastName')">
+                  [class.is-invalid]="isFieldInvalid('lastName')" [class.is-valid]="isFieldValid('lastName')">
                 <div class="invalid-feedback">{{ getErrorMessage('lastName') }}</div>
               </div>
 
               <div class="col-md-4">
                 <label class="form-label fw-semibold">Tipo de Documento <span class="text-danger">*</span></label>
                 <select class="form-select" formControlName="documentType"
-                        [class.is-invalid]="isFieldInvalid('documentType')">
+                  [class.is-invalid]="isFieldInvalid('documentType')">
                   <option *ngFor="let opt of documentTypeOptions" [value]="opt.value">{{ opt.label }}</option>
                 </select>
                 <div class="invalid-feedback">{{ getErrorMessage('documentType') }}</div>
@@ -61,10 +59,9 @@
 
               <div class="col-md-8">
                 <label class="form-label fw-semibold">Número de Documento <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" formControlName="documentNumber"
-                       placeholder="Ej: 1712345678"
-                       [class.is-invalid]="isFieldInvalid('documentNumber')"
-                       [class.is-valid]="isFieldValid('documentNumber')">
+                <input type="text" class="form-control" formControlName="documentNumber" placeholder="Ej: 1712345678"
+                  [class.is-invalid]="isFieldInvalid('documentNumber')"
+                  [class.is-valid]="isFieldValid('documentNumber')">
                 <div class="invalid-feedback">{{ getErrorMessage('documentNumber') }}</div>
               </div>
 
@@ -83,7 +80,7 @@
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-telephone"></i></span>
                   <input type="tel" class="form-control" formControlName="phone" placeholder="Ej: 0987654321"
-                         [class.is-invalid]="isFieldInvalid('phone')">
+                    [class.is-invalid]="isFieldInvalid('phone')">
                 </div>
                 <div class="text-danger small mt-1" *ngIf="isFieldInvalid('phone')">{{ getErrorMessage('phone') }}</div>
               </div>
@@ -93,8 +90,7 @@
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-envelope"></i></span>
                   <input type="email" class="form-control" formControlName="email" placeholder="juan@ejemplo.com"
-                         [class.is-invalid]="isFieldInvalid('email')"
-                         [class.is-valid]="isFieldValid('email')">
+                    [class.is-invalid]="isFieldInvalid('email')" [class.is-valid]="isFieldValid('email')">
                 </div>
                 <div class="text-danger small mt-1" *ngIf="isFieldInvalid('email')">{{ getErrorMessage('email') }}</div>
               </div>
@@ -113,9 +109,8 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Área <span class="text-danger">*</span></label>
-                <select class="form-select" formControlName="area"
-                        [class.is-invalid]="isFieldInvalid('area')"
-                        [class.is-valid]="isFieldValid('area')">
+                <select class="form-select" formControlName="area" [class.is-invalid]="isFieldInvalid('area')"
+                  [class.is-valid]="isFieldValid('area')">
                   <option value="">-- Seleccione un área --</option>
                   <option *ngFor="let opt of areaOptions" [value]="opt.value">{{ opt.label }}</option>
                 </select>
@@ -124,9 +119,8 @@
 
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Turno <span class="text-danger">*</span></label>
-                <select class="form-select" formControlName="shift"
-                        [class.is-invalid]="isFieldInvalid('shift')"
-                        [class.is-valid]="isFieldValid('shift')">
+                <select class="form-select" formControlName="shift" [class.is-invalid]="isFieldInvalid('shift')"
+                  [class.is-valid]="isFieldValid('shift')">
                   <option value="">-- Seleccione un turno --</option>
                   <option *ngFor="let opt of shiftOptions" [value]="opt.value">{{ opt.label }}</option>
                 </select>
@@ -142,11 +136,11 @@
                 <label class="form-label fw-semibold">Salario</label>
                 <div class="input-group">
                   <span class="input-group-text">$</span>
-                  <input type="number" class="form-control" formControlName="salary"
-                         placeholder="0.00" min="0" step="0.01"
-                         [class.is-invalid]="isFieldInvalid('salary')">
+                  <input type="number" class="form-control" formControlName="salary" placeholder="0.00" min="0"
+                    step="0.01" [class.is-invalid]="isFieldInvalid('salary')">
                 </div>
-                <div class="text-danger small mt-1" *ngIf="isFieldInvalid('salary')">{{ getErrorMessage('salary') }}</div>
+                <div class="text-danger small mt-1" *ngIf="isFieldInvalid('salary')">{{ getErrorMessage('salary') }}
+                </div>
               </div>
 
             </div>
@@ -165,8 +159,7 @@
           </div>
           <div class="card-body">
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="isActive"
-                     formControlName="isActive" role="switch">
+              <input class="form-check-input" type="checkbox" id="isActive" formControlName="isActive" role="switch">
               <label class="form-check-label" for="isActive">Empleado activo</label>
               <div class="form-text">Los empleados inactivos no aparecen en la lista por defecto.</div>
             </div>

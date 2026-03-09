@@ -47,10 +47,8 @@
                 <label class="form-label fw-semibold">
                   Nombre <span class="text-danger">*</span>
                 </label>
-                <input type="text" class="form-control" formControlName="firstName"
-                       placeholder="Ej: Juan"
-                       [class.is-invalid]="isFieldInvalid('firstName')"
-                       [class.is-valid]="isFieldValid('firstName')">
+                <input type="text" class="form-control" formControlName="firstName" placeholder="Ej: Juan"
+                  [class.is-invalid]="isFieldInvalid('firstName')" [class.is-valid]="isFieldValid('firstName')">
                 <div class="invalid-feedback">{{ getErrorMessage('firstName') }}</div>
               </div>
 
@@ -59,10 +57,8 @@
                 <label class="form-label fw-semibold">
                   Apellido <span class="text-danger">*</span>
                 </label>
-                <input type="text" class="form-control" formControlName="lastName"
-                       placeholder="Ej: Pérez"
-                       [class.is-invalid]="isFieldInvalid('lastName')"
-                       [class.is-valid]="isFieldValid('lastName')">
+                <input type="text" class="form-control" formControlName="lastName" placeholder="Ej: Pérez"
+                  [class.is-invalid]="isFieldInvalid('lastName')" [class.is-valid]="isFieldValid('lastName')">
                 <div class="invalid-feedback">{{ getErrorMessage('lastName') }}</div>
               </div>
 
@@ -71,9 +67,8 @@
                 <label class="form-label fw-semibold">
                   Rol <span class="text-danger">*</span>
                 </label>
-                <select class="form-select" formControlName="roleId"
-                        [class.is-invalid]="isFieldInvalid('roleId')"
-                        [class.is-valid]="isFieldValid('roleId')">
+                <select class="form-select" formControlName="roleId" [class.is-invalid]="isFieldInvalid('roleId')"
+                  [class.is-valid]="isFieldValid('roleId')">
                   <option value="">-- Seleccione un rol --</option>
                   <option *ngFor="let role of roles" [value]="role.id">{{ role.name }}</option>
                 </select>
@@ -102,11 +97,10 @@
                 </label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-at"></i></span>
-                  <input type="text" class="form-control" formControlName="username"
-                         placeholder="Ej: juan_perez"
-                         autocomplete="username"
-                         [class.is-invalid]="isFieldInvalid('username') || usernameAvailable === false"
-                         [class.is-valid]="isFieldValid('username') && usernameAvailable === true">
+                  <input type="text" class="form-control" formControlName="username" placeholder="Ej: juan_perez"
+                    autocomplete="username"
+                    [class.is-invalid]="isFieldInvalid('username') || usernameAvailable === false"
+                    [class.is-valid]="isFieldValid('username') && usernameAvailable === true">
                   <span class="input-group-text" *ngIf="checkingUsername">
                     <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
                   </span>
@@ -129,11 +123,9 @@
                 </label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                  <input type="email" class="form-control" formControlName="email"
-                         placeholder="juan@ejemplo.com"
-                         autocomplete="email"
-                         [class.is-invalid]="isFieldInvalid('email') || emailAvailable === false"
-                         [class.is-valid]="isFieldValid('email') && emailAvailable === true">
+                  <input type="email" class="form-control" formControlName="email" placeholder="juan@ejemplo.com"
+                    autocomplete="email" [class.is-invalid]="isFieldInvalid('email') || emailAvailable === false"
+                    [class.is-valid]="isFieldValid('email') && emailAvailable === true">
                   <span class="input-group-text" *ngIf="checkingEmail">
                     <div class="spinner-border spinner-border-sm text-secondary" role="status"></div>
                   </span>
@@ -157,10 +149,8 @@
                 </label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                  <input [type]="showPassword ? 'text' : 'password'"
-                         class="form-control" formControlName="password"
-                         placeholder="Dejar vacío para generar automáticamente"
-                         autocomplete="new-password">
+                  <input [type]="showPassword ? 'text' : 'password'" class="form-control" formControlName="password"
+                    placeholder="Dejar vacío para generar automáticamente" autocomplete="new-password">
                   <button type="button" class="btn btn-outline-secondary" (click)="togglePassword()">
                     <i [class]="'bi ' + (showPassword ? 'bi-eye-slash' : 'bi-eye')"></i>
                   </button>
@@ -187,7 +177,7 @@
           <div class="card-body">
             <div class="form-check form-switch">
               <input class="form-check-input" type="checkbox" id="mustChangePassword"
-                     formControlName="mustChangePassword" role="switch">
+                formControlName="mustChangePassword" role="switch">
               <label class="form-check-label" for="mustChangePassword">
                 Forzar cambio de contraseña al ingresar
               </label>
@@ -208,8 +198,7 @@
           </div>
           <div class="card-body">
             <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" id="isActive"
-                     formControlName="isActive" role="switch">
+              <input class="form-check-input" type="checkbox" id="isActive" formControlName="isActive" role="switch">
               <label class="form-check-label" for="isActive">
                 Cuenta activa
               </label>
@@ -281,8 +270,8 @@
         </div>
         <p class="text-muted mb-3">La contraseña temporal del nuevo usuario es:</p>
         <div class="input-group input-group-lg mb-3">
-          <input type="text" class="form-control text-center fw-bold font-monospace"
-                 [value]="temporaryPassword" readonly>
+          <input type="text" class="form-control text-center fw-bold font-monospace" [value]="temporaryPassword"
+            readonly>
           <button class="btn btn-outline-secondary" (click)="copyPassword()" title="Copiar">
             <i class="bi bi-clipboard"></i>
           </button>

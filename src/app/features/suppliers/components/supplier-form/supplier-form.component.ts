@@ -14,6 +14,7 @@ import { AlertService } from '../../../../core/services/alert.service';
 import { LoaderComponent } from '../../../../shared/components/loader/loader.component';
 import {
     Supplier,
+    SupplierStatus,
     CreateSupplierDto,
     PaymentTerms,
     PAYMENT_TERMS_LABELS
@@ -43,6 +44,11 @@ export class SupplierFormComponent implements OnInit {
 
     paymentTermsOptions = Object.entries(PAYMENT_TERMS_LABELS)
         .map(([value, label]) => ({ value, label }));
+
+    bankAccountTypeOptions = [
+        { value: 'ahorros', label: 'Ahorros' },
+        { value: 'corriente', label: 'Corriente' }
+    ];
 
     constructor(
         private fb: FormBuilder,
@@ -84,7 +90,10 @@ export class SupplierFormComponent implements OnInit {
             bankName: ['', Validators.maxLength(100)],
             bankAccount: ['', Validators.maxLength(50)],
             bankAccountType: ['', Validators.maxLength(30)],
-            paymentTerms: ['']
+            paymentTerms: [''],
+
+            // Estado del proveedor
+            status: ['active']
         });
     }
 
@@ -143,7 +152,8 @@ export class SupplierFormComponent implements OnInit {
             bankName: s.bankName || '',
             bankAccount: s.bankAccount || '',
             bankAccountType: s.bankAccountType || '',
-            paymentTerms: s.paymentTerms || ''
+            paymentTerms: s.paymentTerms || '',
+            status: s.status || 'active'
         });
 
         if (s.contacts && s.contacts.length > 0) {
@@ -187,6 +197,7 @@ export class SupplierFormComponent implements OnInit {
             bankAccount: v.bankAccount || null,
             bankAccountType: v.bankAccountType || null,
             paymentTerms: (v.paymentTerms || null) as PaymentTerms | null,
+            status: (v.status || 'active') as SupplierStatus,
             contacts: (v.contacts as any[])
                 .filter(c => c.name?.trim())
                 .map(c => ({
