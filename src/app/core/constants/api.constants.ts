@@ -78,7 +78,16 @@ export const API_CONSTANTS = {
     SUPPLIERS_BY_ID: (id: number) => `/suppliers/${id}`,
     SUPPLIERS_STATUS: (id: number) => `/suppliers/${id}/status`,
     SUPPLIERS_EVALUATE: (id: number) => `/suppliers/${id}/evaluate`,
-    SUPPLIERS_PURCHASES: (id: number) => `/suppliers/${id}/purchases`
+    SUPPLIERS_PURCHASES: (id: number) => `/suppliers/${id}/purchases`,
+
+    // Sprint 11: Códigos de Barra / QR
+    BARCODES_SCAN:                    '/barcodes/scan/barcode',
+    BARCODES_SCAN_QR:                 '/barcodes/scan/qr',
+    BARCODES_VERIFY:                  '/barcodes/verify',
+    BARCODES_GENERATE_QR:             '/barcodes/generate',
+    BARCODES_LOGS:                    '/barcodes/logs',
+    BARCODES_SCANNER_CONFIG:          '/barcodes/config',
+    BARCODES_SCANNER_CONFIG_SAVE:     '/barcodes/config'
   },
 
   TIMEOUT: 30000 // 30 segundos

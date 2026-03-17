@@ -1,0 +1,231 @@
+<section class="container-fluid py-4">
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-clipboard-check me-2 text-primary"></i>Conteo de Inventario por Escaneo
+      </h2>
+      <p class="text-muted small mb-0 mt-1">Realiza conteos físicos comparando con el stock del sistema</p>
+    </div>
+    <a routerLink="/barcodes" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+  </div>
+
+  <!-- ESTADO: IDLE -->
+  @if (state === 'idle') {
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-clipboard2-plus display-1 text-primary mb-3 d-block"></i>
+        <h4 class="fw-bold">Iniciar Nuevo Conteo</h4>
+        <p class="text-muted mb-4">Usa el escáner para realizar un conteo físico de inventario y compararlo con el sistema.</p>
+        <button class="btn btn-primary btn-lg" (click)="startSetup()">
+          <i class="bi bi-play-circle me-2"></i>Iniciar Nuevo Conteo
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ESTADO: SETUP -->
+  @if (state === 'setup') {
+    <div class="card border-0 shadow-sm" style="max-width:520px; margin:0 auto;">
+      <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0"><i class="bi bi-gear me-2 text-primary"></i>Configurar Conteo</h5>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Nombre del conteo <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" [(ngModel)]="countName"
+                 placeholder="Ej: Conteo Mensual Marzo 2026" />
+        </div>
+        <div class="mb-4">
+          <label class="form-label fw-semibold">Categoría (opcional)</label>
+          <input type="number" class="form-control" [(ngModel)]="categoryId"
+                 placeholder="ID de categoría a filtrar" />
+          <div class="form-text">Deja vacío para contar todas las categorías</div>
+        </div>
+        <div class="d-flex gap-2 justify-content-end">
+          <button class="btn btn-outline-secondary" (click)="cancel()">Cancelar</button>
+          <button class="btn btn-primary" (click)="startCount()" [disabled]="!countName.trim() || isLoading">
+            @if (isLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            <i class="bi bi-check2 me-1"></i>Comenzar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ESTADO: COUNTING / PAUSED -->
+  @if (state === 'counting' || state === 'paused') {
+    <!-- Toolbar de sesión -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-2 px-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fw-bold">{{ countName }}</span>
+          @if (state === 'counting') { <span class="badge bg-success">Activo</span> }
+          @if (state === 'paused')   { <span class="badge bg-warning text-dark">Pausado</span> }
+          @if (showScanFlash) {
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle scan-flash">
+              <i class="bi bi-check-circle me-1"></i>{{ lastScannedName }}
+            </span>
+          }
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-secondary btn-sm" (click)="showManualInput = !showManualInput">
+            <i class="bi bi-keyboard me-1"></i>Manual
+          </button>
+          @if (state === 'counting') {
+            <button class="btn btn-outline-warning btn-sm" (click)="pause()">
+              <i class="bi bi-pause-fill me-1"></i>Pausar
+            </button>
+          }
+          @if (state === 'paused') {
+            <button class="btn btn-outline-success btn-sm" (click)="resume()">
+              <i class="bi bi-play-fill me-1"></i>Reanudar
+            </button>
+          }
+          <button class="btn btn-outline-danger btn-sm" (click)="cancel()">
+            <i class="bi bi-x-circle me-1"></i>Cancelar
+          </button>
+          <button class="btn btn-primary btn-sm" (click)="finalize()" [disabled]="isLoading">
+            @if (isLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            <i class="bi bi-flag me-1"></i>Finalizar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    @if (showManualInput) {
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-2">
+          <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-upc text-muted"></i></span>
+            <input id="inv-manual-input" type="text" class="form-control"
+                   [(ngModel)]="manualCode"
+                   (keyup.enter)="scanManual()"
+                   placeholder="Ingresa código y presiona Enter..." />
+            <button class="btn btn-primary" (click)="scanManual()">Buscar</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (lastError) {
+      <div class="alert alert-danger py-2 d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-exclamation-triangle-fill"></i>{{ lastError }}
+      </div>
+    }
+
+    <div class="row g-4">
+      <!-- Tabla de productos escaneados -->
+      <div class="col-12 col-lg-9">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-bottom fw-semibold">
+            <i class="bi bi-table me-2 text-primary"></i>Productos escaneados
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4">Producto</th>
+                    <th>Código</th>
+                    <th class="text-center">Cant. Escaneada</th>
+                    <th class="text-center">Stock Sistema</th>
+                    <th class="text-center">Diferencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (items.length === 0) {
+                    <tr>
+                      <td colspan="5" class="text-center py-4 text-muted">
+                        Escanea el primer producto para comenzar...
+                      </td>
+                    </tr>
+                  }
+                  @for (item of items; track item.barcode) {
+                    <tr [class.table-danger]="hasDiff(item)">
+                      <td class="ps-4 fw-semibold">{{ item.productName }}</td>
+                      <td class="text-muted small font-monospace">{{ item.barcode }}</td>
+                      <td class="text-center fw-bold">{{ item.scannedQuantity }} {{ item.unit }}</td>
+                      <td class="text-center text-muted">{{ item.systemStock }} {{ item.unit }}</td>
+                      <td class="text-center fw-bold"
+                          [class.text-danger]="item.difference < 0"
+                          [class.text-warning]="item.difference > 0">
+                        {{ formatDiff(item.difference) }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel resumen -->
+      <div class="col-12 col-lg-3">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-bottom fw-semibold">
+            <i class="bi bi-bar-chart me-2 text-primary"></i>Resumen
+          </div>
+          <div class="card-body">
+            <dl class="row mb-0">
+              <dt class="col-7 text-muted small fw-normal">Productos únicos</dt>
+              <dd class="col-5 text-end fw-bold mb-3">{{ totalUnique }}</dd>
+              <dt class="col-7 text-muted small fw-normal">Total unidades</dt>
+              <dd class="col-5 text-end fw-bold mb-3">{{ totalUnits }}</dd>
+              <dt class="col-7 text-muted small fw-normal">Discrepancias</dt>
+              <dd class="col-5 text-end fw-bold mb-0"
+                  [class.text-danger]="discrepancies > 0"
+                  [class.text-success]="discrepancies === 0">
+                {{ discrepancies }}
+              </dd>
+            </dl>
+            <hr>
+            <div class="d-flex align-items-center gap-2 small"
+                 [class.text-success]="state==='counting'"
+                 [class.text-muted]="state==='paused'">
+              <i class="bi bi-upc-scan"></i>
+              {{ state === 'counting' ? 'Escáner activo' : 'Escáner pausado' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ESTADO: FINISHED -->
+  @if (state === 'finished') {
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center py-5">
+        <i class="bi bi-check-circle-fill display-1 text-success mb-3 d-block"></i>
+        <h4 class="fw-bold">Conteo Finalizado</h4>
+        <div class="d-flex justify-content-center gap-3 my-4">
+          <div class="card border-0 bg-light px-4 py-3">
+            <span class="fw-bold fs-3">{{ totalUnique }}</span>
+            <span class="text-muted small">Productos</span>
+          </div>
+          <div class="card border-0 bg-light px-4 py-3">
+            <span class="fw-bold fs-3">{{ totalUnits }}</span>
+            <span class="text-muted small">Unidades</span>
+          </div>
+          <div class="card border-0 px-4 py-3" [class.bg-danger-subtle]="discrepancies>0" [class.bg-light]="discrepancies===0">
+            <span class="fw-bold fs-3" [class.text-danger]="discrepancies>0">{{ discrepancies }}</span>
+            <span class="text-muted small">Discrepancias</span>
+          </div>
+        </div>
+        <div class="d-flex justify-content-center gap-2">
+          <button class="btn btn-outline-secondary" (click)="cancel()">Cerrar</button>
+          @if (discrepancies > 0) {
+            <button class="btn btn-primary" (click)="generateAdjust()">
+              <i class="bi bi-arrow-repeat me-1"></i>Generar Ajuste de Inventario
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+</section>

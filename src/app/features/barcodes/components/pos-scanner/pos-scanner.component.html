@@ -1,0 +1,190 @@
+<section class="container-fluid py-4">
+
+  <!-- Toasts -->
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1100">
+    @for (toast of toasts; track toast.id) {
+      <div class="toast show align-items-center border-0"
+           [class.text-bg-success]="toast.type==='success'"
+           [class.text-bg-danger]="toast.type==='error'"
+           [class.text-bg-primary]="toast.type==='info'"
+           role="alert">
+        <div class="d-flex align-items-center gap-2 px-3 py-2 fw-semibold">
+          <i class="bi"
+             [class.bi-check-circle-fill]="toast.type==='success'"
+             [class.bi-exclamation-circle-fill]="toast.type==='error'"
+             [class.bi-info-circle-fill]="toast.type==='info'"></i>
+          {{ toast.message }}
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Encabezado / Toolbar -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-calculator me-2 text-primary"></i>Escáner — Punto de Venta
+      </h2>
+      <p class="text-muted small mb-0 mt-1">Agrega productos al carrito escaneando su código</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <!-- Indicador escáner -->
+      <button class="btn btn-sm d-flex align-items-center gap-2"
+              [class.btn-success]="scannerActive"
+              [class.btn-outline-secondary]="!scannerActive"
+              (click)="toggleScanner()">
+        <span class="status-dot-sm" [class.active]="scannerActive"></span>
+        <i class="bi bi-upc-scan"></i>
+        {{ scannerActive ? 'Escáner activo' : 'Escáner inactivo' }}
+      </button>
+      <!-- Botón cámara/manual -->
+      <button class="btn btn-sm btn-outline-primary" (click)="showCameraInput = !showCameraInput" title="Código manual">
+        <i class="bi bi-keyboard"></i>
+      </button>
+      <a routerLink="/barcodes" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+      </a>
+    </div>
+  </div>
+
+  <!-- Barra de código manual -->
+  @if (showCameraInput) {
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body py-2">
+        <div class="input-group">
+          <span class="input-group-text bg-white"><i class="bi bi-keyboard text-muted"></i></span>
+          <input id="manual-pos-input" type="text" class="form-control"
+                 [(ngModel)]="manualCode"
+                 (keyup.enter)="scanManual()"
+                 placeholder="Ingresa el código y presiona Enter..." />
+          <button class="btn btn-primary" (click)="scanManual()" [disabled]="!manualCode.trim() || isScanning">
+            <i class="bi bi-search me-1"></i>Buscar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (isScanning) {
+    <div class="alert alert-primary py-2 d-flex align-items-center gap-2 mb-3">
+      <div class="spinner-border spinner-border-sm"></div>
+      Buscando: <strong>{{ lastScannedCode }}</strong>
+    </div>
+  }
+
+  <div class="row g-4">
+
+    <!-- Panel de escáner activo -->
+    <div class="col-12 col-md-4 col-xl-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex flex-column align-items-center justify-content-center py-5 text-center gap-3">
+          <div class="scanner-visual rounded-3 border p-4" [class.border-success]="scannerActive" [class.border-secondary]="!scannerActive">
+            <i class="bi bi-upc-scan display-2" [class.text-success]="scannerActive" [class.text-muted]="!scannerActive"></i>
+          </div>
+          <div>
+            <div class="fw-semibold" [class.text-success]="scannerActive" [class.text-muted]="!scannerActive">
+              {{ scannerActive ? 'Escuchando escáner físico...' : 'Escáner desactivado' }}
+            </div>
+            <p class="text-muted small mb-0 mt-1">Conecta tu lector USB para escaneo automático</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel del carrito -->
+    <div class="col-12 col-md-8 col-xl-9">
+      <div class="card border-0 shadow-sm">
+
+        <!-- Header del carrito -->
+        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">
+            <i class="bi bi-cart3 text-primary me-2"></i>Carrito
+            <span class="badge bg-primary rounded-pill ms-1">{{ totalItems }}</span>
+          </h5>
+          <button class="btn btn-outline-danger btn-sm" (click)="clearCart()" [disabled]="cart.length === 0">
+            <i class="bi bi-trash3 me-1"></i>Vaciar
+          </button>
+        </div>
+
+        <!-- Items del carrito -->
+        <div class="card-body p-0">
+          @if (cart.length === 0) {
+            <div class="text-center py-5">
+              <i class="bi bi-cart-x fs-1 text-muted d-block mb-2"></i>
+              <p class="text-muted mb-0">Escanea un producto para comenzar</p>
+            </div>
+          }
+
+          @if (cart.length > 0) {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th class="ps-4">Producto</th>
+                    <th>Precio Unit.</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end pe-4">Subtotal</th>
+                    <th class="text-center pe-4">Quitar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of cart; track item.product.id; let idx = $index) {
+                    <tr [class.table-primary]="recentAnimation === idx" class="cart-row">
+                      <td class="ps-4">
+                        <div class="d-flex align-items-center gap-2">
+                          <div class="cart-img bg-light rounded d-flex align-items-center justify-content-center flex-shrink-0"
+                               style="width:40px;height:40px;">
+                            @if (item.product.imageUrl) {
+                              <img [src]="item.product.imageUrl" style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />
+                            } @else {
+                              <i class="bi bi-box-seam text-muted"></i>
+                            }
+                          </div>
+                          <div>
+                            <div class="fw-semibold small">{{ item.product.name }}</div>
+                            <div class="text-muted" style="font-size:.75rem">{{ item.product.barcode }}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="text-muted small">{{ formatPrice(item.product.price) }}</td>
+                      <td class="text-center">
+                        <div class="input-group input-group-sm" style="width:100px;">
+                          <button class="btn btn-outline-secondary" (click)="updateQty(idx,-1)"><i class="bi bi-dash"></i></button>
+                          <span class="input-group-text bg-white fw-bold">{{ item.quantity }}</span>
+                          <button class="btn btn-outline-secondary" (click)="updateQty(idx,1)"><i class="bi bi-plus"></i></button>
+                        </div>
+                      </td>
+                      <td class="text-end pe-4 fw-bold text-success">{{ formatPrice(item.product.price * item.quantity) }}</td>
+                      <td class="text-center pe-4">
+                        <button class="btn btn-outline-danger btn-sm" (click)="removeFromCart(idx)">
+                          <i class="bi bi-x"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        <!-- Footer con total -->
+        @if (cart.length > 0) {
+          <div class="card-footer bg-white border-top">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted small">Total a pagar:</span>
+                <div class="fw-bold fs-4 text-success">{{ formatPrice(total) }}</div>
+              </div>
+              <button class="btn btn-success btn-lg">
+                <i class="bi bi-bag-check me-2"></i>Procesar Venta
+              </button>
+            </div>
+          </div>
+        }
+
+      </div>
+    </div>
+  </div>
+
+</section>

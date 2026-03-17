@@ -1,0 +1,15 @@
+.module-card {
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+.module-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.12) !important;
+}
+.module-icon-wrap {
+  min-width: 60px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

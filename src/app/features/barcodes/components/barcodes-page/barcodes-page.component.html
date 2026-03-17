@@ -1,0 +1,51 @@
+<section class="container-fluid py-4">
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-upc-scan me-2 text-primary"></i>Módulo de Códigos de Barra / QR
+      </h2>
+      <p class="text-muted small mb-0 mt-1">Herramientas de escaneo para venta, inventario y generación de QR</p>
+    </div>
+  </div>
+
+  <!-- Cards de navegación -->
+  <div class="row g-4">
+    @for (card of cards; track card.route) {
+      <div class="col-12 col-md-6 col-xl-4">
+        <a [routerLink]="card.route" class="text-decoration-none">
+          <div class="card border-0 shadow-sm h-100 module-card">
+            <div class="card-body p-4">
+              <div class="d-flex align-items-start gap-3">
+                <div class="module-icon-wrap bg-primary bg-opacity-10 rounded-3 p-3 flex-shrink-0">
+                  <i class="bi fs-3 text-primary" [class]="card.icon"></i>
+                </div>
+                <div class="flex-grow-1">
+                  @if (card.badge) {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle mb-1">
+                      {{ card.badge }}
+                    </span>
+                  }
+                  <h5 class="fw-semibold mb-1 text-dark">{{ card.title }}</h5>
+                  <p class="text-muted small mb-0">{{ card.description }}</p>
+                </div>
+                <i class="bi bi-chevron-right text-muted align-self-center"></i>
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+    }
+  </div>
+
+  <!-- Tip informativo -->
+  <div class="alert alert-info border-0 shadow-sm mt-4 d-flex align-items-start gap-3">
+    <i class="bi bi-lightbulb-fill fs-5 flex-shrink-0 mt-1"></i>
+    <div>
+      <strong>Consejo:</strong> Conecta tu lector de código de barras USB y será detectado automáticamente en todas las pantallas.
+      También puedes ingresar el código manualmente en cualquier pantalla.
+    </div>
+  </div>
+
+</section>

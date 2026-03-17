@@ -1,0 +1,19 @@
+.status-dot-sm {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6c757d;
+  display: inline-block;
+  transition: background .3s;
+}
+.status-dot-sm.active {
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.4);
+  animation: blink 1s infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.scanner-visual { transition: border-color .3s, box-shadow .3s; }
+.scanner-visual:has(.text-success) { box-shadow: 0 0 0 3px rgba(25,135,84,.15); }
+
+.cart-row { transition: background .4s; }

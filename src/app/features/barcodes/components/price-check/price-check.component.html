@@ -1,0 +1,164 @@
+<section class="container-fluid py-4">
+
+  <!-- Input oculto para escáner físico -->
+  <input #scanInput class="scan-hidden-input" tabindex="-1" aria-hidden="true" readonly />
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-tag-fill me-2 text-primary"></i>Verificación Rápida de Precios
+      </h2>
+      <p class="text-muted small mb-0 mt-1">Escanea o ingresa el código del producto para consultar su precio</p>
+    </div>
+    <a routerLink="/barcodes" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Área principal de escaneo -->
+    <div class="col-12 col-lg-8">
+
+      <!-- Indicador de estado -->
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body py-2 px-4 d-flex align-items-center gap-3">
+          <span class="status-dot" [class]="scannerStatus"></span>
+          <span class="fw-semibold">
+            @if (scannerStatus === 'ready')    { <span class="text-success">Listo para escanear</span> }
+            @if (scannerStatus === 'scanning') { <span class="text-primary">Escaneando...</span> }
+            @if (scannerStatus === 'success')  { <span class="text-success">¡Producto encontrado!</span> }
+            @if (scannerStatus === 'error')    { <span class="text-danger">No encontrado</span> }
+          </span>
+          @if (isLoading) {
+            <div class="spinner-border spinner-border-sm text-primary ms-auto" role="status"></div>
+          }
+        </div>
+      </div>
+
+      <!-- Zona de escaneo / resultado -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+
+          @if (!scannedProduct || scannerStatus !== 'success') {
+            <!-- Estado normal: esperando escaneo -->
+            <div class="text-center py-4">
+              <i class="bi bi-upc-scan display-1 text-primary mb-3 d-block scanner-icon" [class.scanning-anim]="scannerStatus==='scanning'"></i>
+              <h5 class="fw-semibold">Escanea el código del producto</h5>
+              <p class="text-muted small">El escáner físico se activa automáticamente. También puedes ingresar el código manualmente.</p>
+
+              <button class="btn btn-outline-primary btn-sm mt-2" (click)="toggleManualInput()">
+                <i class="bi bi-keyboard me-1"></i>Ingresar código manualmente
+              </button>
+
+              @if (showManualInput) {
+                <div class="input-group mt-3 mx-auto" style="max-width: 420px;">
+                  <input id="manual-input" type="text" class="form-control"
+                         [(ngModel)]="manualCode"
+                         (keyup.enter)="scanManual()"
+                         placeholder="Código de barras o SKU..." />
+                  <button class="btn btn-primary" (click)="scanManual()" [disabled]="!manualCode.trim()">
+                    <i class="bi bi-search"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          @if (scannerStatus === 'error') {
+            <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+              <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+              <span>{{ errorMessage }}</span>
+            </div>
+            <div class="text-center">
+              <button class="btn btn-outline-secondary" (click)="scanAnother()">
+                <i class="bi bi-arrow-repeat me-1"></i>Intentar de nuevo
+              </button>
+            </div>
+          }
+
+          <!-- Tarjeta de producto encontrado -->
+          @if (scannedProduct && scannerStatus === 'success') {
+            <div class="row g-3 align-items-center product-result">
+              <div class="col-auto">
+                @if (scannedProduct.imageUrl) {
+                  <img [src]="scannedProduct.imageUrl" [alt]="scannedProduct.name"
+                       class="rounded-3 border" style="width:100px; height:100px; object-fit:cover;" />
+                } @else {
+                  <div class="product-img-placeholder rounded-3 border bg-light d-flex align-items-center justify-content-center"
+                       style="width:100px; height:100px;">
+                    <i class="bi bi-box-seam fs-1 text-muted"></i>
+                  </div>
+                }
+              </div>
+              <div class="col">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle small mb-1">
+                  {{ scannedProduct.category }}
+                </span>
+                <h4 class="fw-bold mb-1">{{ scannedProduct.name }}</h4>
+                <div class="price-display fw-bold text-success mb-2">{{ formatPrice(scannedProduct.price) }}</div>
+                <div class="d-flex gap-3 text-muted small">
+                  <span>
+                    <i class="bi bi-boxes me-1"></i>
+                    Stock: <strong [class.text-warning]="scannedProduct.isLowStock">{{ scannedProduct.stock }} {{ scannedProduct.unit }}</strong>
+                    @if (scannedProduct.isLowStock) { <span class="badge bg-warning-subtle text-warning border border-warning-subtle ms-1">Stock bajo</span> }
+                  </span>
+                  <span><i class="bi bi-upc me-1"></i>{{ scannedProduct.barcode }}</span>
+                </div>
+                <!-- Barra de auto-reset -->
+                <div class="progress mt-3" style="height:3px;">
+                  <div class="progress-bar bg-primary auto-reset-bar" style="width:100%"></div>
+                </div>
+                <p class="text-muted small mt-1 mb-0">Se limpiará automáticamente en 10 segundos</p>
+              </div>
+            </div>
+            <div class="d-flex justify-content-end mt-3">
+              <button class="btn btn-outline-primary" (click)="scanAnother()">
+                <i class="bi bi-arrow-repeat me-1"></i>Escanear otro producto
+              </button>
+            </div>
+          }
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Historial lateral -->
+    <div class="col-12 col-lg-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header border-0 bg-white fw-semibold text-muted small text-uppercase letter-spaced">
+          <i class="bi bi-clock-history me-1"></i>Últimos escaneos
+        </div>
+        <div class="card-body p-0">
+          @if (scanHistory.length === 0) {
+            <div class="text-center py-5">
+              <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+              <p class="text-muted small mb-0">No hay escaneos recientes</p>
+            </div>
+          }
+          @for (item of scanHistory; track item.scannedAt) {
+            <div class="history-item d-flex align-items-center gap-3 px-3 py-2 border-bottom"
+                 style="cursor:pointer;" (click)="processCode(item.barcode)">
+              <div class="history-img bg-light rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                   style="width:40px;height:40px;">
+                @if (item.product.imageUrl) {
+                  <img [src]="item.product.imageUrl" [alt]="item.product.name"
+                       style="width:40px;height:40px;object-fit:cover;border-radius:6px;" />
+                } @else {
+                  <i class="bi bi-box-seam text-muted"></i>
+                }
+              </div>
+              <div class="flex-grow-1 min-width-0">
+                <div class="fw-semibold small text-truncate">{{ item.product.name }}</div>
+                <div class="text-success small fw-bold">{{ formatPrice(item.product.price) }}</div>
+              </div>
+              <div class="text-muted" style="font-size:.72rem; white-space:nowrap;">{{ getTimeAgo(item.scannedAt) }}</div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+</section>

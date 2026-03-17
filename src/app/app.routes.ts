@@ -92,6 +92,14 @@ export const routes: Routes = [
         data: { module: MODULES.SUPPLIERS }
       },
 
+      // Sprint 11: Códigos de Barra / QR
+      {
+        path: 'barcodes',
+        loadChildren: () => import('./features/barcodes/barcodes.routes')
+          .then(m => m.BARCODES_ROUTES),
+        data: { module: MODULES.BARCODES }
+      },
+
       // Cambiar contraseña (accesible para cualquier usuario autenticado)
       {
         path: 'change-password',
