@@ -1,0 +1,183 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">
+      <i class="bi bi-file-earmark-text text-primary me-2"></i>
+      {{ isEditMode ? 'Editar Orden de Compra' : 'Nueva Orden de Compra' }}
+    </h2>
+    <p class="text-muted mb-0">
+      Número de orden: <span class="fw-semibold">{{ orderNumber || 'Se generará automáticamente al guardar' }}</span>
+    </p>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="text-center py-5">
+  <div class="spinner-border text-primary"></div>
+  <p class="text-muted mt-2">Cargando orden...</p>
+</div>
+
+<div *ngIf="!isLoading" class="row g-3">
+  <div class="col-12 col-xl-8">
+    <div class="card mb-3">
+      <div class="card-header fw-semibold">Datos generales</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+            <select class="form-select" [(ngModel)]="selectedSupplierId">
+              <option [ngValue]="null">Seleccione proveedor</option>
+              <option *ngFor="let supplier of suppliers" [ngValue]="supplier.id">{{ supplier.tradeName }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Fecha esperada de entrega</label>
+            <input type="date" class="form-control" [(ngModel)]="expectedDeliveryDate">
+          </div>
+
+          <div *ngIf="selectedSupplier" class="col-12">
+            <div class="border rounded p-2 small bg-light-subtle">
+              <div class="fw-semibold mb-1">Datos de contacto del proveedor</div>
+              <div><strong>Contacto:</strong> {{ selectedSupplier.tradeName }}</div>
+              <div><strong>Teléfono:</strong> {{ selectedSupplier.phone || '—' }}</div>
+              <div><strong>Email:</strong> {{ selectedSupplier.email || '—' }}</div>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Observaciones / notas internas</label>
+            <textarea class="form-control" rows="3" [(ngModel)]="observations"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header fw-semibold">Productos</div>
+      <div class="card-body">
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-md-5">
+            <label class="form-label">Buscar producto</label>
+            <input
+              type="text"
+              class="form-control"
+              [disabled]="!selectedSupplierId"
+              placeholder="Nombre o código"
+              [(ngModel)]="productSearchTerm"
+              (ngModelChange)="onSearchProduct($event)"
+            >
+            <div *ngIf="productResults.length > 0" class="list-group search-result mt-1">
+              <button
+                type="button"
+                class="list-group-item list-group-item-action"
+                *ngFor="let product of productResults"
+                (click)="selectProduct(product)"
+                [class.active]="selectedProductId === product.id"
+              >
+                {{ product.name }} <small class="text-muted">({{ product.sku || product.barcode || 'sin código' }})</small>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Cantidad</label>
+            <input type="number" class="form-control" min="1" [(ngModel)]="selectedProductQty">
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Costo unitario</label>
+            <input type="number" class="form-control" min="0" step="0.01" [(ngModel)]="selectedProductCost">
+          </div>
+
+          <div class="col-md-3">
+            <button class="btn btn-outline-primary w-100" (click)="addProduct()">
+              <i class="bi bi-plus-circle me-1"></i>Agregar Producto
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Producto</th>
+                <th>Código</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-end">Costo Unitario</th>
+                <th class="text-end">Subtotal</th>
+                <th class="text-end">Eliminar</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let line of lines; let i = index">
+                <td>{{ line.name }}</td>
+                <td class="text-muted">{{ line.sku || '—' }}</td>
+                <td class="text-center" style="max-width: 110px;">
+                  <input type="number" min="1" class="form-control form-control-sm" [(ngModel)]="line.quantity">
+                </td>
+                <td class="text-end" style="max-width: 140px;">
+                  <input type="number" min="0" step="0.01" class="form-control form-control-sm text-end" [(ngModel)]="line.unitCost">
+                </td>
+                <td class="text-end fw-semibold">{{ getLineSubtotal(line) | currency:'$' }}</td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-danger" (click)="removeLine(i)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="lines.length === 0">
+                <td colspan="6" class="text-center text-muted py-3">No hay productos agregados</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-4">
+    <div class="card sticky-top sticky-form-summary">
+      <div class="card-header fw-semibold">Totales</div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span>Subtotal</span>
+          <strong>{{ subtotal | currency:'$' }}</strong>
+        </div>
+
+        <div class="mb-2">
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="applyIva" [(ngModel)]="applyIva">
+            <label class="form-check-label" for="applyIva">Aplicar IVA</label>
+          </div>
+          <div *ngIf="applyIva" class="input-group input-group-sm">
+            <span class="input-group-text">%</span>
+            <input type="number" min="0" max="100" class="form-control" [(ngModel)]="ivaPercent">
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between mb-3">
+          <span>IVA</span>
+          <strong>{{ ivaValue | currency:'$' }}</strong>
+        </div>
+
+        <div class="bg-light rounded p-3 text-center mb-3">
+          <small class="text-muted d-block">Total orden</small>
+          <div class="display-6 fw-bold text-primary">{{ total | currency:'$' }}</div>
+        </div>
+
+        <div class="d-grid gap-2">
+          <button class="btn btn-outline-primary" [disabled]="isSaving" (click)="save(false)">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            Guardar como Pendiente
+          </button>
+
+          <button class="btn btn-primary" [disabled]="isSaving" (click)="save(true)">
+            <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+            Guardar y Confirmar
+          </button>
+
+          <a routerLink="/purchases" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

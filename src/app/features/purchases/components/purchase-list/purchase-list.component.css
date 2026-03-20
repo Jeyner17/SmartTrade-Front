@@ -1,0 +1,10 @@
+table td,
+table th {
+  white-space: nowrap;
+}
+
+table td:nth-child(3) {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

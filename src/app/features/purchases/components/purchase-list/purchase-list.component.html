@@ -1,0 +1,146 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-cart-check text-primary me-2"></i>Órdenes de Compra</h2>
+    <p class="text-muted mb-0">Listado y control de órdenes de compra registradas</p>
+  </div>
+  <a *ngIf="canCreate" routerLink="new" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-2"></i>Nueva Orden de Compra
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <div class="row g-2 align-items-center">
+      <div class="col-12 col-md-3">
+        <label class="form-label small mb-1">Proveedor</label>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedSupplierId" (change)="onFiltersChange()">
+          <option [ngValue]="null">Todos los proveedores</option>
+          <option *ngFor="let supplier of suppliers" [ngValue]="supplier.id">{{ supplier.tradeName }}</option>
+        </select>
+      </div>
+
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Estado</label>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedStatus" (change)="onFiltersChange()">
+          <option value="">Todas</option>
+          <option value="pendiente">Pendientes</option>
+          <option value="confirmada">Confirmadas</option>
+          <option value="recibida">Recibidas</option>
+          <option value="cancelada">Canceladas</option>
+        </select>
+      </div>
+
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Desde</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="startDate" (change)="onFiltersChange()">
+      </div>
+
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Hasta</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="endDate" (change)="onFiltersChange()">
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label small mb-1">Buscar N° Orden</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="PO-20260318-0001"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange($event)"
+          >
+        </div>
+      </div>
+
+      <div class="col-12 text-end mt-2">
+        <button class="btn btn-outline-secondary btn-sm" (click)="clearFilters()">
+          <i class="bi bi-x-circle me-1"></i>Limpiar filtros
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="text-center py-5">
+  <div class="spinner-border text-primary"></div>
+  <p class="text-muted mt-2">Cargando órdenes de compra...</p>
+</div>
+
+<div *ngIf="!isLoading && orders.length === 0" class="text-center py-5 text-muted">
+  <i class="bi bi-cart-x fs-1 d-block mb-2"></i>
+  No se encontraron órdenes de compra
+</div>
+
+<div *ngIf="!isLoading && orders.length > 0" class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>N° Orden</th>
+          <th>Fecha</th>
+          <th>Proveedor</th>
+          <th class="text-center">Productos</th>
+          <th class="text-end">Monto Total</th>
+          <th class="text-center">Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders">
+          <td class="fw-semibold">{{ order.orderNumber }}</td>
+          <td>{{ order.orderDate | date:'dd/MM/yyyy' }}</td>
+          <td>{{ order.supplier.tradeName }}</td>
+          <td class="text-center">{{ order.products.count }} ítem(s)</td>
+          <td class="text-end fw-semibold">{{ order.totalAmount | currency:'$' }}</td>
+          <td class="text-center">
+            <span class="badge" [ngClass]="getStatusBadge(order.status)">{{ getStatusLabel(order.status) }}</span>
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a [routerLink]="[order.id]" class="btn btn-outline-info" title="Ver detalles">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a *ngIf="canEditOrder(order)" [routerLink]="[order.id, 'edit']" class="btn btn-outline-primary" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button *ngIf="canReceiveOrder(order)" class="btn btn-outline-success" title="Recibir" (click)="goToReceive(order)">
+                <i class="bi bi-box-arrow-in-down"></i>
+              </button>
+              <button *ngIf="order.status !== 'cancelada' && order.status !== 'recibida'" class="btn btn-outline-danger" title="Cancelar" (click)="goToCancel(order)">
+                <i class="bi bi-x-circle"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-footer d-flex align-items-center justify-content-between">
+    <small class="text-muted">
+      {{ pagination?.total ?? 0 }} orden(es) — Página {{ currentPage }} de {{ pagination?.pages ?? 1 }}
+    </small>
+
+    <nav *ngIf="pagination && pagination.pages > 1">
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="!pagination.hasPrev">
+          <button class="page-link" (click)="onPageChange(currentPage - 1)">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+        </li>
+
+        <li *ngFor="let page of getPages()" class="page-item" [class.active]="page === currentPage">
+          <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+        </li>
+
+        <li class="page-item" [class.disabled]="!pagination.hasNext">
+          <button class="page-link" (click)="onPageChange(currentPage + 1)">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

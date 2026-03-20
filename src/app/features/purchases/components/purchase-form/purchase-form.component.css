@@ -1,0 +1,8 @@
+.search-result {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.sticky-form-summary {
+  top: 1rem;
+}

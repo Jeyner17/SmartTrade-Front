@@ -80,6 +80,15 @@ export const API_CONSTANTS = {
     SUPPLIERS_EVALUATE: (id: number) => `/suppliers/${id}/evaluate`,
     SUPPLIERS_PURCHASES: (id: number) => `/suppliers/${id}/purchases`,
 
+     // Sprint 9: Compras
+    PURCHASES: '/purchases',
+    PURCHASES_BY_ID: (id: number) => `/purchases/${id}`,
+    PURCHASES_STATUS: (id: number) => `/purchases/${id}/status`,
+    PURCHASES_RECEIVE: (id: number) => `/purchases/${id}/receive`,
+    PURCHASES_CANCEL: (id: number) => `/purchases/${id}/cancel`,
+    PURCHASES_BY_SUPPLIER: (supplierId: number) => `/purchases/supplier/${supplierId}`,
+    PURCHASES_REPORT: '/purchases/report',
+
     // Sprint 11: Códigos de Barra / QR
     BARCODES_SCAN:                    '/barcodes/scan/barcode',
     BARCODES_SCAN_QR:                 '/barcodes/scan/qr',
