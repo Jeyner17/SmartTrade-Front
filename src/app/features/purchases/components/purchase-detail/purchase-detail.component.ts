@@ -215,4 +215,14 @@ export class PurchaseDetailComponent implements OnInit, OnDestroy {
 
     return fullName || history.changedByUser?.username || 'Sistema';
   }
+
+  decodeHtmlEntities(value?: string | null): string {
+    if (!value) {
+      return '';
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = value;
+    return textarea.value;
+  }
 }

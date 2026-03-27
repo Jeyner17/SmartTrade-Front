@@ -1,0 +1,20 @@
+.scanner-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.scanner-icon {
+  font-size: 2.2rem;
+  color: var(--bs-primary);
+}
+
+.sticky-panel {
+  position: sticky;
+  top: 1rem;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}

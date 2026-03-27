@@ -1,0 +1,165 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-upc-scan text-primary me-2"></i>Proceso de Recepción</h2>
+    <p class="text-muted mb-0">Escaneo y registro de productos recibidos</p>
+  </div>
+  <a routerLink="/reception" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Volver
+  </a>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-6">
+        <label class="form-label">Orden de Compra</label>
+        <select class="form-select" [(ngModel)]="selectedOrderId" (change)="onOrderSelected()" [disabled]="isLoadingOrders || isLoadingReception">
+          <option [ngValue]="null">Selecciona una orden confirmada</option>
+          <option *ngFor="let order of confirmedOrders" [ngValue]="order.id">
+            {{ order.orderNumber }} - {{ order.supplier?.tradeName || 'Proveedor' }}
+          </option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button class="btn btn-primary w-100" (click)="createReception()" [disabled]="!selectedOrderId || isLoadingReception">
+          <span *ngIf="isLoadingReception" class="spinner-border spinner-border-sm me-2"></span>
+          Iniciar Recepción
+        </button>
+      </div>
+      <div class="col-md-3 text-end">
+        <small class="text-muted" *ngIf="selectedOrder">
+          Total productos: <strong>{{ selectedOrder.products?.count || 0 }}</strong>
+        </small>
+      </div>
+    </div>
+
+    <div class="row g-2 mt-2" *ngIf="selectedOrder">
+      <div class="col-md-4"><strong>Proveedor:</strong> {{ selectedOrder.supplier?.tradeName || '—' }}</div>
+      <div class="col-md-4"><strong>Fecha esperada:</strong> {{ selectedOrder.expectedDeliveryDate ? (selectedOrder.expectedDeliveryDate | date:'dd/MM/yyyy') : '—' }}</div>
+      <div class="col-md-4"><strong>Orden:</strong> {{ selectedOrder.orderNumber }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3" *ngIf="reception">
+  <div class="col-lg-8">
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="scanner-header mb-3">
+          <i class="bi bi-upc-scan scanner-icon"></i>
+          <div>
+            <h5 class="mb-1">Escáner activo</h5>
+            <p class="text-muted mb-0">{{ scanWaitingText }}</p>
+          </div>
+        </div>
+
+        <form (ngSubmit)="onScanSubmit()" class="d-flex gap-2">
+          <input
+            #barcodeInput
+            type="text"
+            class="form-control"
+            placeholder="Escanea o escribe código de barras..."
+            [(ngModel)]="barcode"
+            name="barcode"
+            [disabled]="isScanning || isPaused"
+            autocomplete="off"
+          >
+          <button class="btn btn-success" type="submit" [disabled]="!barcode.trim() || isScanning || isPaused">
+            <span *ngIf="isScanning" class="spinner-border spinner-border-sm me-1"></span>
+            Escanear
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header fw-semibold">Tabla de Progreso</div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Producto</th>
+              <th class="text-center">Cantidad Esperada</th>
+              <th class="text-center">Cantidad Escaneada</th>
+              <th class="text-center">Estado</th>
+              <th class="text-center">Progreso</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let detail of reception.details">
+              <td>{{ detail.product?.name || ('Producto #' + detail.productId) }}</td>
+              <td class="text-center">{{ detail.quantityExpected }}</td>
+              <td class="text-center fw-semibold">{{ detail.quantityReceived }}</td>
+              <td class="text-center">
+                <span class="badge" [ngClass]="getDetailStatusClass(detail)">{{ getDetailStatusLabel(detail) }}</span>
+              </td>
+              <td style="min-width: 180px;">
+                <div class="progress" style="height: 8px;">
+                  <div
+                    class="progress-bar"
+                    [ngClass]="getDetailStatusClass(detail)"
+                    [style.width.%]="getDetailProgress(detail)">
+                  </div>
+                </div>
+              </td>
+              <td class="text-end">
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-primary" (click)="adjustQuantity(detail)">
+                    Ajustar cantidad
+                  </button>
+                  <button
+                    class="btn btn-outline-danger"
+                    *ngIf="detail.quantityExpected !== detail.quantityReceived"
+                    (click)="openDiscrepancy(detail)">
+                    Discrepancia
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card sticky-panel">
+      <div class="card-body">
+        <h5 class="card-title">Panel de Avance</h5>
+
+        <div class="mb-3">
+          <label class="form-label small mb-1">Progreso general</label>
+          <div class="progress" style="height: 12px;">
+            <div class="progress-bar bg-primary" [style.width.%]="getProgressPercent()"></div>
+          </div>
+          <small class="text-muted">{{ getProgressPercent() }}%</small>
+        </div>
+
+        <p class="mb-2"><i class="bi bi-list-check me-2"></i>{{ getScannedCounter() }}</p>
+        <p class="mb-3"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Discrepancias detectadas: <strong>{{ getDiscrepanciesCount() }}</strong></p>
+
+        <div class="d-grid gap-2">
+          <button class="btn btn-success" (click)="confirmReception()" [disabled]="isLoadingReception || isScanning">
+            <i class="bi bi-check-circle me-1"></i>Confirmar Recepción
+          </button>
+          <button class="btn btn-outline-warning" (click)="togglePause()">
+            <i class="bi" [ngClass]="isPaused ? 'bi-play-fill' : 'bi-pause-fill'"></i>
+            {{ isPaused ? 'Reanudar' : 'Pausar' }}
+          </button>
+          <button class="btn btn-outline-primary" (click)="goToSummary()">
+            <i class="bi bi-file-earmark-text me-1"></i>Resumen
+          </button>
+          <button class="btn btn-outline-danger" (click)="cancelReception()">
+            <i class="bi bi-x-circle me-1"></i>Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div *ngIf="!reception" class="text-center text-muted py-5">
+  <i class="bi bi-upc-scan fs-1 d-block mb-2"></i>
+  Selecciona una orden y presiona <strong>Iniciar Recepción</strong> para comenzar el proceso.
+</div>

@@ -1,0 +1,61 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-exclamation-diamond text-warning me-2"></i>Registro de Discrepancias</h2>
+    <p class="text-muted mb-0">Documenta diferencias encontradas en la recepción</p>
+  </div>
+  <a routerLink="/reception" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Volver
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-md-4"><strong>Producto ID:</strong> {{ productId }}</div>
+      <div class="col-md-4"><strong>Cantidad esperada:</strong> {{ quantityExpected }}</div>
+      <div class="col-md-4"><strong>Cantidad real:</strong> {{ quantityReceived }}</div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Tipo de discrepancia</label>
+        <select class="form-select" [(ngModel)]="type">
+          <option *ngFor="let option of typeOptions" [ngValue]="option.value">{{ option.label }}</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Cantidad de la discrepancia</label>
+        <input type="number" class="form-control" min="1" [(ngModel)]="discrepancyQuantity">
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Descripción detallada del problema</label>
+        <textarea class="form-control" rows="4" [(ngModel)]="description" placeholder="Describe el hallazgo..."></textarea>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Subir foto (opcional)</label>
+        <input type="file" class="form-control" (change)="onPhotoSelected($event)">
+        <small *ngIf="photoFileName" class="text-muted">Archivo: {{ photoFileName }}</small>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Acción a tomar</label>
+        <select class="form-select" [(ngModel)]="actionToTake">
+          <option>Aceptar discrepancia</option>
+          <option>Rechazar y devolver</option>
+          <option>Contactar proveedor</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+      <button class="btn btn-outline-secondary" (click)="ignore()">Ignorar</button>
+      <button class="btn btn-warning" (click)="register()" [disabled]="isSaving">
+        <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1"></span>
+        Registrar Discrepancia
+      </button>
+    </div>
+  </div>
+</div>

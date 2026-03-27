@@ -1,0 +1,8 @@
+.summary-page .table td,
+.summary-page .table th {
+  vertical-align: middle;
+}
+
+.summary-page .card {
+  border-color: #e9ecef;
+}

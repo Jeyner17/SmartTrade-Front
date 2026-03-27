@@ -1,0 +1,28 @@
+.table td,
+.table th {
+  vertical-align: middle;
+}
+
+.badge {
+  min-width: 45px;
+}
+
+.card-footer {
+  background-color: #fff;
+}
+
+/* Leyenda de estados */
+.bg-light-info {
+  background-color: #e7f3ff !important;
+  border-color: #87ceeb !important;
+}
+
+.bg-light-info .card-body small {
+  color: #333;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.bg-light-info .card-body small strong {
+  color: #0c5460;
+}

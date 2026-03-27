@@ -118,6 +118,8 @@ export class PurchaseFormComponent implements OnInit, OnDestroy {
           this.selectedSupplierId = order.supplierId;
           this.expectedDeliveryDate = order.expectedDeliveryDate ? order.expectedDeliveryDate.slice(0, 10) : '';
           this.observations = order.notes ?? '';
+          this.applyIva = (order.ivaPercent ?? 0) > 0;
+          this.ivaPercent = order.ivaPercent ?? 0;
           this.lines = (order.details ?? []).map(detail => ({
             productId: detail.productId,
             name: detail.product?.name || `Producto #${detail.productId}`,
@@ -243,6 +245,8 @@ export class PurchaseFormComponent implements OnInit, OnDestroy {
       supplierId: this.selectedSupplierId,
       expectedDeliveryDate: this.expectedDeliveryDate || null,
       observations: this.observations || '',
+      applyIva: this.applyIva,
+      ivaPercent: this.applyIva ? this.ivaPercent : 0,
       products: this.lines.map(line => ({
         productId: line.productId,
         quantity: Number(line.quantity),

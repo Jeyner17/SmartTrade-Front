@@ -1,0 +1,169 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-clipboard-check text-primary me-2"></i>Lista de Recepciones</h2>
+    <p class="text-muted mb-0">Tabla de recepciones registradas y su estado de avance</p>
+  </div>
+
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary" (click)="goToHistory()">
+      <i class="bi bi-clock-history me-2"></i>Historial de Discrepancias
+    </button>
+    <button class="btn btn-primary" (click)="goToNewReception()">
+      <i class="bi bi-plus-circle me-2"></i>Nueva Recepción
+    </button>
+  </div>
+</div>
+
+<!-- Leyenda de Estados -->
+<div class="card mb-3 border-info bg-light-info">
+  <div class="card-body py-2">
+    <div class="row g-3 text-sm">
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-check-circle-fill text-success fs-5"></i>
+          <small><strong>Completa</strong> - Todos los artículos recibidos sin discrepancias</small>
+        </div>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+          <small><strong>Con discrepancias</strong> - Se encontraron diferencias al recibir</small>
+        </div>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-circle-fill text-danger fs-5"></i>
+          <small><strong>Discrepancias graves</strong> - Diferencias significativas detectadas</small>
+        </div>
+      </div>
+
+      <div class="col-12 col-sm-6 col-md-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-hourglass-split text-warning fs-5"></i>
+          <small><strong>En proceso</strong> - Recepción todavía no confirmada</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <div class="row g-2 align-items-center">
+      <div class="col-12 col-md-3">
+        <label class="form-label small mb-1">Proveedor</label>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedSupplierId" (change)="onFiltersChange()">
+          <option [ngValue]="null">Todos los proveedores</option>
+          <option *ngFor="let supplier of suppliers" [ngValue]="supplier.id">{{ supplier.tradeName }}</option>
+        </select>
+      </div>
+
+      <div class="col-12 col-md-3">
+        <label class="form-label small mb-1">Estado</label>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedVisualStatus" (change)="onFiltersChange()">
+          <option value="">Todas</option>
+          <option value="completa">Completas</option>
+          <option value="parcial">Parciales</option>
+          <option value="discrepancias">Con discrepancias</option>
+        </select>
+      </div>
+
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Desde</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="startDate" (change)="onFiltersChange()">
+      </div>
+
+      <div class="col-6 col-md-2">
+        <label class="form-label small mb-1">Hasta</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="endDate" (change)="onFiltersChange()">
+      </div>
+
+      <div class="col-12 col-md-2">
+        <label class="form-label small mb-1" style="visibility: hidden;">filtro</label>
+        <button class="btn btn-outline-secondary w-100 border border-2" (click)="clearFilters()">
+          <i class="bi bi-x-circle me-1"></i>Limpiar
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="text-center py-5">
+  <div class="spinner-border text-primary"></div>
+  <p class="text-muted mt-2">Cargando recepciones...</p>
+</div>
+
+<div *ngIf="!isLoading && receptions.length === 0" class="text-center py-5 text-muted">
+  <i class="bi bi-inboxes fs-1 d-block mb-2"></i>
+  No se encontraron recepciones
+</div>
+
+<div *ngIf="!isLoading && receptions.length > 0" class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>N° Recepción</th>
+          <th>N° Orden Relacionada</th>
+          <th>Proveedor</th>
+          <th>Fecha de Recepción</th>
+          <th class="text-center">Productos Recibidos</th>
+          <th class="text-center">Estado</th>
+          <th class="text-center">Discrepancias</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let reception of receptions">
+          <td class="fw-semibold">{{ reception.receptionNumber }}</td>
+          <td>{{ reception.purchaseOrder?.orderNumber || ('OC #' + reception.purchaseOrderId) }}</td>
+          <td>{{ reception.purchaseOrder?.supplier?.tradeName || '—' }}</td>
+          <td>{{ reception.receptionDate | date:'dd/MM/yyyy' }}</td>
+          <td class="text-center">{{ getProductsProgress(reception) }}</td>
+          <td class="text-center">
+            <i [class]="getStateIconClass(reception)" class="fs-5" [title]="reception.status"></i>
+          </td>
+          <td class="text-center">
+            <span class="badge" [class.bg-danger]="reception.hasDiscrepancies" [class.bg-success]="!reception.hasDiscrepancies">
+              {{ getDiscrepancyLabel(reception) }}
+            </span>
+          </td>
+          <td class="text-end">
+            <button class="btn btn-sm btn-outline-primary" (click)="goToSummary(reception)">
+              <i class="bi bi-eye me-1"></i>Ver
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-footer d-flex align-items-center justify-content-between">
+    <small class="text-muted">
+      {{ pagination?.total ?? receptions.length }} recepción(es) — Página {{ currentPage }} de {{ pagination?.pages ?? 1 }}
+    </small>
+
+    <nav *ngIf="pagination && pagination.pages > 1">
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="!pagination.hasPrev">
+          <button class="page-link" (click)="onPageChange(currentPage - 1)">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+        </li>
+
+        <li *ngFor="let page of getPages()" class="page-item" [class.active]="page === currentPage">
+          <button class="page-link" (click)="onPageChange(page)">{{ page }}</button>
+        </li>
+
+        <li class="page-item" [class.disabled]="!pagination.hasNext">
+          <button class="page-link" (click)="onPageChange(currentPage + 1)">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>

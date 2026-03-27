@@ -1,0 +1,123 @@
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h2 class="mb-1"><i class="bi bi-clock-history text-primary me-2"></i>Historial de Discrepancias</h2>
+    <p class="text-muted mb-0">Reporte de diferencias encontradas en recepciones</p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary border border-2" (click)="goBack()">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </button>
+    <button class="btn btn-outline-success" style="border: 1px solid rgba(0, 128, 0, 0.371);" (click)="exportExcel()">
+      <i class="bi bi-file-earmark-spreadsheet me-1"></i>Exportar a Excel
+    </button>
+    <button class="btn btn-primary" (click)="generateReport()">
+      <i class="bi bi-file-earmark-text me-1"></i>Generar Reporte
+    </button>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body">
+        <small class="text-muted">Total discrepancias del mes</small>
+        <h4 class="mb-0">{{ getTotalMonth() }}</h4>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body">
+        <small class="text-muted">Proveedor con más discrepancias</small>
+        <h6 class="mb-0">{{ getSupplierMostIssues() }}</h6>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card stat-card">
+      <div class="card-body">
+        <small class="text-muted">Tipo más común</small>
+        <h6 class="mb-0">{{ getMostCommonType() }}</h6>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Proveedor</label>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedSupplierId" (change)="onFiltersChange()">
+          <option [ngValue]="null">Todos</option>
+          <option *ngFor="let supplier of suppliers" [ngValue]="supplier.id">{{ supplier.tradeName }}</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small mb-1">Tipo</label>
+        <select class="form-select form-select-sm" [(ngModel)]="selectedType" (change)="loadDiscrepancies()">
+          <option value="">Todos</option>
+          <option value="faltante">Faltante</option>
+          <option value="sobrante">Sobrante</option>
+          <option value="dañado">Producto dañado</option>
+          <option value="otro">Otro</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small mb-1">Desde</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="startDate" (change)="onFiltersChange()">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label small mb-1">Hasta</label>
+        <input type="date" class="form-control form-control-sm" [(ngModel)]="endDate" (change)="onFiltersChange()">
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn btn-outline-secondary w-100 border border-2" (click)="clearFilters()">
+          <i class="bi bi-x-circle me-1"></i>Limpiar
+        </button>
+      </div>
+
+
+
+    </div>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="text-center py-5">
+  <div class="spinner-border text-primary"></div>
+  <p class="text-muted mt-2">Cargando discrepancias...</p>
+</div>
+
+<div *ngIf="!isLoading" class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Fecha</th>
+          <th>N° Recepción</th>
+          <th>Proveedor</th>
+          <th>Producto</th>
+          <th>Tipo de Discrepancia</th>
+          <th class="text-center">Cantidad Afectada</th>
+          <th>Acción Tomada</th>
+          <th class="text-center">Estado de Resolución</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of filtered">
+          <td>{{ item.createdAt | date:'dd/MM/yyyy' }}</td>
+          <td>{{ item.reception?.receptionNumber || '—' }}</td>
+          <td>{{ item.reception?.purchaseOrder?.supplier?.tradeName || '—' }}</td>
+          <td>{{ item.product?.name || ('Producto #' + item.productId) }}</td>
+          <td>{{ getTypeLabel(item.type) }}</td>
+          <td class="text-center">{{ (item.quantityExpected - item.quantityReceived) | number:'1.0-0' }}</td>
+          <td>{{ item.resolutionNotes || item.observations || '—' }}</td>
+          <td class="text-center"><span class="badge" [ngClass]="getStatusClass(item)">{{ getStatusLabel(item) }}</span></td>
+        </tr>
+        <tr *ngIf="filtered.length === 0">
+          <td colspan="8" class="text-center text-muted py-4">No hay discrepancias para los filtros seleccionados</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

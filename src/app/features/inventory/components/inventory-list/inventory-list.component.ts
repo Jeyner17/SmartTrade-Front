@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { InventoryService } from '../../services/inventory.service';
 import { InventoryItem, InventoryFilters, InventoryValue } from '../../models/inventory.model';
+import { AlertService } from '../../../../core/services/alert.service';
 
 /**
  * Pantalla 1: Vista General de Inventario
@@ -52,8 +53,17 @@ export class InventoryListComponent implements OnInit {
     lastUpdate: new Date()
   };
 
+  // Modal de edición de Min/Max Stock
+  showEditStockLimitsModal = false;
+  selectedItem: InventoryItem | null = null;
+  editMinStock = 0;
+  editMaxStock: number | null = null;
+  editLocation = '';
+  isSavingStockLimits = false;
+
   constructor(
     private inventoryService: InventoryService,
+    private alertService: AlertService,
     private router: Router
   ) {}
 
@@ -223,5 +233,70 @@ export class InventoryListComponent implements OnInit {
   refresh(): void {
     this.loadInventory();
     this.loadInventoryValue();
+  }
+
+  /**
+   * Abrir modal para editar límites de stock (Mín/Máx)
+   */
+  openEditStockLimitsModal(item: InventoryItem): void {
+    this.selectedItem = item;
+    this.editMinStock = item.minStock || 0;
+    this.editMaxStock = item.maxStock || null;
+    this.editLocation = item.location || '';
+    this.showEditStockLimitsModal = true;
+  }
+
+  /**
+   * Cerrar modal de edición
+   */
+  closeEditStockLimitsModal(): void {
+    this.showEditStockLimitsModal = false;
+    this.selectedItem = null;
+    this.editMinStock = 0;
+    this.editMaxStock = null;
+    this.editLocation = '';
+    this.isSavingStockLimits = false;
+  }
+
+  /**
+   * Guardar cambios de Mín/Máx stock
+   */
+  saveStockLimits(): void {
+    if (!this.selectedItem) return;
+
+    // Validaciones
+    if (this.editMinStock < 0) {
+      this.alertService.warning('El stock mínimo no puede ser negativo');
+      return;
+    }
+
+    if (this.editMaxStock !== null && this.editMaxStock < 0) {
+      this.alertService.warning('El stock máximo no puede ser negativo');
+      return;
+    }
+
+    if (this.editMaxStock !== null && this.editMinStock > this.editMaxStock) {
+      this.alertService.warning('El stock mínimo debe ser menor o igual al máximo');
+      return;
+    }
+
+    this.isSavingStockLimits = true;
+    const updates = {
+      minStock: this.editMinStock,
+      maxStock: this.editMaxStock,
+      location: this.editLocation.trim() || null
+    };
+
+    this.inventoryService.updateStockLimits(this.selectedItem.id, updates).subscribe({
+      next: () => {
+        this.alertService.success('Límites y ubicación actualizados correctamente');
+        this.closeEditStockLimitsModal();
+        this.loadInventory();
+      },
+      error: () => {
+        this.alertService.error('Error al actualizar los límites de stock');
+        this.isSavingStockLimits = false;
+      }
+    });
   }
 }

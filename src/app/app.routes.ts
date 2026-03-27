@@ -91,13 +91,21 @@ export const routes: Routes = [
           .then(m => m.SUPPLIERS_ROUTES),
         data: { module: MODULES.SUPPLIERS }
       },
-      
+
       // Sprint 9: Gestión de Compras
       {
         path: 'purchases',
         loadChildren: () => import('./features/purchases/purchases.routes')
           .then(m => m.PURCHASES_ROUTES),
         data: { module: MODULES.PURCHASES }
+      },
+
+      // Sprint 10: Recepción de Mercancía
+      {
+        path: 'reception',
+        loadChildren: () => import('./features/reception/reception.routes')
+          .then(m => m.RECEPTION_ROUTES),
+        data: { module: MODULES.RECEPTION }
       },
 
       // Sprint 11: Códigos de Barra / QR

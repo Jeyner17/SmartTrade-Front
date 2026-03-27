@@ -50,6 +50,8 @@ export interface PurchaseOrder {
   expectedDeliveryDate?: string | null;
   status: PurchaseStatus;
   subtotal: number;
+  ivaPercent?: number;
+  ivaAmount?: number;
   totalAmount: number;
   notes?: string | null;
   statusObservations?: string | null;

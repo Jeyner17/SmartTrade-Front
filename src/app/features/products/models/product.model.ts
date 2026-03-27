@@ -49,6 +49,9 @@ export interface CreateProductDto {
   taxPercent?: number;
   categoryId?: number | null;
   isActive?: boolean;
+  minStock?: number;
+  maxStock?: number | null;
+  location?: string |null;
 }
 
 export type UpdateProductDto = Partial<CreateProductDto>;

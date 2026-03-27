@@ -1,0 +1,96 @@
+<div *ngIf="isLoading" class="text-center py-5">
+  <div class="spinner-border text-primary"></div>
+  <p class="text-muted mt-2">Cargando resumen de recepción...</p>
+</div>
+
+<div *ngIf="!isLoading && reception" class="summary-page">
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="mb-1"><i class="bi bi-file-earmark-text text-primary me-2"></i>Resumen de Recepción</h2>
+      <p class="text-muted mb-0">Revisión final antes de confirmar la recepción completa</p>
+      <small *ngIf="isConfirmed" class="text-success fw-semibold">Recepción ya confirmada (solo lectura)</small>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="downloadReceipt()">
+      <i class="bi bi-download me-1"></i>Descargar comprobante
+    </button>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-2">
+        <div class="col-md-3"><strong>Número de orden:</strong> {{ reception.purchaseOrder?.orderNumber || reception.purchaseOrderId }}</div>
+        <div class="col-md-3"><strong>Proveedor:</strong> {{ reception.purchaseOrder?.supplier?.tradeName || '—' }}</div>
+        <div class="col-md-3"><strong>Fecha de recepción:</strong> {{ reception.receptionDate | date:'dd/MM/yyyy' }}</div>
+        <div class="col-md-3"><strong>Recibido por:</strong> {{ currentUsername }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header fw-semibold">Tabla resumen</div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Producto</th>
+            <th class="text-center">Esperado</th>
+            <th class="text-center">Recibido</th>
+            <th class="text-center">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let detail of reception.details">
+            <td>{{ detail.product?.name || ('Producto #' + detail.productId) }}</td>
+            <td class="text-center">{{ detail.quantityExpected }}</td>
+            <td class="text-center">{{ detail.quantityReceived }}</td>
+            <td class="text-center" [ngClass]="getLineStatusClass(detail)">{{ getLineStatus(detail) }}</td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light">
+          <tr>
+            <td class="text-end fw-semibold">Totales</td>
+            <td class="text-center fw-semibold">{{ getTotalExpected() }}</td>
+            <td class="text-center fw-semibold">{{ getTotalReceived() }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="card mb-3" *ngIf="discrepancies.length > 0">
+    <div class="card-header fw-semibold text-danger">Sección de Discrepancias</div>
+    <div class="card-body">
+      <ul class="mb-0">
+        <li *ngFor="let discrepancy of discrepancies" class="mb-1">
+          {{ discrepancy.product?.name || ('Producto #' + discrepancy.productId) }} -
+          {{ discrepancy.type }} -
+          Cantidad afectada: {{ (discrepancy.quantityExpected || 0) - (discrepancy.quantityReceived || 0) | number:'1.0-0' }}
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="form-check mb-2">
+        <input class="form-check-input" type="checkbox" id="updateInventory" [(ngModel)]="updateInventory" [disabled]="isConfirmed">
+        <label class="form-check-label" for="updateInventory">Actualizar inventario automáticamente</label>
+      </div>
+      <small class="text-muted d-block mb-3">Preview: Se agregarán {{ getTotalReceived() }} unidades al inventario.</small>
+
+      <label class="form-label">Observaciones generales</label>
+      <textarea class="form-control" rows="3" [(ngModel)]="notes" placeholder="Notas finales de la recepción" [readonly]="isConfirmed"></textarea>
+    </div>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 justify-content-end">
+    <button *ngIf="!isConfirmed" class="btn btn-success" (click)="confirmAndUpdate()" [disabled]="isSaving">
+      <span *ngIf="isSaving" class="spinner-border spinner-border-sm me-1"></span>
+      Confirmar y Actualizar Inventario
+    </button>
+    <button *ngIf="!isConfirmed" class="btn btn-outline-primary" (click)="goBackToReview()">Volver a Revisar</button>
+    <button *ngIf="!isConfirmed" class="btn btn-outline-danger" (click)="cancelReception()">Cancelar Recepción</button>
+    <button *ngIf="isConfirmed" class="btn btn-outline-secondary" (click)="cancelReception()">Volver</button>
+  </div>
+</div>

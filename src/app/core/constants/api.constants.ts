@@ -89,6 +89,17 @@ export const API_CONSTANTS = {
     PURCHASES_BY_SUPPLIER: (supplierId: number) => `/purchases/supplier/${supplierId}`,
     PURCHASES_REPORT: '/purchases/report',
 
+    // Sprint 10: Recepción de Mercancía
+    RECEPTIONS: '/receptions',
+    RECEPTIONS_BY_ID: (id: number) => `/receptions/${id}`,
+    RECEPTIONS_VERIFY_BARCODE: '/receptions/verify-barcode',
+    RECEPTIONS_SCAN: (id: number) => `/receptions/${id}/scan`,
+    RECEPTIONS_CONFIRM: (id: number) => `/receptions/${id}/confirm`,
+    RECEPTIONS_DISCREPANCIES: (id: number) => `/receptions/${id}/discrepancies`,
+    RECEPTIONS_DISCREPANCIES_LIST: '/receptions/discrepancies',
+    RECEPTIONS_DISCREPANCY_RESOLVE: (id: number) => `/receptions/discrepancies/${id}/resolve`,
+      RECEPTIONS_CONFIRMED_ORDERS: '/receptions/confirmed-orders',
+
     // Sprint 11: Códigos de Barra / QR
     BARCODES_SCAN:                    '/barcodes/scan/barcode',
     BARCODES_SCAN_QR:                 '/barcodes/scan/qr',

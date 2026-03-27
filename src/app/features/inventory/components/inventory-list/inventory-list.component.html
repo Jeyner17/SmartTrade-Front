@@ -34,7 +34,7 @@
             </div>
             <div class="flex-grow-1 ms-3">
               <h6 class="text-muted mb-1">Valor Total</h6>
-              <h4 class="mb-0">\${{ stats.totalValue | number:'1.2-2' }}</h4>
+              <h4 class="mb-0">${{ stats.totalValue | number:'1.2-2' }}</h4>
             </div>
           </div>
         </div>
@@ -132,11 +132,12 @@
         </div>
 
         <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-secondary w-100" (click)="clearFilters()">
-            <i class="bi bi-x-circle me-2"></i>
+          <button class="btn btn-outline-secondary w-100 border border-2" (click)="clearFilters()">
+            <i class="bi bi-x-circle me-1"></i>
             Limpiar
           </button>
         </div>
+
       </div>
     </div>
   </div>
@@ -227,6 +228,12 @@
                     title="Ver detalles">
                     <i class="bi bi-eye"></i>
                   </button>
+                  <button
+                    class="btn btn-outline-info"
+                    (click)="openEditStockLimitsModal(item)"
+                    title="Editar límites de stock">
+                    <i class="bi bi-sliders"></i>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -268,3 +275,108 @@
     </div>
   </div>
 </div>
+
+<!-- Modal: Editar Límites de Stock -->
+<div *ngIf="showEditStockLimitsModal" class="modal d-block" style="background-color: rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title">
+          <i class="bi bi-sliders me-2 text-info"></i>
+          Editar Límites de Stock
+        </h5>
+        <button
+          type="button"
+          class="btn-close"
+          (click)="closeEditStockLimitsModal()"
+          [disabled]="isSavingStockLimits">
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div *ngIf="selectedItem" class="mb-3">
+          <p class="text-muted mb-2">
+            <strong>{{ selectedItem.name }}</strong>
+            <span class="badge bg-secondary ms-2">SKU: {{ selectedItem.sku }}</span>
+          </p>
+          <hr />
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">
+            <i class="bi bi-arrow-down-circle me-1 text-warning"></i>
+            Stock Mínimo
+          </label>
+          <input
+            type="number"
+            class="form-control"
+            [(ngModel)]="editMinStock"
+            [disabled]="isSavingStockLimits"
+            min="0">
+          <small class="text-muted">Cantidad mínima antes de mostrar alerta</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">
+            <i class="bi bi-arrow-up-circle me-1 text-success"></i>
+            Stock Máximo
+          </label>
+          <input
+            type="number"
+            class="form-control"
+            [(ngModel)]="editMaxStock"
+            [disabled]="isSavingStockLimits"
+            min="0">
+          <small class="text-muted">Cantidad máxima recomendada (opcional)</small>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">
+            <i class="bi bi-geo-alt me-1 text-primary"></i>
+            Ubicación en Bodega
+          </label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="editLocation"
+            [disabled]="isSavingStockLimits"
+            maxlength="100"
+            placeholder="Ej: Bodega A-3, Estante 2, Refrigerador 1">
+          <small class="text-muted">Opcional: posición física para encontrar el producto rápido</small>
+        </div>
+
+        <div class="alert alert-info alert-sm" role="alert">
+          <i class="bi bi-info-circle me-2"></i>
+          <small>
+            El sistema alertará de "Stock Bajo" cuando el inventario sea ≤ al mínimo definido.
+          </small>
+        </div>
+      </div>
+
+      <div class="modal-footer border-0">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          (click)="closeEditStockLimitsModal()"
+          [disabled]="isSavingStockLimits">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="saveStockLimits()"
+          [disabled]="isSavingStockLimits">
+          <span *ngIf="!isSavingStockLimits">
+            <i class="bi bi-check-circle me-1"></i>
+            Guardar
+          </span>
+          <span *ngIf="isSavingStockLimits">
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            Guardando...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
