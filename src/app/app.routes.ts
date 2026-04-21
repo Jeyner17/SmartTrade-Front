@@ -116,6 +116,14 @@ export const routes: Routes = [
         data: { module: MODULES.BARCODES }
       },
 
+      // Sprint 12: Punto de Venta (POS)
+      {
+        path: 'pos',
+        loadChildren: () => import('./features/pos/pos.routes')
+          .then(m => m.POS_ROUTES),
+        data: { module: MODULES.POS }
+      },
+
       // Sprint 14: Gestión de Caja
       {
         path: 'cash-register',
@@ -123,7 +131,7 @@ export const routes: Routes = [
           .then(m => m.CASH_REGISTER_ROUTES),
         data: { module: MODULES.CASH_REGISTER }
       },
-
+      
       // Cambiar contraseña (accesible para cualquier usuario autenticado)
       {
         path: 'change-password',

@@ -1,0 +1,93 @@
+<div *ngIf="visible" class="modal d-block" style="background: rgba(0,0,0,.45)">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-cash-stack me-2"></i>Finalizar Venta</h5>
+        <button class="btn-close" (click)="onCancel()"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="total-block mb-3">
+          <span>Total a pagar</span>
+          <h2 class="mb-0">${{ total | number:'1.2-2' }}</h2>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Método de pago</label>
+          <div class="d-flex flex-wrap gap-2">
+            <button class="btn" [class.btn-primary]="paymentMethod==='efectivo'" [class.btn-outline-primary]="paymentMethod!=='efectivo'" (click)="paymentMethod='efectivo'">Efectivo</button>
+            <button class="btn" [class.btn-primary]="paymentMethod==='tarjeta'" [class.btn-outline-primary]="paymentMethod!=='tarjeta'" (click)="paymentMethod='tarjeta'">Tarjeta</button>
+            <button class="btn" [class.btn-primary]="paymentMethod==='transferencia'" [class.btn-outline-primary]="paymentMethod!=='transferencia'" (click)="paymentMethod='transferencia'">Transferencia</button>
+            <button class="btn" [class.btn-primary]="paymentMethod==='credito'" [class.btn-outline-primary]="paymentMethod!=='credito'" (click)="paymentMethod='credito'">Crédito</button>
+          </div>
+        </div>
+
+        <div *ngIf="paymentMethod==='efectivo'" class="pay-box">
+          <label class="form-label fw-semibold">Monto recibido</label>
+          <input type="number" class="form-control form-control-lg" min="0" [(ngModel)]="amountReceived">
+
+          <div class="d-flex gap-2 flex-wrap mt-2">
+            <button class="btn btn-outline-secondary btn-sm" (click)="addCash(5)">+5</button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="addCash(10)">+10</button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="addCash(20)">+20</button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="addCash(50)">+50</button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="addCash(100)">+100</button>
+            <button class="btn btn-outline-primary btn-sm" (click)="resetCashToTotal()">Exacto</button>
+          </div>
+
+          <div class="change-box mt-3">
+            Cambio: <strong>${{ changeAmount | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div *ngIf="paymentMethod==='tarjeta'" class="pay-box">
+          <label class="form-label fw-semibold">Últimos 4 dígitos</label>
+          <input class="form-control" maxlength="4" [(ngModel)]="cardLast4">
+
+          <label class="form-label fw-semibold mt-2">Número de autorización (opcional)</label>
+          <input class="form-control" [(ngModel)]="cardAuth">
+
+          <div class="alert alert-info py-2 mt-3 mb-0"><small>Esperando confirmación del terminal...</small></div>
+        </div>
+
+        <div *ngIf="paymentMethod==='transferencia'" class="pay-box">
+          <div class="transfer-qr mb-3">QR Cuenta Bancaria</div>
+          <label class="form-label fw-semibold">Número de comprobante/referencia</label>
+          <input class="form-control" [(ngModel)]="transferRef">
+
+          <div class="form-check mt-2">
+            <input id="verified" class="form-check-input" type="checkbox" [(ngModel)]="transferVerified">
+            <label class="form-check-label" for="verified">Pago verificado</label>
+          </div>
+        </div>
+
+        <div *ngIf="paymentMethod==='credito'" class="pay-box">
+          <div class="alert alert-warning py-2" *ngIf="!customer"><small>Cliente obligatorio para venta a crédito.</small></div>
+          <div class="mb-2"><strong>Cliente:</strong> {{ customer?.fullName || 'No seleccionado' }}</div>
+
+          <label class="form-label fw-semibold">Plazo en días</label>
+          <input type="number" min="1" class="form-control" [(ngModel)]="creditDays" (ngModelChange)="onCreditDaysChange()">
+
+          <label class="form-label fw-semibold mt-2">Fecha de vencimiento</label>
+          <input type="date" class="form-control" [(ngModel)]="creditDueDate" readonly>
+        </div>
+
+        <div class="d-flex gap-4 mt-3">
+          <div class="form-check">
+            <input id="print" class="form-check-input" type="checkbox" [(ngModel)]="printTicket">
+            <label class="form-check-label" for="print">Imprimir ticket</label>
+          </div>
+          <div class="form-check">
+            <input id="email" class="form-check-input" type="checkbox" [(ngModel)]="sendEmail">
+            <label class="form-check-label" for="email">Enviar por email</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="onCancel()">Volver</button>
+        <button class="btn btn-success" [disabled]="!isValid" (click)="onConfirm()">Confirmar Venta</button>
+      </div>
+    </div>
+  </div>
+</div>

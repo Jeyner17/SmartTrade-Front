@@ -1,9 +1,10 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 
 import { CashRegisterService } from '../../services/cash-register.service';
 import { AlertService } from '../../../../core/services/alert.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { WithdrawalDto, DENOMINATION_ALL, DenominationCount, MAX_CASH_IN_DRAWER } from '../../models/cash-register.model';
 import { DenominationCalculatorComponent } from '../denomination-calculator/denomination-calculator.component';
 
@@ -17,7 +18,7 @@ import { DenominationCalculatorComponent } from '../denomination-calculator/deno
   templateUrl: './withdrawal-modal.component.html',
   styleUrl: './withdrawal-modal.component.css'
 })
-export class WithdrawalModalComponent {
+export class WithdrawalModalComponent implements OnInit {
 
   @Input() sessionId = 0;
   @Input() currentCash = 0;
@@ -42,14 +43,22 @@ export class WithdrawalModalComponent {
   constructor(
     private fb: FormBuilder,
     private cashService: CashRegisterService,
-    private alertService: AlertService
+    private alertService: AlertService,
+    private authService: AuthService
   ) {
     this.form = this.fb.group({
       amount:       [null, [Validators.required, Validators.min(0.01)]],
-      receivedBy:   ['', Validators.required],
+      receivedBy:   [null, [Validators.required, Validators.min(1)]],
       authCode:     [''],
       observations: ['']
     });
+  }
+
+  ngOnInit(): void {
+    const user = this.authService.getCurrentUser();
+    if (user?.id) {
+      this.form.patchValue({ receivedBy: user.id });
+    }
   }
 
   onTotalChange(total: number): void {
@@ -76,7 +85,7 @@ export class WithdrawalModalComponent {
     const dto: WithdrawalDto = {
       sessionId:        this.sessionId,
       amount:           this.form.value.amount,
-      receivedBy:       this.form.value.receivedBy,
+      receivedBy:       Number(this.form.value.receivedBy),
       authCode:         this.form.value.authCode || undefined,
       denominationCount: this.denominationCount,
       observations:     this.form.value.observations || undefined

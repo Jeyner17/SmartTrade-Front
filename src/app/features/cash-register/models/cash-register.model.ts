@@ -20,22 +20,19 @@ export interface DenominationCount {
 }
 
 export const DENOMINATION_BILLS: Omit<DenominationCount, 'quantity' | 'subtotal'>[] = [
-  { denomination: 100,  label: 'Billetes de $100', type: 'bill' },
-  { denomination: 50,   label: 'Billetes de $50',  type: 'bill' },
-  { denomination: 20,   label: 'Billetes de $20',  type: 'bill' },
-  { denomination: 10,   label: 'Billetes de $10',  type: 'bill' },
-  { denomination: 5,    label: 'Billetes de $5',   type: 'bill' },
-  { denomination: 2,    label: 'Billetes de $2',   type: 'bill' },
-  { denomination: 1,    label: 'Billetes de $1',   type: 'bill' }
+  { denomination: 1000, label: 'Billetes de $1000', type: 'bill' },
+  { denomination: 500,  label: 'Billetes de $500',  type: 'bill' },
+  { denomination: 200,  label: 'Billetes de $200',  type: 'bill' },
+  { denomination: 100,  label: 'Billetes de $100',  type: 'bill' },
+  { denomination: 50,   label: 'Billetes de $50',   type: 'bill' },
+  { denomination: 20,   label: 'Billetes de $20',   type: 'bill' },
+  { denomination: 10,   label: 'Billetes de $10',   type: 'bill' }
 ];
 
 export const DENOMINATION_COINS: Omit<DenominationCount, 'quantity' | 'subtotal'>[] = [
-  { denomination: 1,    label: 'Monedas de $1.00',  type: 'coin' },
-  { denomination: 0.50, label: 'Monedas de $0.50',  type: 'coin' },
-  { denomination: 0.25, label: 'Monedas de $0.25',  type: 'coin' },
-  { denomination: 0.10, label: 'Monedas de $0.10',  type: 'coin' },
-  { denomination: 0.05, label: 'Monedas de $0.05',  type: 'coin' },
-  { denomination: 0.01, label: 'Monedas de $0.01',  type: 'coin' }
+  { denomination: 5,  label: 'Monedas de $5', type: 'coin' },
+  { denomination: 2,  label: 'Monedas de $2', type: 'coin' },
+  { denomination: 1,  label: 'Monedas de $1', type: 'coin' }
 ];
 
 export const DENOMINATION_ALL = [...DENOMINATION_BILLS, ...DENOMINATION_COINS];
@@ -147,7 +144,7 @@ export interface RegisterExpenseDto {
 export interface WithdrawalDto {
   sessionId: number;
   amount: number;
-  receivedBy: string;
+  receivedBy: number;
   authCode?: string;
   denominationCount?: DenominationCount[];
   observations?: string;
@@ -156,6 +153,8 @@ export interface WithdrawalDto {
 export interface CloseCashDto {
   sessionId: number;
   physicalCount: DenominationCount[];
+  countedBy: number;
+  verifiedBy?: number;
   observations?: string;
   differenceExplanation?: string;
   supervisorId?: number;
@@ -176,6 +175,7 @@ export interface CashHistoryFilters {
   cashierId?: number;
   cashNumber?: number;
   withDifferences?: boolean;
+  status?: 'OPEN' | 'CLOSED' | 'COUNTED';
   page?: number;
   limit?: number;
 }
@@ -185,7 +185,8 @@ export interface CashHistoryItem {
   cashNumber: number;
   cashierName: string;
   openedAt: string;
-  closedAt: string;
+  closedAt: string | null;
+  status: 'OPEN' | 'COUNTED' | 'CLOSED';
   durationMinutes: number;
   totalSales: number;
   difference: number;

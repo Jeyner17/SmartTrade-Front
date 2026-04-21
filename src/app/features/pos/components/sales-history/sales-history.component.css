@@ -1,0 +1,8 @@
+.stat {
+  border: 1px solid #d7dde8;
+}
+
+.sale-voided {
+  color: #9aa1ad;
+  text-decoration: line-through;
+}

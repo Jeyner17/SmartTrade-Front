@@ -109,19 +109,35 @@ export const API_CONSTANTS = {
     BARCODES_SCANNER_CONFIG:          '/barcodes/config',
     BARCODES_SCANNER_CONFIG_SAVE:     '/barcodes/config',
 
+    // Sprint 12: POS
+    POS_CUSTOMERS_SEARCH: '/pos/customers/search',
+    POS_CUSTOMERS_QUICK: '/pos/customers/quick',
+    POS_PRODUCTS_POPULAR: '/pos/products/popular',
+    POS_SALES_TODAY: '/pos/sales/today',
+    POS_SALES: '/pos/sales',
+    POS_SALE_BY_ID: (id: number) => `/pos/sales/${id}`,
+    POS_SALE_VOID: (id: number) => `/pos/sales/${id}/void`,
+    POS_CART_ITEMS: '/pos/cart/items',
+    POS_CART_ITEM: (sessionId: number, productId: number) => `/pos/cart/${sessionId}/items/${productId}`,
+    POS_CART_DISCOUNT: (sessionId: number) => `/pos/cart/${sessionId}/discount`,
+    POS_CART_TOTAL: (sessionId: number) => `/pos/cart/${sessionId}/total`,
+    POS_CART_PAYMENT: (sessionId: number) => `/pos/cart/${sessionId}/payment`,
+
     // Sprint 14: Gestión de Caja
-    CASH_OPEN:              '/cash-register/open',
-    CASH_CLOSE:             (sessionId: number) => `/cash-register/${sessionId}/close`,
-    CASH_STATUS:            (sessionId: number) => `/cash-register/${sessionId}/status`,
-    CASH_HISTORY:           '/cash-register/history',
-    CASH_DETAIL:            (sessionId: number) => `/cash-register/${sessionId}`,
-    CASH_INCOME:            (sessionId: number) => `/cash-register/${sessionId}/income`,
-    CASH_EXPENSE:           (sessionId: number) => `/cash-register/${sessionId}/expense`,
-    CASH_WITHDRAWAL:        (sessionId: number) => `/cash-register/${sessionId}/withdrawal`,
-    CASH_SALE:              (sessionId: number) => `/cash-register/${sessionId}/sale`,
-    CASH_ARQUEO:            (sessionId: number) => `/cash-register/${sessionId}/arqueo`,
-    CASH_REPORT:            (sessionId: number) => `/cash-register/${sessionId}/report`
+      CASH_OPEN:              '/cash/sessions/open',
+      CASH_CLOSE:             '/cash/sessions/close',
+      CASH_STATUS:            (sessionId: number) => `/cash/sessions/${sessionId}/status`,
+      CASH_HISTORY:           '/cash/sessions',
+      CASH_DETAIL:            (sessionId: number) => `/cash/sessions/${sessionId}`,
+      CASH_INCOME:            '/cash/movements/income',
+      CASH_EXPENSE:           '/cash/movements/expense',
+      CASH_WITHDRAWAL:        '/cash/movements/withdrawal',
+      CASH_SALE:              '/cash/sales',
+      CASH_ARQUEO:            (sessionId: number) => `/cash/sessions/${sessionId}/examination`,
+      CASH_REPORT:            (sessionId: number) => `/cash/sessions/${sessionId}/report`
+
   },
+
 
   TIMEOUT: 30000 // 30 segundos
 };

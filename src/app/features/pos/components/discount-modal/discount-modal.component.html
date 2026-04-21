@@ -1,0 +1,62 @@
+<div *ngIf="visible" class="modal d-block" style="background: rgba(0,0,0,.45)">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-percent me-2"></i>Aplicar Descuento</h5>
+        <button class="btn-close" (click)="onCancel()"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Tipo de descuento</label>
+          <div class="d-flex gap-3">
+            <div class="form-check">
+              <input id="d1" class="form-check-input" type="radio" name="discountType" [(ngModel)]="discountType" value="percentage">
+              <label class="form-check-label" for="d1">Porcentaje</label>
+            </div>
+            <div class="form-check">
+              <input id="d2" class="form-check-input" type="radio" name="discountType" [(ngModel)]="discountType" value="fixed">
+              <label class="form-check-label" for="d2">Monto fijo</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Valor del descuento</label>
+          <input type="number" min="0" class="form-control" [(ngModel)]="value">
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Motivo</label>
+          <select class="form-select" [(ngModel)]="reason">
+            <option>Promoción</option>
+            <option>Cliente frecuente</option>
+            <option>Producto dañado</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Observaciones (opcional)</label>
+          <textarea class="form-control" rows="2" [(ngModel)]="observations"></textarea>
+        </div>
+
+        <div class="calc-box">
+          <div class="d-flex justify-content-between"><span>Total actual</span><strong>${{ currentTotal | number:'1.2-2' }}</strong></div>
+          <div class="d-flex justify-content-between text-danger"><span>Descuento</span><strong>- ${{ discountAmount | number:'1.2-2' }}</strong></div>
+          <hr class="my-2">
+          <div class="d-flex justify-content-between"><span>Nuevo total</span><strong class="text-success">${{ newTotal | number:'1.2-2' }}</strong></div>
+        </div>
+
+        <div class="alert alert-warning py-2 mt-3 mb-0">
+          <small><i class="bi bi-exclamation-triangle me-1"></i>Descuento máximo permitido: {{ maxPercentage }}%</small>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="onCancel()">Cancelar</button>
+        <button class="btn btn-primary" [disabled]="isInvalid" (click)="onApply()">Aplicar Descuento</button>
+      </div>
+    </div>
+  </div>
+</div>

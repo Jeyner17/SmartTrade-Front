@@ -97,5 +97,47 @@
     </div>
 
   </form>
+
+  <div class="card border-0 shadow-sm mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-box-arrow-in-right me-1"></i>Recuperar Caja Abierta</span>
+      <button class="btn btn-outline-primary btn-sm" type="button" (click)="loadOpenSessions()" [disabled]="isLoadingOpenSessions">
+        <span *ngIf="isLoadingOpenSessions" class="spinner-border spinner-border-sm me-1"></span>
+        <i *ngIf="!isLoadingOpenSessions" class="bi bi-arrow-repeat me-1"></i>Buscar
+      </button>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" *ngIf="openSessions.length; else noOpenSessions">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Caja</th>
+              <th>Apertura</th>
+              <th>Monto Base</th>
+              <th class="text-end pe-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of openSessions">
+              <td class="ps-4">Caja {{ s.cashNumber }}</td>
+              <td class="text-muted small">{{ s.openedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="fw-semibold">{{ s.initialAmount | currency:'$':'symbol':'1.2-2' }}</td>
+              <td class="text-end pe-4">
+                <button class="btn btn-outline-success btn-sm" type="button" (click)="resumeSession(s)">
+                  <i class="bi bi-play-circle me-1"></i>Continuar
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #noOpenSessions>
+          <div class="text-center py-4">
+            <i class="bi bi-inbox text-muted d-block mb-2"></i>
+            <span class="text-muted">No hay cajas abiertas para este usuario.</span>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
 </div>
 

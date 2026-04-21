@@ -33,7 +33,9 @@
           <div class="mb-3" *ngIf="showCustomConcept">
             <label class="form-label fw-semibold">Descripción del ingreso *</label>
             <input type="text" class="form-control" formControlName="customConcept"
+              [class.is-invalid]="form.get('customConcept')?.invalid && form.get('customConcept')?.touched"
               placeholder="Describa el ingreso..."/>
+            <div class="invalid-feedback">Ingrese una descripción válida.</div>
           </div>
 
           <div class="mb-3">

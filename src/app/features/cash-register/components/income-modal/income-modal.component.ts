@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { CashRegisterService } from '../../services/cash-register.service';
 import { AlertService } from '../../../../core/services/alert.service';
@@ -48,10 +49,29 @@ export class IncomeModalComponent {
       paymentMethod: ['cash', Validators.required],
       observations:  ['']
     });
+
+    this.form.get('concept')?.valueChanges.subscribe(() => this.updateCustomConceptValidator());
+    this.updateCustomConceptValidator();
+  }
+
+  private updateCustomConceptValidator(): void {
+    const control = this.form.get('customConcept');
+    if (!control) return;
+
+    if (this.showCustomConcept) {
+      control.setValidators([Validators.required, Validators.minLength(3)]);
+    } else {
+      control.clearValidators();
+    }
+    control.updateValueAndValidity({ emitEvent: false });
   }
 
   register(): void {
     if (this.form.invalid) return;
+    if (!this.sessionId || this.sessionId < 1) {
+      this.alertService.error('No se detecto una caja abierta. Regrese a estado de caja.');
+      return;
+    }
     this.isLoading = true;
 
     const dto: RegisterIncomeDto = {
@@ -75,8 +95,12 @@ export class IncomeModalComponent {
         }
         this.isLoading = false;
       },
-      error: () => {
-        this.alertService.error('Error de conexión');
+      error: (err: HttpErrorResponse) => {
+        const apiMessage = err?.error?.message;
+        const validationErrors = Array.isArray(err?.error?.errors)
+          ? err.error.errors.map((e: any) => e.message).filter(Boolean).join(' | ')
+          : null;
+        this.alertService.error(validationErrors || apiMessage || 'Error al registrar ingreso');
         this.isLoading = false;
       }
     });

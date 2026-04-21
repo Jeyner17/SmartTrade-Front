@@ -1,0 +1,39 @@
+.ticket-card {
+  width: min(100%, 520px);
+  background: #fff;
+  border: 1px solid #d9dee8;
+  border-radius: 10px;
+  padding: 14px;
+}
+
+.ticket-meta {
+  font-size: 13px;
+  display: grid;
+  gap: 2px;
+}
+
+.totals {
+  display: grid;
+  gap: 6px;
+}
+
+.totals > div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.grand {
+  font-size: 1.1rem;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .ticket-card {
+    width: 80mm;
+    border: none;
+    padding: 0;
+  }
+}

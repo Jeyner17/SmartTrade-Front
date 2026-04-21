@@ -15,13 +15,13 @@ import { AuthService } from '../services/auth.service';
 /**
  * Interceptor de Autenticación
  * Sprint 2 - Autenticación y Autorización
- * 
+ *
  * Agrega el token a todas las peticiones HTTP
  * Maneja errores 401 y refresca el token automáticamente
  */
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  
+
   private isRefreshing = false;
   private refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
 
@@ -33,9 +33,20 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // Agregar token si existe
     const token = this.storage.getAccessToken();
-    
+
+    // console.log('=== AuthInterceptor Debug ===');
+    // console.log('URL:', request.url);
+    // console.log('Token found:', token ? `YES (length: ${token.length})` : 'NO');
+    // console.log('localStorage.access_token:', localStorage.getItem('access_token') ? 'YES' : 'NO');
+    // console.log('sessionStorage.access_token:', sessionStorage.getItem('access_token') ? 'YES' : 'NO');
+    // console.log('All localStorage keys:', Object.keys(localStorage));
+    // console.log('All sessionStorage keys:', Object.keys(sessionStorage));
+
     if (token) {
       request = this.addToken(request, token);
+      // console.log('✅ Token agregado al request');
+    } else {
+      console.warn('❌ NO TOKEN FOUND en storage');
     }
 
     return next.handle(request).pipe(
@@ -74,7 +85,7 @@ export class AuthInterceptor implements HttpInterceptor {
         return this.authService.refreshToken().pipe(
           switchMap((response: any) => {
             this.isRefreshing = false;
-            
+
             if (response.success && response.data) {
               this.refreshTokenSubject.next(response.data.accessToken);
               return next.handle(this.addToken(request, response.data.accessToken));

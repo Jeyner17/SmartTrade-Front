@@ -1,0 +1,32 @@
+.total-block {
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: white;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.pay-box {
+  border: 1px solid #d8dee9;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fbfcff;
+}
+
+.change-box {
+  background: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.transfer-qr {
+  width: 140px;
+  height: 140px;
+  border: 2px dashed #94a3b8;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #64748b;
+}

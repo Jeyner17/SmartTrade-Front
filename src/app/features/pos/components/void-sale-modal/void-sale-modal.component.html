@@ -1,0 +1,52 @@
+<div *ngIf="visible" class="modal d-block" style="background: rgba(0,0,0,.45)">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="bi bi-x-octagon me-2"></i>Anulación de Venta</h5>
+        <button class="btn-close" (click)="onCancel()"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="alert alert-warning py-2">
+          <small><i class="bi bi-exclamation-triangle me-1"></i>Esta acción devolverá el stock al inventario.</small>
+        </div>
+
+        <div *ngIf="sale" class="summary-box mb-3">
+          <div><strong>Ticket:</strong> {{ sale.ticketNumber }}</div>
+          <div><strong>Fecha:</strong> {{ sale.createdAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          <div><strong>Total:</strong> ${{ sale.totalAmount | number:'1.2-2' }}</div>
+          <div><strong>Productos:</strong>
+            <ul class="mb-0">
+              <li *ngFor="let d of sale.details">{{ d.quantity }} x {{ d.product?.name || ('Producto #' + d.productId) }}</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Motivo de anulación</label>
+          <select class="form-select" [(ngModel)]="reason">
+            <option>Error del cajero</option>
+            <option>Devolución del cliente</option>
+            <option>Venta duplicada</option>
+            <option>Otro</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Explicación detallada (obligatoria)</label>
+          <textarea rows="3" class="form-control" [(ngModel)]="details"></textarea>
+        </div>
+
+        <div class="mb-0" *ngIf="requireSupervisorPassword">
+          <label class="form-label fw-semibold">Contraseña de supervisor</label>
+          <input type="password" class="form-control" [(ngModel)]="supervisorPassword">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline-secondary" (click)="onCancel()">Cancelar</button>
+        <button class="btn btn-danger" [disabled]="!canSubmit" (click)="onConfirm()">Confirmar Anulación</button>
+      </div>
+    </div>
+  </div>
+</div>

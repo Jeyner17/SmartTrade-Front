@@ -2,9 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 
 import { CashRegisterService } from '../../services/cash-register.service';
 import { AlertService } from '../../../../core/services/alert.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import {
   DENOMINATION_ALL,
   DenominationCount,
@@ -42,6 +44,7 @@ export class CashCloseComponent implements OnInit {
     private fb: FormBuilder,
     private cashService: CashRegisterService,
     private alertService: AlertService,
+    private authService: AuthService,
     private router: Router
   ) {
     this.form = this.fb.group({
@@ -130,11 +133,23 @@ export class CashCloseComponent implements OnInit {
       this.alertService.warning('Debe explicar la diferencia mayor a $5.');
       return;
     }
+    if (!this.sessionId || this.sessionId < 1) {
+      this.alertService.error('No se detecto una caja abierta. Regrese a estado de caja.');
+      return;
+    }
 
     this.isClosing = true;
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser?.id) {
+      this.alertService.error('No se pudo obtener el ID del usuario. Inicie sesion de nuevo.');
+      this.isClosing = false;
+      return;
+    }
     const dto: CloseCashDto = {
       sessionId:             this.sessionId,
       physicalCount:         this.physicalCount,
+      countedBy:             currentUser.id,
+      verifiedBy:            undefined,
       observations:          this.form.value.observations || undefined,
       differenceExplanation: this.form.value.differenceExplanation || undefined
     };
@@ -149,8 +164,12 @@ export class CashCloseComponent implements OnInit {
         }
         this.isClosing = false;
       },
-      error: () => {
-        this.alertService.error('Error de conexión al cerrar la caja');
+      error: (err: HttpErrorResponse) => {
+        const apiMessage = err?.error?.message;
+        const validationErrors = Array.isArray(err?.error?.errors)
+          ? err.error.errors.map((e: any) => e.message).filter(Boolean).join(' | ')
+          : null;
+        this.alertService.error(validationErrors || apiMessage || 'Error al cerrar la caja');
         this.isClosing = false;
       }
     });

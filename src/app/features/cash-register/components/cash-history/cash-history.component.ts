@@ -57,6 +57,7 @@ export class CashHistoryComponent implements OnInit {
       startDate:       [thirtyDaysAgo],
       endDate:         [today],
       cashNumber:      [''],
+      status:          [''],
       withDifferences: [false]
     });
   }
@@ -72,6 +73,7 @@ export class CashHistoryComponent implements OnInit {
       startDate:       v.startDate || undefined,
       endDate:         v.endDate   || undefined,
       cashNumber:      v.cashNumber ? +v.cashNumber : undefined,
+      status:          v.status || undefined,
       withDifferences: v.withDifferences || undefined
     };
 
@@ -107,5 +109,11 @@ export class CashHistoryComponent implements OnInit {
 
   exportExcel(): void {
     this.alertService.info('Exportación en desarrollo');
+  }
+
+  getStatusLabel(status: 'OPEN' | 'COUNTED' | 'CLOSED'): string {
+    if (status === 'OPEN') return 'Abierta';
+    if (status === 'COUNTED') return 'Contada';
+    return 'Cerrada';
   }
 }

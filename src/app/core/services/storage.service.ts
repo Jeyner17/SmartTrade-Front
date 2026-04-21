@@ -26,9 +26,9 @@ export class StorageService {
    */
   saveTokens(tokens: AuthTokens, rememberMe: boolean = false): void {
     localStorage.setItem(this.config.rememberMeKey, rememberMe.toString());
-    
+
     const storage = this.getStorage();
-    
+
     storage.setItem(this.config.tokenKey, tokens.accessToken);
     storage.setItem(this.config.refreshTokenKey, tokens.refreshToken);
   }
@@ -37,15 +37,27 @@ export class StorageService {
    * Obtener access token
    */
   getAccessToken(): string | null {
-    return localStorage.getItem(this.config.tokenKey) || 
-           sessionStorage.getItem(this.config.tokenKey);
+    const tokenKey = this.config.tokenKey;
+    const localToken = localStorage.getItem(tokenKey);
+    const sessionToken = sessionStorage.getItem(tokenKey);
+
+    // console.log('[StorageService.getAccessToken]', {
+    //   tokenKey,
+    //   localStorageHasToken: !!localToken,
+    //   sessionStorageHasToken: !!sessionToken,
+    //   localStorageKeys: Object.keys(localStorage),
+    //   sessionStorageKeys: Object.keys(sessionStorage),
+    //   result: localToken || sessionToken ? 'YES' : 'NO'
+    // });
+
+    return localToken || sessionToken;
   }
 
   /**
    * Obtener refresh token
    */
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.config.refreshTokenKey) || 
+    return localStorage.getItem(this.config.refreshTokenKey) ||
            sessionStorage.getItem(this.config.refreshTokenKey);
   }
 
@@ -63,13 +75,13 @@ export class StorageService {
   getUser(): User | null {
     const storage = this.getStorage();
     const userStr = storage.getItem(this.config.userKey);
-    
+
     if (!userStr) {
       const otherStorage = storage === localStorage ? sessionStorage : localStorage;
       const otherUserStr = otherStorage.getItem(this.config.userKey);
       return otherUserStr ? JSON.parse(otherUserStr) : null;
     }
-    
+
     return JSON.parse(userStr);
   }
 
@@ -87,13 +99,13 @@ export class StorageService {
   getPermissions(): UserPermissions | null {
     const storage = this.getStorage();
     const permStr = storage.getItem(this.config.permissionsKey);
-    
+
     if (!permStr) {
       const otherStorage = storage === localStorage ? sessionStorage : localStorage;
       const otherPermStr = otherStorage.getItem(this.config.permissionsKey);
       return otherPermStr ? JSON.parse(otherPermStr) : null;
     }
-    
+
     return JSON.parse(permStr);
   }
 
