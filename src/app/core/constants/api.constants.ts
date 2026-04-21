@@ -107,7 +107,20 @@ export const API_CONSTANTS = {
     BARCODES_GENERATE_QR:             '/barcodes/generate',
     BARCODES_LOGS:                    '/barcodes/logs',
     BARCODES_SCANNER_CONFIG:          '/barcodes/config',
-    BARCODES_SCANNER_CONFIG_SAVE:     '/barcodes/config'
+    BARCODES_SCANNER_CONFIG_SAVE:     '/barcodes/config',
+
+    // Sprint 14: Gestión de Caja
+    CASH_OPEN:              '/cash-register/open',
+    CASH_CLOSE:             (sessionId: number) => `/cash-register/${sessionId}/close`,
+    CASH_STATUS:            (sessionId: number) => `/cash-register/${sessionId}/status`,
+    CASH_HISTORY:           '/cash-register/history',
+    CASH_DETAIL:            (sessionId: number) => `/cash-register/${sessionId}`,
+    CASH_INCOME:            (sessionId: number) => `/cash-register/${sessionId}/income`,
+    CASH_EXPENSE:           (sessionId: number) => `/cash-register/${sessionId}/expense`,
+    CASH_WITHDRAWAL:        (sessionId: number) => `/cash-register/${sessionId}/withdrawal`,
+    CASH_SALE:              (sessionId: number) => `/cash-register/${sessionId}/sale`,
+    CASH_ARQUEO:            (sessionId: number) => `/cash-register/${sessionId}/arqueo`,
+    CASH_REPORT:            (sessionId: number) => `/cash-register/${sessionId}/report`
   },
 
   TIMEOUT: 30000 // 30 segundos

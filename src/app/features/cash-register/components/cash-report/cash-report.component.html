@@ -1,0 +1,160 @@
+<!-- Pantalla 7: Reporte de Cierre de Caja -->
+<div>
+
+  <div *ngIf="isLoading" class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="text-muted mt-3">Cargando reporte...</p>
+  </div>
+
+  <ng-container *ngIf="report && !isLoading">
+
+    <!-- Botones de acción -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print flex-wrap gap-2">
+      <a class="btn btn-outline-secondary" routerLink="/cash-register/history">
+        <i class="bi bi-arrow-left me-1"></i>Historial
+      </a>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary" (click)="printReport()">
+          <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        <button class="btn btn-danger" (click)="downloadPdf()">
+          <i class="bi bi-file-earmark-pdf me-1"></i>Guardar PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Documento del reporte -->
+    <div class="card border-0 shadow-sm report-document">
+      <div class="card-body p-5">
+
+        <!-- Encabezado -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-4 border-bottom">
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-shop fs-1 text-primary"></i>
+            <div>
+              <h4 class="fw-bold mb-0 text-primary">SmartTrade</h4>
+              <div class="text-muted small">Sistema de Gestión Comercial</div>
+            </div>
+          </div>
+          <div class="text-end">
+            <h3 class="fw-bold mb-1">REPORTE DE CIERRE DE CAJA</h3>
+            <div class="text-muted small">Documento oficial de cierre de turno</div>
+          </div>
+        </div>
+
+        <!-- Información general -->
+        <div class="row g-3 mb-4">
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Caja N°</div>
+            <div class="fw-bold">{{ report.session.cashNumber }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Cajero</div>
+            <div class="fw-bold">{{ report.session.cashierName }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Fecha Apertura</div>
+            <div class="fw-bold">{{ report.session.openedAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small">Fecha Cierre</div>
+            <div class="fw-bold">{{ report.closedAt | date:'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+        </div>
+
+        <!-- Tabla de movimientos -->
+        <h5 class="fw-semibold mb-3 border-bottom pb-2"><i class="bi bi-list-ul text-primary me-2"></i>Movimientos del Turno</h5>
+        <table class="table table-sm mb-4">
+          <tbody>
+            <tr><td>Monto inicial (base)</td><td class="text-end">{{ report.summary.initialAmount | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr><td>Ventas en efectivo</td><td class="text-end text-success fw-semibold">{{ report.summary.salesCash | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr><td>Ventas con tarjeta</td><td class="text-end">{{ report.summary.salesCard | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr><td>Ventas por transferencia</td><td class="text-end">{{ report.summary.salesTransfer | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr><td>Pagos de crédito recibidos</td><td class="text-end">{{ report.summary.salesCredit | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr><td>Ingresos adicionales</td><td class="text-end">{{ report.summary.additionalIncome | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr class="table-success"><td><strong>Total de Ingresos</strong></td>
+              <td class="text-end fw-bold text-success">{{ (report.summary.salesCash + report.summary.salesCard + report.summary.salesTransfer + report.summary.salesCredit + report.summary.additionalIncome) | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr><td>Gastos menores (egresos)</td><td class="text-end text-danger">{{ report.summary.expenses | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr><td>Retiros a caja fuerte</td><td class="text-end text-danger">{{ report.summary.withdrawals | currency:'$':'symbol':'1.2-2' }}</td></tr>
+            <tr class="table-danger"><td><strong>Total de Egresos</strong></td>
+              <td class="text-end fw-bold text-danger">{{ (report.summary.expenses + report.summary.withdrawals) | currency:'$':'symbol':'1.2-2' }}</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Arqueo Final -->
+        <h5 class="fw-semibold mb-3 border-bottom pb-2"><i class="bi bi-calculator text-primary me-2"></i>Arqueo Final</h5>
+        <div class="row g-2 mb-4">
+          <div class="col-12">
+            <div class="d-flex justify-content-between p-2 bg-light rounded">
+              <span>Total esperado en efectivo</span>
+              <strong>{{ report.expectedTotal | currency:'$':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="d-flex justify-content-between p-2 bg-light rounded">
+              <span>Total contado físico</span>
+              <strong>{{ report.physicalTotal | currency:'$':'symbol':'1.2-2' }}</strong>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="d-flex justify-content-between p-2 rounded"
+              [class.bg-success-subtle]="differenceClass === 'surplus'"
+              [class.bg-danger-subtle]="differenceClass === 'shortage'"
+              [class.bg-light]="differenceClass === 'exact'">
+              <span class="fw-semibold">Diferencia</span>
+              <strong [class.text-success]="differenceClass === 'surplus'" [class.text-danger]="differenceClass === 'shortage'">
+                {{ differenceLabel }}
+              </strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Denominaciones -->
+        <div *ngIf="report.physicalCount?.length" class="mb-4">
+          <h6 class="fw-semibold text-muted mb-2">Desglose de Denominaciones Contadas</h6>
+          <table class="table table-sm table-bordered">
+            <thead class="table-light">
+              <tr>
+                <th>Denominación</th>
+                <th class="text-center">Cantidad</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let d of report.physicalCount">
+                <td>{{ d.label }}</td>
+                <td class="text-center">{{ d.quantity }}</td>
+                <td class="text-end fw-semibold">{{ d.subtotal | currency:'$':'symbol':'1.2-2' }}</td>
+              </tr>
+            </tbody>
+            <tfoot class="table-light">
+              <tr>
+                <td colspan="2"><strong>Total Físico</strong></td>
+                <td class="text-end"><strong>{{ report.physicalTotal | currency:'$':'symbol':'1.2-2' }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Observaciones -->
+        <div *ngIf="report.observations" class="mb-4">
+          <h6 class="fw-semibold text-muted mb-2">Observaciones</h6>
+          <p class="bg-light rounded p-3 small fst-italic mb-0">{{ report.observations }}</p>
+        </div>
+
+        <!-- Firmas -->
+        <div class="row mt-5 pt-4 border-top">
+          <div class="col-6 text-center">
+            <div class="border-bottom border-dark mx-5 mb-2"></div>
+            <div class="small text-muted">Cajero: {{ report.session.cashierName }}</div>
+          </div>
+          <div class="col-6 text-center">
+            <div class="border-bottom border-dark mx-5 mb-2"></div>
+            <div class="small text-muted">Supervisor</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </ng-container>
+</div>

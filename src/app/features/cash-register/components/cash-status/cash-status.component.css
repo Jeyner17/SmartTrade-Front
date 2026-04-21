@@ -1,0 +1,2 @@
+/* Only minimal styles not achievable with Bootstrap 5 */
+.badge.bg-primary-light { background-color: var(--primary-lighter) !important; }

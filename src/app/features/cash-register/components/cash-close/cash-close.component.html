@@ -1,0 +1,182 @@
+<!-- Pantalla 6: Proceso de Cierre de Caja -->
+<div>
+
+  <!-- Encabezado con pasos -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-lock-fill me-2 text-danger"></i>Cierre de Caja
+      </h2>
+      <p class="text-muted small mb-0 mt-1">Siga los pasos para completar el cierre de su turno</p>
+    </div>
+    <!-- Barra de progreso de pasos -->
+    <div class="d-flex align-items-center gap-2">
+      <span class="step-pill" [class.active]="step >= 1" [class.done]="step > 1">1. Resumen</span>
+      <i class="bi bi-chevron-right text-muted small"></i>
+      <span class="step-pill" [class.active]="step >= 2" [class.done]="step > 2">2. Conteo</span>
+      <i class="bi bi-chevron-right text-muted small"></i>
+      <span class="step-pill" [class.active]="step >= 3">3. Confirmar</span>
+    </div>
+  </div>
+
+  <!-- ── PASO 1: RESUMEN ─────────────────────────── -->
+  <ng-container *ngIf="step === 1">
+    <div *ngIf="isLoadingArqueo" class="text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="text-muted mt-3">Calculando arqueo...</p>
+    </div>
+
+    <ng-container *ngIf="arqueo && !isLoadingArqueo">
+      <div class="alert alert-info border-0 shadow-sm d-flex align-items-center gap-2 mb-4">
+        <i class="bi bi-info-circle-fill fs-5 flex-shrink-0"></i>
+        <div>Revise el resumen de su turno antes de proceder al conteo físico.</div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3" *ngFor="let item of [
+          {label:'Monto Inicial',    val: arqueo.summary.initialAmount,     cls: 'card-primary'},
+          {label:'Ventas Efectivo',  val: arqueo.summary.salesCash,         cls: 'card-success'},
+          {label:'Ventas Tarjeta',   val: arqueo.summary.salesCard,         cls: ''},
+          {label:'Pagos Crédito',    val: arqueo.summary.salesCredit,       cls: ''},
+          {label:'Ingresos Adic.',   val: arqueo.summary.additionalIncome,  cls: ''},
+          {label:'Egresos',          val: arqueo.summary.expenses,          cls: 'card-danger'},
+          {label:'Retiros',          val: arqueo.summary.withdrawals,       cls: 'card-warning'},
+          {label:'💵 Efectivo Esp.', val: arqueo.expectedCash,             cls: 'card-primary highlight-card'}
+        ]">
+          <div class="card border-0 shadow-sm h-100" [class]="item.cls">
+            <div class="card-body py-3">
+              <div class="text-muted small">{{ item.label }}</div>
+              <div class="fw-bold fs-6">{{ item.val | currency:'$':'symbol':'1.2-2' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <a routerLink="/cash-register/status" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Volver a Caja
+        </a>
+        <button class="btn btn-primary" (click)="nextStep()">
+          Iniciar Conteo Físico <i class="bi bi-arrow-right ms-1"></i>
+        </button>
+      </div>
+    </ng-container>
+  </ng-container>
+
+  <!-- ── PASO 2: CONTEO FÍSICO ────────────────────── -->
+  <ng-container *ngIf="step === 2">
+    <div class="row g-4">
+      <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header">
+            <i class="bi bi-cash-coin"></i> Denominaciones
+          </div>
+          <div class="card-body">
+            <p class="text-muted small mb-3">Ingrese la cantidad de cada denominación que tiene en caja.</p>
+            <app-denomination-calculator
+              [denominations]="denominations"
+              (totalChange)="onTotalChange($event)"
+              (denominationsChange)="onDenominationsChange($event)">
+            </app-denomination-calculator>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header"><i class="bi bi-calculator"></i> Comparación</div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted">Total Esperado:</span>
+              <strong>{{ expectedCash | currency:'$':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="d-flex justify-content-between py-2 border-bottom">
+              <span class="text-muted">Total Contado:</span>
+              <strong>{{ physicalTotal | currency:'$':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="d-flex justify-content-between py-2 mt-1">
+              <span class="fw-semibold">Diferencia:</span>
+              <strong [class.text-success]="difference > 0" [class.text-danger]="difference < 0">
+                {{ differenceLabel }}
+              </strong>
+            </div>
+            <div class="alert alert-warning border-0 mt-3 d-flex align-items-start gap-2 small" *ngIf="hasMajorDifference">
+              <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+              Diferencia significativa. Se solicitará explicación en el paso siguiente.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+      <button class="btn btn-outline-secondary" (click)="prevStep()">
+        <i class="bi bi-arrow-left me-1"></i>Atrás
+      </button>
+      <button class="btn btn-primary" (click)="nextStep()">
+        Continuar <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- ── PASO 3: CONFIRMACIÓN ─────────────────────── -->
+  <ng-container *ngIf="step === 3">
+    <form [formGroup]="form" (ngSubmit)="closeCash()">
+
+      <!-- Resumen final -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header"><i class="bi bi-receipt"></i> Resumen Final</div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-12 d-flex justify-content-between py-1 border-bottom">
+              <span class="text-muted">Efectivo esperado:</span>
+              <strong>{{ expectedCash | currency:'$':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="col-12 d-flex justify-content-between py-1 border-bottom">
+              <span class="text-muted">Efectivo contado:</span>
+              <strong>{{ physicalTotal | currency:'$':'symbol':'1.2-2' }}</strong>
+            </div>
+            <div class="col-12 d-flex justify-content-between py-1">
+              <span class="fw-semibold">Diferencia:</span>
+              <strong [class.text-success]="difference > 0" [class.text-danger]="difference < 0">
+                {{ differenceLabel }}
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mb-3" *ngIf="hasMajorDifference">
+        <label class="form-label fw-semibold small">Explicación de la diferencia *</label>
+        <textarea class="form-control" formControlName="differenceExplanation" rows="3"
+          placeholder="Explique el motivo de la diferencia..."></textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Observaciones del turno <span class="text-muted fw-normal">(opcional)</span></label>
+        <textarea class="form-control" formControlName="observations" rows="2"
+          placeholder="Notas finales del turno..."></textarea>
+      </div>
+
+      <div class="alert alert-success border-0 shadow-sm mb-4 d-flex align-items-center gap-3">
+        <div class="form-check mb-0">
+          <input class="form-check-input" type="checkbox" formControlName="confirmed" id="confirmCheck">
+          <label class="form-check-label fw-medium" for="confirmCheck">
+            He verificado que el conteo físico es correcto y confirmo el cierre de la caja.
+          </label>
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" (click)="recount()">
+          <i class="bi bi-arrow-repeat me-1"></i>Volver a Contar
+        </button>
+        <button type="submit" class="btn btn-danger btn-lg px-4 fw-bold" [disabled]="form.invalid || isClosing">
+          <span *ngIf="!isClosing"><i class="bi bi-lock-fill me-2"></i>Cerrar Caja</span>
+          <span *ngIf="isClosing"><span class="spinner-border spinner-border-sm me-2"></span>Cerrando...</span>
+        </button>
+      </div>
+    </form>
+  </ng-container>
+
+</div>

@@ -1,0 +1,73 @@
+<div class="table-responsive">
+
+  <!-- Billetes -->
+  <p class="fw-semibold small text-muted mb-1 mt-0">
+    <i class="bi bi-cash me-1"></i>Billetes
+  </p>
+  <table class="table table-sm table-hover mb-3 align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Denominación</th>
+        <th class="text-center" style="width:110px;">Cantidad</th>
+        <th class="text-end">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of billRows">
+        <td class="fw-medium">{{ row.label }}</td>
+        <td class="text-center">
+          <input
+            type="number"
+            class="form-control form-control-sm text-center fw-bold denom-input"
+            [(ngModel)]="row.quantity"
+            min="0" step="1"
+            (ngModelChange)="onQuantityChange(row)"
+            placeholder="0"
+          />
+        </td>
+        <td class="text-end fw-semibold">
+          <span [class.text-primary]="row.subtotal > 0">{{ row.subtotal | currency:'$':'symbol':'1.2-2' }}</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Monedas -->
+  <p class="fw-semibold small text-muted mb-1">
+    <i class="bi bi-coin me-1"></i>Monedas
+  </p>
+  <table class="table table-sm table-hover mb-0 align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Denominación</th>
+        <th class="text-center" style="width:110px;">Cantidad</th>
+        <th class="text-end">Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let row of coinRows">
+        <td class="fw-medium">{{ row.label }}</td>
+        <td class="text-center">
+          <input
+            type="number"
+            class="form-control form-control-sm text-center fw-bold denom-input"
+            [(ngModel)]="row.quantity"
+            min="0" step="1"
+            (ngModelChange)="onQuantityChange(row)"
+            placeholder="0"
+          />
+        </td>
+        <td class="text-end fw-semibold">
+          <span [class.text-primary]="row.subtotal > 0">{{ row.subtotal | currency:'$':'symbol':'1.2-2' }}</span>
+        </td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr class="table-primary">
+        <td colspan="2" class="fw-bold text-uppercase small">Total</td>
+        <td class="text-end fw-bold fs-6">{{ total | currency:'$':'symbol':'1.2-2' }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+</div>

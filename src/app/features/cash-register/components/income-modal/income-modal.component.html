@@ -1,0 +1,80 @@
+<!-- Modal 3: Registrar Ingreso Adicional -->
+<div class="modal-backdrop fade show" style="z-index:1040;"></div>
+<div class="modal fade show d-block" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow-lg">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-arrow-down-circle text-primary me-2"></i>Registrar Ingreso Adicional
+        </h5>
+        <button type="button" class="btn-close" (click)="cancel()"></button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="register()">
+        <div class="modal-body">
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Monto del Ingreso *</label>
+            <div class="input-group">
+              <span class="input-group-text fw-bold">$</span>
+              <input type="number" class="form-control form-control-lg fw-bold"
+                formControlName="amount" min="0.01" step="0.01" placeholder="0.00"/>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Concepto *</label>
+            <select class="form-select" formControlName="concept">
+              <option *ngFor="let c of concepts" [value]="c.value">{{ c.label }}</option>
+            </select>
+          </div>
+
+          <div class="mb-3" *ngIf="showCustomConcept">
+            <label class="form-label fw-semibold">Descripción del ingreso *</label>
+            <input type="text" class="form-control" formControlName="customConcept"
+              placeholder="Describa el ingreso..."/>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Método de Pago *</label>
+            <div class="d-flex flex-wrap gap-2">
+              <label *ngFor="let pm of paymentMethods"
+                class="btn btn-sm"
+                [class.btn-primary]="form.value.paymentMethod === pm[0]"
+                [class.btn-outline-secondary]="form.value.paymentMethod !== pm[0]">
+                <input type="radio" class="d-none" formControlName="paymentMethod" [value]="pm[0]"/>
+                {{ pm[1] }}
+              </label>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Observaciones <small class="text-muted fw-normal">(opcional)</small>
+            </label>
+            <textarea class="form-control" formControlName="observations"
+              rows="2" placeholder="Notas adicionales..."></textarea>
+          </div>
+
+          <div class="alert alert-success d-flex justify-content-between align-items-center py-2 mb-0">
+            <small class="fw-semibold">Nuevo total esperado en caja:</small>
+            <strong>{{ newTotal | currency:'$':'symbol':'1.2-2' }}</strong>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            <i class="bi bi-x-circle me-1"></i>Cancelar
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || isLoading">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!isLoading" class="bi bi-check-circle me-1"></i>
+            {{ isLoading ? 'Registrando...' : 'Registrar Ingreso' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>

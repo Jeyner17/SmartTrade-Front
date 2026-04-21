@@ -1,0 +1,23 @@
+/* Step pill nav for the close wizard */
+.step-pill {
+  padding: 0.3rem 0.9rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: var(--gray-100, #f1f5f9);
+  color: var(--gray-500, #64748b);
+  white-space: nowrap;
+}
+.step-pill.active {
+  background: var(--primary, #2563EB);
+  color: #fff;
+}
+.step-pill.done {
+  background: var(--success-light, #d1fae5);
+  color: var(--success-dark, #059669);
+}
+
+.highlight-card {
+  border-left: 4px solid var(--primary, #2563EB) !important;
+  background: var(--primary-lighter, #eff6ff) !important;
+}

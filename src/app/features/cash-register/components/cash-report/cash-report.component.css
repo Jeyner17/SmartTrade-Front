@@ -1,0 +1,6 @@
+/* Report - only print styles */
+@media print {
+  .no-print { display: none !important; }
+  section.container-fluid { padding: 0 !important; }
+  .report-document { box-shadow: none !important; border: none !important; }
+}

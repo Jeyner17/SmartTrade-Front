@@ -1,0 +1,111 @@
+<!-- Modal 5: Retiro a Caja Fuerte -->
+<div class="modal-backdrop fade show" style="z-index:1040;"></div>
+<div class="modal fade show d-block" style="z-index:1050;" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow-lg">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="bi bi-safe2 text-warning me-2"></i>Retiro a Caja Fuerte
+        </h5>
+        <button type="button" class="btn-close" (click)="cancel()"></button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="register()">
+        <div class="modal-body">
+
+          <!-- Estado de caja -->
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <div class="card card-success">
+                <div class="card-body py-3 text-center">
+                  <p class="text-muted small mb-1">Efectivo en Caja</p>
+                  <div class="fw-bold fs-5 text-success">{{ currentCash | currency:'$':'symbol':'1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="card" [class.card-danger]="remainingCash < 0">
+                <div class="card-body py-3 text-center">
+                  <p class="text-muted small mb-1">Quedará en Caja</p>
+                  <div class="fw-bold fs-5" [class.text-danger]="remainingCash < 0">
+                    {{ remainingCash | currency:'$':'symbol':'1.2-2' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recomendación -->
+          <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
+            <i class="bi bi-info-circle-fill flex-shrink-0"></i>
+            <span>
+              Se recomienda máximo ${{ maxRecommended }} en caja.
+              <button type="button" class="btn btn-link btn-sm p-0 ms-1 fw-semibold"
+                (click)="useSuggested()">
+                Usar sugerido (${{ suggestedWithdrawal | number:'1.2-2' }})
+              </button>
+            </span>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Monto a retirar *</label>
+            <div class="input-group">
+              <span class="input-group-text fw-bold">$</span>
+              <input type="number" class="form-control form-control-lg fw-bold"
+                formControlName="amount" min="0.01" step="0.01" placeholder="0.00"/>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">
+              Desglose por denominaciones <small class="text-muted fw-normal">(opcional)</small>
+            </label>
+            <div class="bg-light rounded p-3">
+              <app-denomination-calculator
+                [denominations]="denominations"
+                (totalChange)="onTotalChange($event)"
+                (denominationsChange)="onDenominationsChange($event)">
+              </app-denomination-calculator>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Recibido por *</label>
+              <input type="text" class="form-control" formControlName="receivedBy"
+                placeholder="Nombre de quien recibe"/>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">
+                Código de autorización <small class="text-muted fw-normal">(opcional)</small>
+              </label>
+              <input type="text" class="form-control" formControlName="authCode"
+                placeholder="Código o firma digital"/>
+            </div>
+          </div>
+
+          <div class="mb-0">
+            <label class="form-label fw-semibold">
+              Observaciones <small class="text-muted fw-normal">(opcional)</small>
+            </label>
+            <textarea class="form-control" formControlName="observations" rows="2"></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">
+            <i class="bi bi-x-circle me-1"></i>Cancelar
+          </button>
+          <button type="submit" class="btn btn-warning fw-bold"
+            [disabled]="form.invalid || isLoading || remainingCash < 0">
+            <span *ngIf="isLoading" class="spinner-border spinner-border-sm me-1"></span>
+            <i *ngIf="!isLoading" class="bi bi-safe2 me-1"></i>
+            {{ isLoading ? 'Procesando...' : 'Confirmar Retiro' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>

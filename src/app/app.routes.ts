@@ -116,6 +116,14 @@ export const routes: Routes = [
         data: { module: MODULES.BARCODES }
       },
 
+      // Sprint 14: Gestión de Caja
+      {
+        path: 'cash-register',
+        loadChildren: () => import('./features/cash-register/cash-register.routes')
+          .then(m => m.CASH_REGISTER_ROUTES),
+        data: { module: MODULES.CASH_REGISTER }
+      },
+
       // Cambiar contraseña (accesible para cualquier usuario autenticado)
       {
         path: 'change-password',

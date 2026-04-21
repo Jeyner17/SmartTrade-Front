@@ -1,0 +1,101 @@
+<!-- Pantalla 1: Apertura de Caja -->
+<div>
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1">
+        <i class="bi bi-cash-coin text-primary me-2"></i>Apertura de Caja
+      </h2>
+      <p class="text-muted mb-0">
+        {{ getGreeting() }}, {{ cashierName }} —
+        {{ currentDate | date:'EEEE d \'de\' MMMM, HH:mm':'':'es' }}
+      </p>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="openCash()">
+    <div class="row g-4">
+
+      <!-- Información del turno -->
+      <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header">
+            <i class="bi bi-info-circle"></i> Información del Turno
+          </div>
+          <div class="card-body">
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Número de Caja</label>
+              <div class="d-flex gap-2 flex-wrap">
+                <button type="button" *ngFor="let n of cashNumbers"
+                  class="btn btn-sm"
+                  [class.btn-primary]="form.value.cashNumber === n"
+                  [class.btn-outline-secondary]="form.value.cashNumber !== n"
+                  style="width:44px;height:44px;"
+                  (click)="form.patchValue({ cashNumber: n })">{{ n }}</button>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Monto de Base Inicial</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white fw-bold">$</span>
+                <input type="number" class="form-control form-control-lg fw-bold"
+                  formControlName="initialAmount" min="0" step="0.01" placeholder="0.00"/>
+              </div>
+              <div class="form-text">
+                <i class="bi bi-info-circle me-1"></i>
+                Use la calculadora de denominaciones para calcular automáticamente
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">
+                Observaciones <span class="text-muted fw-normal">(opcional)</span>
+              </label>
+              <textarea class="form-control" formControlName="observations"
+                rows="3" placeholder="Notas del inicio de turno..."></textarea>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Calculadora de denominaciones -->
+      <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header">
+            <i class="bi bi-cash-coin"></i> Calculadora de Denominaciones
+          </div>
+          <div class="card-body">
+            <p class="text-muted small mb-3">
+              Ingrese la cantidad de cada denominación del fondo inicial.
+            </p>
+            <app-denomination-calculator
+              [denominations]="denominations"
+              (totalChange)="onTotalChange($event)"
+              (denominationsChange)="onDenominationsChange($event)">
+            </app-denomination-calculator>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Botón Abrir Caja -->
+    <div class="d-flex justify-content-center mt-4">
+      <button type="submit" class="btn btn-success btn-lg px-5 py-3 fw-bold shadow-sm"
+        [disabled]="form.invalid || isLoading">
+        <span *ngIf="!isLoading">
+          <i class="bi bi-unlock-fill me-2"></i>Abrir Caja
+        </span>
+        <span *ngIf="isLoading">
+          <span class="spinner-border spinner-border-sm me-2"></span>Abriendo...
+        </span>
+      </button>
+    </div>
+
+  </form>
+</div>
+

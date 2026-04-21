@@ -1,0 +1,175 @@
+<!-- Pantalla 8: Historial de Cierres de Caja -->
+<div>
+
+  <!-- Encabezado -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-0">
+        <i class="bi bi-clock-history me-2 text-primary"></i>Historial de Caja
+      </h2>
+      <p class="text-muted small mb-0 mt-1">Consulta y análisis de sesiones de caja cerradas</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-primary" routerLink="/cash-register">
+        <i class="bi bi-plus-circle me-1"></i>Nueva Apertura
+      </a>
+      <button class="btn btn-outline-secondary" (click)="exportExcel()">
+        <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+      </button>
+    </div>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm card-primary">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icon-circle icon-circle-primary"><i class="bi bi-graph-up"></i></div>
+          <div>
+            <div class="text-muted small">Total Vendido</div>
+            <div class="fw-bold">{{ totalSales | currency:'$':'symbol':'1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm card-info">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icon-circle icon-circle-info"><i class="bi bi-bar-chart"></i></div>
+          <div>
+            <div class="text-muted small">Promedio por Turno</div>
+            <div class="fw-bold">{{ avgSales | currency:'$':'symbol':'1.2-2' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm" [class.card-danger]="sessionsWithDiff > 0">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icon-circle icon-circle-danger"><i class="bi bi-exclamation-triangle"></i></div>
+          <div>
+            <div class="text-muted small">Turnos con Diferencias</div>
+            <div class="fw-bold" [class.text-danger]="sessionsWithDiff > 0">{{ sessionsWithDiff }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm card-success">
+        <div class="card-body py-3 d-flex align-items-center gap-3">
+          <div class="icon-circle icon-circle-success"><i class="bi bi-award"></i></div>
+          <div>
+            <div class="text-muted small">Cajero Mayor Volumen</div>
+            <div class="fw-bold small">{{ topCashier }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <form [formGroup]="filterForm" (ngSubmit)="loadHistory()">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-semibold small">Desde</label>
+            <input type="date" class="form-control" formControlName="startDate"/>
+          </div>
+          <div class="col-12 col-md-3">
+            <label class="form-label fw-semibold small">Hasta</label>
+            <input type="date" class="form-control" formControlName="endDate"/>
+          </div>
+          <div class="col-12 col-md-2">
+            <label class="form-label fw-semibold small">N° de Caja</label>
+            <select class="form-select" formControlName="cashNumber">
+              <option value="">Todas</option>
+              <option *ngFor="let n of cashNumbers" [value]="n">Caja {{ n }}</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-2 d-flex align-items-end pb-1">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" formControlName="withDifferences" id="diffCheck"/>
+              <label class="form-check-label fw-medium small" for="diffCheck">Solo con diferencias</label>
+            </div>
+          </div>
+          <div class="col-12 col-md-2">
+            <button type="submit" class="btn btn-primary w-100" [disabled]="isLoading">
+              <i class="bi bi-search me-1"></i>Buscar
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabla de historial -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span><i class="bi bi-table"></i> Sesiones de Caja</span>
+      <span class="badge bg-primary rounded-pill">{{ sessions.length }} registros</span>
+    </div>
+    <div class="card-body p-0">
+
+      <div *ngIf="isLoading" class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="text-muted mt-3">Cargando historial...</p>
+      </div>
+
+      <div *ngIf="!isLoading" class="table-responsive">
+        <table class="table table-hover align-middle mb-0" *ngIf="sessions.length; else noData">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4">Fecha</th>
+              <th>Caja</th>
+              <th>Cajero</th>
+              <th>Apertura</th>
+              <th>Cierre</th>
+              <th>Duración</th>
+              <th class="text-end">Total Ventas</th>
+              <th class="text-end">Diferencia</th>
+              <th class="text-center pe-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let s of sessions"
+              [class.table-success]="s.differenceType === 'surplus'"
+              [class.table-danger]="s.differenceType === 'shortage'">
+              <td class="ps-4 small">{{ s.openedAt | date:'dd/MM/yyyy' }}</td>
+              <td><span class="badge bg-secondary rounded-pill">Caja {{ s.cashNumber }}</span></td>
+              <td class="small">{{ s.cashierName }}</td>
+              <td class="small text-muted">{{ s.openedAt | date:'HH:mm' }}</td>
+              <td class="small text-muted">{{ s.closedAt  | date:'HH:mm' }}</td>
+              <td class="small text-muted">{{ formatDuration(s.durationMinutes) }}</td>
+              <td class="text-end fw-bold">{{ s.totalSales | currency:'$':'symbol':'1.2-2' }}</td>
+              <td class="text-end">
+                <span class="badge rounded-pill px-3"
+                  [class.bg-success-subtle]="s.differenceType === 'surplus'"
+                  [class.text-success]="s.differenceType === 'surplus'"
+                  [class.bg-danger-subtle]="s.differenceType === 'shortage'"
+                  [class.text-danger]="s.differenceType === 'shortage'"
+                  [class.bg-light]="s.differenceType === 'exact'"
+                  [class.text-muted]="s.differenceType === 'exact'">
+                  {{ getDiffLabel(s) }}
+                </span>
+              </td>
+              <td class="text-center pe-4">
+                <a [routerLink]="['/cash-register/report', s.id]" class="btn btn-outline-info btn-sm" title="Ver reporte">
+                  <i class="bi bi-eye"></i>
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <ng-template #noData>
+          <div class="text-center py-5">
+            <i class="bi bi-inbox fs-1 text-muted d-block mb-2"></i>
+            <p class="text-muted mb-0">No se encontraron sesiones con los filtros seleccionados.</p>
+          </div>
+        </ng-template>
+      </div>
+
+    </div>
+  </div>
+
+</div>
