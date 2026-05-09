@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil, timer, switchMap, catchError, of } from 'rxjs';
 
 import { ExpenseService } from '../../services/expense.service';
 import { AlertService } from '../../../../core/services/alert.service';
@@ -51,6 +51,8 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
   private searchSubject = new Subject<string>();
+  private readonly POLL_INTERVAL_MS = 30_000; // Refresca tarjetas cada 30 s
+  lastUpdated: Date = new Date();
 
   constructor(
     private expenseService: ExpenseService,
@@ -63,7 +65,38 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
     this.setCurrentMonth();
     this.loadCategories();
     this.loadExpenses();
-    this.loadSummary();
+
+    // Polling en tiempo real: ejecuta inmediatamente y luego cada POLL_INTERVAL_MS
+    timer(0, this.POLL_INTERVAL_MS)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() => {
+          this.lastUpdated = new Date();
+          return this.expenseService.getTotalByPeriod(this.filters.startDate, this.filters.endDate)
+            .pipe(catchError(err => { console.error('[Resumen] totalByPeriod error:', err); return of({ total: 0, avgDaily: 0 }); }));
+        })
+      )
+      .subscribe({ next: r => this.totalReport = r });
+
+    timer(0, this.POLL_INTERVAL_MS)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() =>
+          this.expenseService.getExpensesByCategory(this.filters.startDate, this.filters.endDate)
+            .pipe(catchError(err => { console.error('[Resumen] expensesByCategory error:', err); return of([]); }))
+        )
+      )
+      .subscribe({ next: items => this.topCategory = items.sort((a, b) => b.total - a.total)[0] });
+
+    timer(0, this.POLL_INTERVAL_MS)
+      .pipe(
+        takeUntil(this.destroy$),
+        switchMap(() =>
+          this.expenseService.getHighestExpense(this.filters.startDate, this.filters.endDate)
+            .pipe(catchError(err => { console.error('[Resumen] highestExpense error:', err); return of(undefined); }))
+        )
+      )
+      .subscribe({ next: exp => this.highestExpense = exp });
 
     this.searchSubject.pipe(
       debounceTime(350),
@@ -105,7 +138,6 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
         this.expenses = res.rows;
         this.totalCount = res.count;
         this.totalPages = Math.ceil(res.count / this.pageSize);
-        this.highestExpense = [...res.rows].sort((a, b) => b.amount - a.amount)[0];
         this.applyLocalFilter();
         this.loading = false;
       },
@@ -117,6 +149,7 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
   }
 
   loadSummary(): void {
+    this.lastUpdated = new Date();
     this.expenseService.getTotalByPeriod(this.filters.startDate, this.filters.endDate)
       .subscribe({ next: r => this.totalReport = r });
 
@@ -126,6 +159,9 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
           this.topCategory = items.sort((a, b) => b.total - a.total)[0];
         }
       });
+
+    this.expenseService.getHighestExpense(this.filters.startDate, this.filters.endDate)
+      .subscribe({ next: exp => this.highestExpense = exp });
   }
 
   // ── Filtros ───────────────────────────────────────────────────────────────
@@ -244,7 +280,67 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
   }
 
   exportExcel(): void {
-    this.alertService.info('Funcionalidad de exportación disponible próximamente');
+    if (!this.filteredExpenses || this.filteredExpenses.length === 0) {
+      this.alertService.info('No hay datos para exportar en el período seleccionado.');
+      return;
+    }
+
+    // Encabezados
+    const headers = ['Fecha', 'Categoría', 'Concepto', 'Monto (USD)', 'Método de Pago', 'Nº Comprobante', 'Notas'];
+
+    // Filas de datos
+    const rows = this.filteredExpenses.map(exp => [
+      this.formatDate(exp.date),
+      exp.category?.name ?? '—',
+      exp.concept,
+      Number(exp.amount).toFixed(2),
+      this.getPaymentLabel(exp.paymentMethod),
+      exp.receiptNumber ?? '—',
+      exp.notes ?? ''
+    ]);
+
+    // Construye tabla HTML que Excel interpreta como .xls nativo
+    const tableHtml = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office"
+            xmlns:x="urn:schemas-microsoft-com:office:excel"
+            xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="UTF-8">
+        <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+          <x:ExcelWorksheet><x:Name>Gastos Operativos</x:Name>
+          <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+          </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+      </head>
+      <body>
+        <table border="1">
+          <thead>
+            <tr style="background:#d32f2f;color:#fff;font-weight:bold;">
+              ${headers.map(h => `<th>${h}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row, i) => `
+              <tr style="background:${i % 2 === 0 ? '#fff' : '#f5f5f5'}">
+                ${row.map(cell => `<td>${cell}</td>`).join('')}
+              </tr>`).join('')}
+            <tr style="font-weight:bold;background:#ffeaea;">
+              <td colspan="3">TOTAL</td>
+              <td>${this.filteredExpenses.reduce((s, e) => s + Number(e.amount), 0).toFixed(2)}</td>
+              <td colspan="3"></td>
+            </tr>
+          </tbody>
+        </table>
+      </body></html>`;
+
+    const blob = new Blob([tableHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const now  = new Date();
+    const stamp = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+    a.href     = url;
+    a.download = `gastos_operativos_${stamp}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.alertService.success(`Archivo exportado: ${this.filteredExpenses.length} registros`);
   }
 
   // ── Formato ───────────────────────────────────────────────────────────────
@@ -255,9 +351,11 @@ export class ExpenseListComponent implements OnInit, OnDestroy {
 
   formatDate(dateStr: string): string {
     if (!dateStr) return '—';
-    return new Date(dateStr + 'T00:00:00').toLocaleDateString('es-SV', {
-      day: '2-digit', month: 'short', year: 'numeric'
-    });
+    const d = new Date(dateStr + 'T00:00:00');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yy = String(d.getFullYear()).slice(2);
+    return `${dd}/${mm}/${yy}`;
   }
 
   getPaymentLabel(method: PaymentMethod): string {

@@ -25,7 +25,14 @@
   </div>
 
   <!-- ── TARJETAS DE RESUMEN ────────────────────────────────────── -->
+  <div class="d-flex align-items-center justify-content-end mb-2">
+    <span class="realtime-badge">
+      <span class="realtime-dot"></span>
+      En tiempo real &nbsp;·&nbsp; Actualizado: {{ lastUpdated | date:'HH:mm:ss' }}
+    </span>
+  </div>
   <div class="row g-3 mb-4">
+    <!-- Total del periodo -->
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="summary-card card border-0 shadow-sm">
         <div class="card-body">
@@ -33,14 +40,15 @@
             <div class="summary-icon bg-danger-subtle text-danger">
               <i class="bi bi-wallet2"></i>
             </div>
-            <div>
-              <p class="summary-label mb-0">Total del periodo</p>
+            <div class="flex-fill">
+              <p class="summary-label mb-1">Total gastado en el periodo</p>
               <h4 class="summary-value mb-0">{{ formatCurrency(totalReport.total) }}</h4>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- Promedio diario -->
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="summary-card card border-0 shadow-sm">
         <div class="card-body">
@@ -48,14 +56,15 @@
             <div class="summary-icon bg-warning-subtle text-warning">
               <i class="bi bi-calendar-day"></i>
             </div>
-            <div>
-              <p class="summary-label mb-0">Promedio diario</p>
+            <div class="flex-fill">
+              <p class="summary-label mb-1">Promedio diario</p>
               <h4 class="summary-value mb-0">{{ formatCurrency(totalReport.avgDaily) }}</h4>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- Gasto más alto -->
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="summary-card card border-0 shadow-sm">
         <div class="card-body">
@@ -63,16 +72,26 @@
             <div class="summary-icon bg-primary-subtle text-primary">
               <i class="bi bi-arrow-up-circle"></i>
             </div>
-            <div>
-              <p class="summary-label mb-0">Gasto más alto</p>
-              <h4 class="summary-value mb-0">{{ formatCurrency(highestExpense?.amount || 0) }}</h4>
-              <small class="text-muted text-truncate d-block" style="max-width:140px"
-                     [title]="highestExpense?.concept">{{ highestExpense?.concept || '—' }}</small>
+            <div class="flex-fill min-w-0">
+              <p class="summary-label mb-1">Gasto más alto</p>
+              <h4 class="summary-value mb-0" *ngIf="highestExpense; else noHighest">
+                {{ formatCurrency(highestExpense.amount) }}
+              </h4>
+              <small class="text-muted text-truncate d-block"
+                     *ngIf="highestExpense"
+                     [title]="highestExpense.concept"
+                     style="max-width:180px">
+                ({{ highestExpense.concept }})
+              </small>
+              <ng-template #noHighest>
+                <h4 class="summary-value mb-0 text-muted">$0.00</h4>
+              </ng-template>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- Categoría con más gastos -->
     <div class="col-12 col-sm-6 col-xl-3">
       <div class="summary-card card border-0 shadow-sm">
         <div class="card-body">
@@ -80,15 +99,25 @@
             <div class="summary-icon bg-success-subtle text-success">
               <i class="bi bi-tags"></i>
             </div>
-            <div>
-              <p class="summary-label mb-0">Mayor categoría</p>
-              <h4 class="summary-value mb-0 fs-6">{{ topCategory?.category?.name || '—' }}</h4>
+            <div class="flex-fill min-w-0">
+              <p class="summary-label mb-1">Categoría con más gastos</p>
+              <h4 class="summary-value mb-0 fs-6 text-truncate" *ngIf="topCategory; else noCat"
+                  [title]="topCategory.category?.name">
+                {{ topCategory.category?.name || '—' }}
+              </h4>
+              <small class="text-muted" *ngIf="topCategory">
+                {{ formatCurrency(topCategory.total) }} total
+              </small>
+              <ng-template #noCat>
+                <h4 class="summary-value mb-0 fs-6 text-muted">Sin datos</h4>
+              </ng-template>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+
 
   <!-- ── FILTROS ────────────────────────────────────────────────── -->
   <div class="card border-0 shadow-sm mb-3">
@@ -107,12 +136,12 @@
         <div class="col-6 col-md-2" *ngIf="quickPeriod === 'custom'">
           <label class="form-label small mb-1 fw-semibold">Desde</label>
           <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.startDate"
-                 (change)="loadExpenses()">
+                 (change)="loadExpenses(); loadSummary()">
         </div>
         <div class="col-6 col-md-2" *ngIf="quickPeriod === 'custom'">
           <label class="form-label small mb-1 fw-semibold">Hasta</label>
           <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.endDate"
-                 (change)="loadExpenses()">
+                 (change)="loadExpenses(); loadSummary()">
         </div>
         <!-- Categoría -->
         <div class="col-12 col-md-2">

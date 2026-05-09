@@ -111,6 +111,13 @@ export class ExpenseService {
       .pipe(map(r => r.data ?? { total: 0, avgDaily: 0 }));
   }
 
+  /** Devuelve el gasto con el monto más alto del periodo */
+  getHighestExpense(startDate?: string, endDate?: string): Observable<Expense | undefined> {
+    const url = `${BASE_URL}${ENDPOINTS.EXPENSES_EXPENSES}`;
+    return this.http.get<ExpenseListResponse>(url, { startDate, endDate, limit: 1, page: 1, sortBy: 'amount', sortDir: 'DESC' })
+      .pipe(map(r => (r.data?.rows ?? [])[0]));
+  }
+
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   /** Devuelve la URL completa del comprobante */
