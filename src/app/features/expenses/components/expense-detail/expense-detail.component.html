@@ -1,0 +1,171 @@
+<div class="expense-detail-page">
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-danger"></div>
+    <p class="text-muted mt-2">Cargando detalle...</p>
+  </div>
+
+  <ng-container *ngIf="!loading && expense">
+
+    <!-- ── ENCABEZADO ─────────────────────────────────────────────── -->
+    <div class="page-header d-flex justify-content-between align-items-start mb-4 flex-wrap gap-2">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a routerLink="/expenses">Gastos</a></li>
+            <li class="breadcrumb-item active">Detalle</li>
+          </ol>
+        </nav>
+        <h1 class="page-title mb-0">
+          <i class="bi bi-file-text me-2 text-danger"></i>{{ expense.concept }}
+        </h1>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-outline-secondary" (click)="goBack()">
+          <i class="bi bi-arrow-left me-1"></i>Volver
+        </button>
+        <button class="btn btn-outline-secondary" (click)="print()">
+          <i class="bi bi-printer me-1"></i>Imprimir
+        </button>
+        <button class="btn btn-outline-warning" (click)="edit()">
+          <i class="bi bi-pencil me-1"></i>Editar
+        </button>
+        <button class="btn btn-outline-danger" (click)="confirmDelete()">
+          <i class="bi bi-trash me-1"></i>Eliminar
+        </button>
+      </div>
+    </div>
+
+    <div class="row g-4">
+
+      <!-- ── MONTO PRINCIPAL ────────────────────────────────────── -->
+      <div class="col-12">
+        <div class="amount-card card border-0 shadow">
+          <div class="card-body text-center py-4">
+            <p class="text-muted mb-1 text-uppercase small fw-semibold letter-spacing">Monto del gasto</p>
+            <h1 class="amount-display text-danger mb-2">{{ formatCurrency(expense.amount) }}</h1>
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+              <span class="badge bg-secondary-subtle text-secondary fs-6">
+                <i class="bi bi-tags me-1"></i>{{ expense.category?.name || '—' }}
+              </span>
+              <span class="badge fs-6" [ngClass]="getPaymentBadgeClass(expense.paymentMethod)">
+                <i class="bi me-1" [ngClass]="getPaymentIcon(expense.paymentMethod)"></i>
+                {{ getPaymentLabel(expense.paymentMethod) }}
+              </span>
+              <span class="badge bg-light text-dark fs-6">
+                <i class="bi bi-calendar3 me-1"></i>{{ formatDate(expense.date) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DETALLES ────────────────────────────────────────────── -->
+      <div class="col-12 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom fw-semibold">
+            <i class="bi bi-info-circle me-2 text-primary"></i>Información del Gasto
+          </div>
+          <div class="card-body">
+            <dl class="row detail-list mb-0">
+              <dt class="col-5">Fecha</dt>
+              <dd class="col-7">{{ formatDate(expense.date) }}</dd>
+
+              <dt class="col-5">Categoría</dt>
+              <dd class="col-7">
+                <span class="badge bg-secondary-subtle text-secondary">{{ expense.category?.name || '—' }}</span>
+                <small class="d-block text-muted" *ngIf="expense.category?.description">
+                  {{ expense.category?.description }}
+                </small>
+              </dd>
+
+              <dt class="col-5">Tipo categoría</dt>
+              <dd class="col-7">
+                <span class="badge" [ngClass]="expense.category?.type === 'FIXED' ? 'bg-primary-subtle text-primary' : 'bg-success-subtle text-success'">
+                  {{ expense.category?.type === 'FIXED' ? 'Fijo' : 'Variable' }}
+                </span>
+              </dd>
+
+              <dt class="col-5">Concepto</dt>
+              <dd class="col-7 fw-semibold">{{ expense.concept }}</dd>
+
+              <dt class="col-5">Nro. Comprobante</dt>
+              <dd class="col-7">{{ expense.receiptNumber || '—' }}</dd>
+
+              <dt class="col-5">Proveedor</dt>
+              <dd class="col-7">{{ expense.supplier?.name || '—' }}</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── REGISTRO / OBSERVACIONES ───────────────────────────── -->
+      <div class="col-12 col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom fw-semibold">
+            <i class="bi bi-clock-history me-2 text-warning"></i>Registro
+          </div>
+          <div class="card-body">
+            <dl class="row detail-list mb-0">
+              <dt class="col-5">Registrado por</dt>
+              <dd class="col-7">
+                <span class="fw-semibold">{{ expense.createdByUser?.username || '—' }}</span>
+              </dd>
+
+              <dt class="col-5">Fecha de registro</dt>
+              <dd class="col-7">{{ formatDateTime(expense.createdAt) }}</dd>
+
+              <dt class="col-5">Última edición</dt>
+              <dd class="col-7">{{ formatDateTime(expense.updatedAt) }}</dd>
+            </dl>
+
+            <hr *ngIf="expense.notes">
+            <div *ngIf="expense.notes">
+              <p class="fw-semibold mb-1 small text-uppercase text-muted">Observaciones</p>
+              <p class="mb-0">{{ expense.notes }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── COMPROBANTE ────────────────────────────────────────── -->
+      <div class="col-12" *ngIf="expense.receipts && expense.receipts.length > 0">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-bottom fw-semibold d-flex justify-content-between">
+            <span><i class="bi bi-paperclip me-2 text-success"></i>Comprobante adjunto</span>
+            <a [href]="getReceiptUrl(expense.receipts[0].fileUrl)" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-download me-1"></i>Descargar
+            </a>
+          </div>
+          <div class="card-body text-center">
+            <ng-container *ngIf="isImage(expense.receipts[0].mimeType)">
+              <img [src]="getReceiptUrl(expense.receipts[0].fileUrl)"
+                   [alt]="expense.receipts[0].fileName || 'Comprobante'"
+                   class="img-fluid rounded shadow-sm receipt-img">
+            </ng-container>
+            <ng-container *ngIf="!isImage(expense.receipts[0].mimeType)">
+              <div class="pdf-viewer-placeholder">
+                <i class="bi bi-file-earmark-pdf text-danger" style="font-size:4rem"></i>
+                <p class="mt-2 fw-semibold">{{ expense.receipts[0].fileName || 'Comprobante.pdf' }}</p>
+                <a [href]="getReceiptUrl(expense.receipts[0].fileUrl)" target="_blank"
+                   class="btn btn-outline-danger">
+                  <i class="bi bi-eye me-1"></i>Ver PDF
+                </a>
+              </div>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- Sin datos -->
+  <div *ngIf="!loading && !expense" class="text-center py-5">
+    <i class="bi bi-exclamation-triangle fs-1 text-warning"></i>
+    <p class="mt-2">Gasto no encontrado</p>
+    <a routerLink="/expenses" class="btn btn-primary">Volver a la lista</a>
+  </div>
+
+</div>

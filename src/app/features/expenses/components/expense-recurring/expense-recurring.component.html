@@ -1,0 +1,213 @@
+<div class="recurring-page">
+
+  <!-- ── ENCABEZADO ─────────────────────────────────────────────── -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+          <li class="breadcrumb-item"><a routerLink="/expenses">Gastos</a></li>
+          <li class="breadcrumb-item active">Recurrentes</li>
+        </ol>
+      </nav>
+      <h1 class="page-title mb-0">
+        <i class="bi bi-arrow-repeat me-2 text-info"></i>Gastos Recurrentes
+      </h1>
+      <p class="text-muted mb-0">Gastos programados que se repiten automáticamente</p>
+    </div>
+    <button class="btn btn-info text-white" (click)="openModal()">
+      <i class="bi bi-plus-circle me-1"></i>Programar Gasto
+    </button>
+  </div>
+
+  <!-- ── FILTRO ESTADO ───────────────────────────────────────────── -->
+  <div class="d-flex gap-2 mb-3">
+    <button class="btn btn-sm" [ngClass]="filterActive === null ? 'btn-dark' : 'btn-outline-secondary'"
+            (click)="setFilter(null)">Todos</button>
+    <button class="btn btn-sm" [ngClass]="filterActive === true ? 'btn-success' : 'btn-outline-success'"
+            (click)="setFilter(true)">
+      <i class="bi bi-play-circle me-1"></i>Activos
+    </button>
+    <button class="btn btn-sm" [ngClass]="filterActive === false ? 'btn-secondary' : 'btn-outline-secondary'"
+            (click)="setFilter(false)">
+      <i class="bi bi-pause-circle me-1"></i>Pausados
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-info"></div>
+    <p class="text-muted mt-2">Cargando gastos recurrentes...</p>
+  </div>
+
+  <!-- Sin datos -->
+  <div *ngIf="!loading && filteredRecurrings.length === 0" class="text-center py-5">
+    <i class="bi bi-calendar-x fs-1 text-muted d-block mb-2"></i>
+    <p class="text-muted">No hay gastos recurrentes programados</p>
+    <button class="btn btn-info text-white" (click)="openModal()">
+      <i class="bi bi-plus me-1"></i>Programar el primero
+    </button>
+  </div>
+
+  <!-- ── TARJETAS ────────────────────────────────────────────────── -->
+  <div class="row g-3" *ngIf="!loading && filteredRecurrings.length > 0">
+    <div class="col-12 col-md-6 col-xl-4" *ngFor="let r of filteredRecurrings">
+      <div class="recurring-card card border-0 shadow-sm h-100"
+           [ngClass]="{ 'opacity-65': !r.active }">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge" [ngClass]="r.active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'">
+              <i class="bi me-1" [ngClass]="r.active ? 'bi-play-circle' : 'bi-pause-circle'"></i>
+              {{ r.active ? 'Activo' : 'Pausado' }}
+            </span>
+            <span class="badge bg-info-subtle text-info">
+              {{ getFrequencyLabel(r.frequency) }}
+            </span>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="recurring-icon bg-info-subtle text-info">
+              <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div class="flex-grow-1 min-w-0">
+              <p class="fw-semibold mb-0 text-truncate" [title]="r.concept">{{ r.concept }}</p>
+              <small class="text-muted">{{ r.category?.name || 'Sin categoría' }}</small>
+            </div>
+            <div class="text-end">
+              <p class="fw-bold text-danger mb-0 fs-5">{{ formatCurrency(r.amount) }}</p>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center flex-wrap gap-1 mb-3">
+            <div>
+              <small class="text-muted d-block">Inicio</small>
+              <small class="fw-semibold">{{ formatDate(r.startDate) }}</small>
+            </div>
+            <i class="bi bi-arrow-right text-muted"></i>
+            <div class="text-end">
+              <small class="text-muted d-block">Próximo</small>
+              <small class="fw-semibold" [ngClass]="isOverdue(r.nextDate) ? 'text-danger' : 'text-success'">
+                {{ r.nextDate ? formatDate(r.nextDate) : '—' }}
+                <i class="bi bi-exclamation-circle-fill ms-1" *ngIf="isOverdue(r.nextDate)"></i>
+              </small>
+            </div>
+          </div>
+
+          <div class="d-flex gap-2">
+            <button class="btn btn-sm flex-grow-1"
+                    [ngClass]="r.active ? 'btn-outline-secondary' : 'btn-outline-success'"
+                    (click)="toggleStatus(r)" title="{{ r.active ? 'Pausar' : 'Activar' }}">
+              <i class="bi me-1" [ngClass]="r.active ? 'bi-pause' : 'bi-play'"></i>
+              {{ r.active ? 'Pausar' : 'Activar' }}
+            </button>
+            <button class="btn btn-sm btn-outline-danger" (click)="confirmDelete(r)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EJEMPLOS DE USO ─────────────────────────────────────────── -->
+  <div class="card border-0 shadow-sm mt-4" *ngIf="filteredRecurrings.length > 0">
+    <div class="card-body">
+      <h6 class="fw-bold text-muted mb-2"><i class="bi bi-lightbulb me-2"></i>Ejemplos de gastos recurrentes</h6>
+      <div class="row g-2">
+        <div class="col-12 col-md-4" *ngFor="let ex of examples">
+          <div class="example-item d-flex align-items-center gap-2 p-2 rounded">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <small>{{ ex }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── MODAL: PROGRAMAR GASTO RECURRENTE ──────────────────────── -->
+<div class="modal fade" id="recurringModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-arrow-repeat me-2"></i>Programar Gasto Recurrente
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="form">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="categoryId"
+                      [ngClass]="{ 'is-invalid': isInvalid('categoryId') }">
+                <option value="">Seleccionar...</option>
+                <option *ngFor="let c of categories" [value]="c.id">{{ c.name }}</option>
+              </select>
+              <div class="invalid-feedback">Requerido</div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Concepto <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="concept"
+                     placeholder="Ej: Alquiler del local"
+                     [ngClass]="{ 'is-invalid': isInvalid('concept') }">
+              <div class="invalid-feedback">Requerido</div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Monto <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" formControlName="amount"
+                       min="0.01" step="0.01" placeholder="0.00"
+                       [ngClass]="{ 'is-invalid': isInvalid('amount') }">
+              </div>
+              <div class="invalid-feedback">Monto requerido</div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Frecuencia <span class="text-danger">*</span></label>
+              <select class="form-select" formControlName="frequency"
+                      [ngClass]="{ 'is-invalid': isInvalid('frequency') }">
+                <option value="MONTHLY">📅 Mensual</option>
+                <option value="BIWEEKLY">📅 Quincenal</option>
+                <option value="WEEKLY">📅 Semanal</option>
+              </select>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Fecha de inicio <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" formControlName="startDate"
+                     [ngClass]="{ 'is-invalid': isInvalid('startDate') }">
+              <div class="invalid-feedback">Requerido</div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <label class="form-label fw-semibold">Vista previa</label>
+              <div class="preview-box p-2 rounded bg-light text-center">
+                <small class="text-muted">
+                  <strong>{{ form.get('concept')?.value || 'El gasto' }}</strong>
+                  se registrará
+                  <strong>{{ getFrequencyLabel(form.get('frequency')?.value) | lowercase }}</strong>
+                  por
+                  <strong class="text-danger">{{ formatCurrency(form.get('amount')?.value || 0) }}</strong>
+                </small>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-info text-white" (click)="save()"
+                [disabled]="saving || form.invalid">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!saving" class="bi bi-check-circle me-1"></i>
+          Programar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

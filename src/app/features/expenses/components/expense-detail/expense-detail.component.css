@@ -1,0 +1,13 @@
+.amount-card { border-radius: 16px; }
+.amount-display { font-size: 3rem; font-weight: 800; letter-spacing: -1px; }
+.letter-spacing { letter-spacing: 1.5px; }
+.detail-list dt { color: #6c757d; font-weight: 500; }
+.detail-list dd { font-weight: 400; }
+.receipt-img { max-height: 400px; object-fit: contain; }
+.pdf-viewer-placeholder { padding: 2rem; }
+.page-title { font-size: 1.5rem; font-weight: 700; }
+
+@media print {
+  .btn, nav, .breadcrumb { display: none !important; }
+  .card { box-shadow: none !important; border: 1px solid #dee2e6 !important; }
+}

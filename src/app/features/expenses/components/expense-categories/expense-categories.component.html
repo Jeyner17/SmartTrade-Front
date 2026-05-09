@@ -1,0 +1,196 @@
+<div class="categories-page">
+
+  <!-- ── ENCABEZADO ─────────────────────────────────────────────── -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+          <li class="breadcrumb-item"><a routerLink="/expenses">Gastos</a></li>
+          <li class="breadcrumb-item active">Categorías</li>
+        </ol>
+      </nav>
+      <h1 class="page-title mb-0">
+        <i class="bi bi-tags me-2 text-warning"></i>Categorías de Gastos
+      </h1>
+    </div>
+    <button class="btn btn-warning text-white" (click)="openModal()">
+      <i class="bi bi-plus-circle me-1"></i>Nueva Categoría
+    </button>
+  </div>
+
+  <!-- ── SUGERIDAS (solo si no hay categorías) ──────────────────── -->
+  <div class="alert alert-info border-0 shadow-sm mb-4" *ngIf="categories.length === 0 && !loading">
+    <div class="d-flex align-items-start gap-3">
+      <i class="bi bi-lightbulb fs-4"></i>
+      <div>
+        <strong>Sugerencia:</strong> Aún no tienes categorías. Puedes agregar las categorías comunes con un solo clic.
+        <div class="mt-2 d-flex flex-wrap gap-1">
+          <button *ngFor="let s of suggestedCategories" class="btn btn-sm btn-outline-info"
+                  (click)="createSuggested(s)">
+            {{ s.name }}
+          </button>
+        </div>
+        <button class="btn btn-info btn-sm text-white mt-2" (click)="createAllSuggested()"
+                [disabled]="creatingSuggested">
+          <span *ngIf="creatingSuggested" class="spinner-border spinner-border-sm me-1"></span>
+          Agregar todas las sugeridas
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FILTRO TIPO ─────────────────────────────────────────────── -->
+  <div class="d-flex gap-2 mb-3" *ngIf="categories.length > 0">
+    <button class="btn btn-sm" [ngClass]="filterType === '' ? 'btn-dark' : 'btn-outline-secondary'"
+            (click)="setFilter('')">Todas</button>
+    <button class="btn btn-sm" [ngClass]="filterType === 'FIXED' ? 'btn-primary' : 'btn-outline-primary'"
+            (click)="setFilter('FIXED')">
+      <i class="bi bi-pin-angle me-1"></i>Fijas
+    </button>
+    <button class="btn btn-sm" [ngClass]="filterType === 'VARIABLE' ? 'btn-success' : 'btn-outline-success'"
+            (click)="setFilter('VARIABLE')">
+      <i class="bi bi-shuffle me-1"></i>Variables
+    </button>
+  </div>
+
+  <!-- ── LOADING ────────────────────────────────────────────────── -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-warning"></div>
+    <p class="text-muted mt-2">Cargando categorías...</p>
+  </div>
+
+  <!-- ── TABLA ──────────────────────────────────────────────────── -->
+  <div class="card border-0 shadow-sm" *ngIf="!loading">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th class="ps-3">Categoría</th>
+              <th>Tipo</th>
+              <th class="text-center">Gastos</th>
+              <th class="text-end">Total (mes actual)</th>
+              <th class="text-center pe-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cat of filteredCategories">
+              <td class="ps-3">
+                <div class="d-flex align-items-center gap-2">
+                  <div class="cat-icon" [ngClass]="cat.type === 'FIXED' ? 'cat-fixed' : 'cat-variable'">
+                    <i class="bi" [ngClass]="cat.type === 'FIXED' ? 'bi-pin-angle' : 'bi-shuffle'"></i>
+                  </div>
+                  <div>
+                    <span class="fw-semibold">{{ cat.name }}</span>
+                    <small class="text-muted d-block" *ngIf="cat.description">{{ cat.description }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="cat.type === 'FIXED' ? 'bg-primary-subtle text-primary' : 'bg-success-subtle text-success'">
+                  {{ cat.type === 'FIXED' ? 'Fijo' : 'Variable' }}
+                </span>
+              </td>
+              <td class="text-center">
+                <span class="fw-semibold">{{ cat.expenseCount || 0 }}</span>
+              </td>
+              <td class="text-end fw-bold">
+                {{ formatCurrency(cat.totalLastMonth || 0) }}
+              </td>
+              <td class="text-center pe-3">
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-warning" (click)="openModal(cat)" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" (click)="confirmDelete(cat)"
+                          [disabled]="(cat.expenseCount || 0) > 0"
+                          [title]="(cat.expenseCount||0) > 0 ? 'No se puede eliminar: tiene gastos asociados' : 'Eliminar'">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="filteredCategories.length === 0">
+              <td colspan="5" class="text-center py-4 text-muted">
+                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                No hay categorías {{ filterType ? 'de este tipo' : '' }}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot class="table-light" *ngIf="filteredCategories.length > 0">
+            <tr>
+              <td colspan="3" class="ps-3 fw-semibold">Total</td>
+              <td class="text-end fw-bold text-danger">{{ formatCurrency(totalMonthAmount) }}</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── MODAL: CREAR / EDITAR CATEGORÍA ────────────────────────── -->
+<div class="modal fade" id="catModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-tags me-2"></i>{{ editingCategory ? 'Editar' : 'Nueva' }} Categoría
+        </h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="form" id="catForm">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="name"
+                   placeholder="Ej: Servicios Básicos"
+                   [ngClass]="{ 'is-invalid': isInvalid('name') }">
+            <div class="invalid-feedback">El nombre es requerido</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Descripción <span class="text-muted small">(opcional)</span></label>
+            <input type="text" class="form-control" formControlName="description"
+                   placeholder="Ej: Luz, agua, internet, gas">
+          </div>
+          <div class="mb-2">
+            <label class="form-label fw-semibold">Tipo de gasto</label>
+            <div class="row g-2 mt-1">
+              <div class="col-6">
+                <label class="type-card" [ngClass]="{ 'selected': form.get('type')?.value === 'FIXED' }">
+                  <input type="radio" formControlName="type" value="FIXED" class="d-none">
+                  <div class="text-center p-3">
+                    <i class="bi bi-pin-angle fs-2 text-primary d-block mb-1"></i>
+                    <strong>Fijo</strong>
+                    <small class="d-block text-muted">Se repite mensualmente</small>
+                  </div>
+                </label>
+              </div>
+              <div class="col-6">
+                <label class="type-card" [ngClass]="{ 'selected': form.get('type')?.value === 'VARIABLE' }">
+                  <input type="radio" formControlName="type" value="VARIABLE" class="d-none">
+                  <div class="text-center p-3">
+                    <i class="bi bi-shuffle fs-2 text-success d-block mb-1"></i>
+                    <strong>Variable</strong>
+                    <small class="d-block text-muted">Ocasional o irregular</small>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button class="btn btn-warning text-white" (click)="save()"
+                [disabled]="saving || form.invalid">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
+          <i *ngIf="!saving" class="bi bi-check-circle me-1"></i>
+          {{ saving ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

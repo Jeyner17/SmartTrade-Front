@@ -1,0 +1,32 @@
+.drop-zone {
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  transition: border-color .2s, background .2s;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.drop-zone.drag-over {
+  border-color: #0d6efd;
+  background: rgba(13,110,253,.05);
+}
+.receipt-preview img {
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 8px;
+}
+.pdf-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.action-bar {
+  border-radius: 12px;
+}
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
