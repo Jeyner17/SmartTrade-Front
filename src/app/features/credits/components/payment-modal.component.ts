@@ -28,8 +28,17 @@ export class PaymentModalComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['credit'] && !changes['credit'].firstChange) {
-      this.updateForm();
+    if (changes['credit'] && this.credit) {
+      // Asegurar que credit siempre tenga lateInterest
+      this.credit.lateInterest = this.credit.lateInterest || 0;
+      this.credit.outstandingBalance = Number(this.credit.outstandingBalance) || 0;
+      
+      if (!changes['credit'].firstChange) {
+        this.updateForm();
+      } else {
+        // Primera carga: inicializar con saldo total
+        this.updateAmount();
+      }
     }
   }
 
@@ -43,34 +52,42 @@ export class PaymentModalComponent implements OnInit, OnChanges {
       printReceipt: [false]
     });
 
-    this.paymentForm.get('paymentType')?.valueChanges.subscribe(() => this.updateAmount());
+    this.paymentForm.get('paymentType')?.valueChanges.subscribe(() => {
+      setTimeout(() => this.updateAmount(), 0);
+    });
   }
 
   updateForm(): void {
     if (this.credit) {
-      this.paymentForm.patchValue({
-        amount: this.credit.outstandingBalance
-      });
+      this.credit.lateInterest = this.credit.lateInterest || 0;
+      this.credit.outstandingBalance = Number(this.credit.outstandingBalance) || 0;
+      this.updateAmount();
     }
   }
 
   updateAmount(): void {
+    if (!this.credit) return;
+    
     if (this.paymentForm.value.paymentType === 'total') {
+      const totalAmount = Number(this.credit.outstandingBalance || 0) + Number(this.credit.lateInterest || 0);
       this.paymentForm.patchValue({
-        amount: this.credit.outstandingBalance + (this.credit.lateInterest || 0)
-      });
+        amount: totalAmount
+      }, { emitEvent: false });
     }
   }
 
   calculateNewBalance(): number {
-    const currentAmount = this.paymentForm.value.amount || 0;
-    const current = this.credit.outstandingBalance + (this.credit.lateInterest || 0);
+    if (!this.credit) return 0;
+    const currentAmount = this.paymentForm?.value?.amount || 0;
+    const current = Number(this.credit.outstandingBalance || 0) + Number(this.credit.lateInterest || 0);
     return Math.max(0, current - currentAmount);
   }
 
   validateAmount(): string | null {
-    const amount = this.paymentForm.value.amount;
-    const maxAmount = this.credit.outstandingBalance + (this.credit.lateInterest || 0);
+    if (!this.credit) return 'Datos del crédito no disponibles';
+    
+    const amount = this.paymentForm?.value?.amount || 0;
+    const maxAmount = Number(this.credit.outstandingBalance || 0) + Number(this.credit.lateInterest || 0);
     
     if (amount > maxAmount) {
       return `El monto no puede ser mayor a $${maxAmount.toFixed(2)}`;

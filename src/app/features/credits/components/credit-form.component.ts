@@ -53,7 +53,7 @@ export class CreditFormComponent implements OnInit, OnDestroy {
 
   loadCustomersAndSales(): void {
     this.isLoading = true;
-    
+
     // Cargar clientes de crédito
     this.creditsService.getCustomers()
       .pipe(takeUntil(this.destroy$))
@@ -61,9 +61,9 @@ export class CreditFormComponent implements OnInit, OnDestroy {
         next: (response: any) => {
           const customerData = response.data;
           this.customers = Array.isArray(customerData) ? customerData : (customerData?.data || []);
-          
+
           // Cargar ventas
-          this.http.get<any>('/api/v1/sales')
+          this.http.get<any>('/api/v1/credits/sales')
             .pipe(takeUntil(this.destroy$))
             .subscribe({
               next: (saleResponse: any) => {

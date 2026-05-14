@@ -35,7 +35,7 @@ interface MenuItem {
   styleUrl: './layout.component.css'
 })
 export class LayoutComponent implements OnInit, OnDestroy {
-  
+
   // Datos de la app
   currentYear = new Date().getFullYear();
   appName = APP_CONSTANTS.APP_NAME;
@@ -181,12 +181,12 @@ export class LayoutComponent implements OnInit, OnDestroy {
         route: '/pos',
         module: MODULES.POS
       },
-      {
-        icon: 'bi-cart-check',
-        label: 'Ventas',
-        route: '/sales',
-        module: MODULES.SALES
-      },
+      // {
+      //   icon: 'bi-cart-check',
+      //   label: 'Ventas',
+      //   route: '/sales',
+      //   module: MODULES.SALES
+      // },
       {
         icon: 'bi-receipt',
         label: 'Facturación',
@@ -238,7 +238,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
     ];
 
     // Filtrar items según permisos del usuario
-    this.menuItems = allMenuItems.filter(item => 
+    this.menuItems = allMenuItems.filter(item =>
       this.hasModuleAccess(item.module)
     );
   }
@@ -291,7 +291,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
 
     const firstInitial = this.currentUser.firstName?.charAt(0) || '';
     const lastInitial = this.currentUser.lastName?.charAt(0) || '';
-    
+
     return (firstInitial + lastInitial).toUpperCase() || 'U';
   }
 
