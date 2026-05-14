@@ -1,0 +1,67 @@
+/* Clientes morosos */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.delinquent-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.delinquent-table th,
+.delinquent-table td {
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.delinquent-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Colores de severidad de mora */
+.border-rojo-intenso {
+  border-left: 4px solid #800000;
+}
+
+.border-rojo {
+  border-left: 4px solid #dc3545;
+}
+
+.border-naranja {
+  border-left: 4px solid #fd7e14;
+}
+
+.border-amarillo {
+  border-left: 4px solid #ffc107;
+}
+
+.checkbox-column {
+  text-align: center;
+  width: 40px;
+}
+
+.btn-group-sm {
+  gap: 0.25rem;
+}
+
+.badge {
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+}
+
+.action-cell {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.panel {
+  margin-top: 1rem;
+  background: #f5f5f5;
+  padding: 1rem;
+  border-radius: 8px;
+}

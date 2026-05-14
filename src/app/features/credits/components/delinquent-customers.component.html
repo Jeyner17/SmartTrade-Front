@@ -1,0 +1,153 @@
+<div class="container-fluid mt-5 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1"><i class="bi bi-exclamation-circle text-danger me-2"></i>Clientes Morosos</h2>
+      <p class="text-muted mb-0">Gestión de cobranzas y seguimiento de pagos vencidos</p>
+    </div>
+    <button type="button" class="btn btn-outline-secondary" (click)="goBack()">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </button>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Días de atraso</label>
+          <select class="form-select" [(ngModel)]="filters.delayDays" (change)="onFilterChange()">
+            <option *ngFor="let range of delayRanges" [value]="range.value">{{ range.label }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Monto mínimo adeudado</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control" [(ngModel)]="filters.amountMin" (input)="onFilterChange()" step="10">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Monto máximo adeudado</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input type="number" class="form-control" [(ngModel)]="filters.amountMax" (input)="onFilterChange()" step="10">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Ordenar por</label>
+          <select class="form-select" [(ngModel)]="filters.orderBy" (change)="onFilterChange()">
+            <option *ngFor="let order of orderOptions" [value]="order.value">{{ order.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL DE GESTIÓN -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-danger">
+        <div class="card-body text-center">
+          <h6 class="card-title text-muted mb-2">Total de deuda en mora</h6>
+          <h3 class="text-danger mb-0">${{ stats.totalDebt | number:'1.2-2' }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-danger">
+        <div class="card-body text-center">
+          <h6 class="card-title text-muted mb-2">Clientes en mora</h6>
+          <h3 class="text-danger mb-0">{{ stats.delinquentCount }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-warning">
+        <div class="card-body text-center">
+          <h6 class="card-title text-muted mb-2">Mora promedio</h6>
+          <h3 class="text-warning mb-0">{{ stats.avgDelayDays }} días</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="d-grid gap-2">
+        <button type="button" class="btn btn-danger btn-sm" (click)="sendBulkReminder()" [disabled]="selectedCustomers.size === 0">
+          <i class="bi bi-send me-1"></i>Enviar recordatorio masivo
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" (click)="export()">
+          <i class="bi bi-download me-1"></i>Exportar lista
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLA DE MOROSOS -->
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 40px;">
+              <input class="form-check-input" type="checkbox" (change)="selectAll()" [checked]="selectedCustomers.size === customers.length && customers.length > 0">
+            </th>
+            <th>Cliente</th>
+            <th>Teléfono</th>
+            <th>Créditos Vencidos</th>
+            <th>Total Adeudado</th>
+            <th>Días de Atraso Promedio</th>
+            <th>Última Gestión</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="loading">
+            <td colspan="8" class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="!loading && customers.length === 0">
+            <td colspan="8" class="text-center py-4 text-muted">No hay clientes morosos registrados</td>
+          </tr>
+          <tr *ngFor="let customer of customers" [ngClass]="'border-' + getDelayColor(customer)">
+            <td>
+              <input class="form-check-input" type="checkbox" (change)="toggleCustomer(customer.id)" [checked]="isCustomerSelected(customer.id)">
+            </td>
+            <td class="fw-semibold">{{ customer.name }}</td>
+            <td>{{ customer.phone }}</td>
+            <td><span class="badge bg-danger">{{ customer.overdueCredits }}</span></td>
+            <td class="fw-semibold text-danger">${{ customer.totalDue | number:'1.2-2' }}</td>
+            <td>
+              <span [ngClass]="'badge bg-' + (getDelayColor(customer) === 'rojo-intenso' ? 'danger' : 
+                                             getDelayColor(customer) === 'rojo' ? 'danger' : 
+                                             getDelayColor(customer) === 'naranja' ? 'warning' : 'warning')">
+                {{ customer.avgDelayDays }} días
+              </span>
+            </td>
+            <td>{{ customer.lastAction || 'N/A' }}</td>
+            <td>
+              <div class="btn-group btn-group-sm" role="group">
+                <button type="button" class="btn btn-outline-info" (click)="callCustomer(customer.phone)" title="Llamar">
+                  <i class="bi bi-telephone"></i>
+                </button>
+                <button type="button" class="btn btn-outline-success" (click)="sendSMS(customer.phone)" title="Enviar SMS">
+                  <i class="bi bi-chat-dots"></i>
+                </button>
+                <button type="button" class="btn btn-outline-primary" (click)="sendEmail(customer.email)" title="Enviar Email">
+                  <i class="bi bi-envelope"></i>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" (click)="viewDetail(customer.id)" title="Ver detalle">
+                  <i class="bi bi-eye"></i>
+                </button>
+                <button type="button" class="btn btn-outline-warning" (click)="registerAction(customer.id)" title="Registrar gestión">
+                  <i class="bi bi-pencil"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

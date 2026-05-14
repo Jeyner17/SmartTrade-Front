@@ -131,13 +131,21 @@ export const routes: Routes = [
           .then(m => m.CASH_REGISTER_ROUTES),
         data: { module: MODULES.CASH_REGISTER }
       },
-      
+
       // Cambiar contraseña (accesible para cualquier usuario autenticado)
       {
         path: 'change-password',
         loadComponent: () => import('./features/auth/components/change-password/change-password.component')
           .then(m => m.ChangePasswordComponent),
         title: 'Cambiar Contraseña'
+      },
+
+      // Créditos (Gestión de Créditos y Clientes de Crédito)
+      {
+        path: 'credits',
+        loadChildren: () => import('./features/credits/credits.routes')
+          .then(m => m.creditsRoutes),
+        data: { module: MODULES.CREDITS }
       },
 
       // Ruta por defecto dentro del layout

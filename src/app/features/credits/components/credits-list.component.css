@@ -1,0 +1,99 @@
+/* Estilos generales */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Tabla de créditos */
+.credits-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.credits-table th,
+.credits-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.credits-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Colores de estado */
+.border-verde {
+  border-left: 4px solid #28a745;
+}
+
+.border-amarillo {
+  border-left: 4px solid #ffc107;
+}
+
+.border-naranja {
+  border-left: 4px solid #fd7e14;
+}
+
+.border-rojo {
+  border-left: 4px solid #dc3545;
+}
+
+/* Estados de badge */
+.state-green {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.state-yellow {
+  color: #ffc107;
+  font-weight: 600;
+}
+
+.state-orange {
+  color: #fd7e14;
+  font-weight: 600;
+}
+
+.state-red {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Modales */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-dialog {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  width: 90%;
+}
+
+.table-cell {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.on-time { color: green; }
+.due-soon { color: orange; }
+.overdue { color: darkorange; }
+.severe { color: red; font-weight: bold; }
+.state-green { background: #c8e6c9; padding: 0.2rem 0.5rem; border-radius: 4px; }
+.state-yellow { background: #fff9c4; padding: 0.2rem 0.5rem; border-radius: 4px; }
+.state-orange { background: #ffe0b2; padding: 0.2rem 0.5rem; border-radius: 4px; }
+.state-red { background: #ffcdd2; padding: 0.2rem 0.5rem; border-radius: 4px; }

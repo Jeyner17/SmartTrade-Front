@@ -1,0 +1,181 @@
+<div *ngIf="isSaving" class="overlay">
+  <div class="loader">Guardando...</div>
+</div>
+
+<div class="container mt-5 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1"><i class="bi bi-person-vcard text-primary me-2"></i>Registro de Cliente para Crédito</h2>
+      <p class="text-muted mb-0">Complete el formulario para registrar un cliente de crédito</p>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left me-1"></i> Volver
+    </button>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+    <i class="bi bi-exclamation-circle me-2"></i>{{ error }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+    <i class="bi bi-check-circle me-2"></i>{{ successMessage }}
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <!-- DATOS PERSONALES -->
+        <div class="card mb-4">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-person me-2"></i>Datos Personales</h5></div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="fullName" [class.is-invalid]="isFieldInvalid('fullName')" [class.is-valid]="isFieldValid('fullName')">
+                <div class="invalid-feedback">{{ getErrorMessage('fullName') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Cédula/Documento <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="documentNumber" [class.is-invalid]="isFieldInvalid('documentNumber')" [class.is-valid]="isFieldValid('documentNumber')">
+                <div class="invalid-feedback">{{ getErrorMessage('documentNumber') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Fecha de nacimiento <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="birthDate" [class.is-invalid]="isFieldInvalid('birthDate')" [class.is-valid]="isFieldValid('birthDate')">
+                <div class="invalid-feedback">{{ getErrorMessage('birthDate') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Dirección <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="address" [class.is-invalid]="isFieldInvalid('address')" [class.is-valid]="isFieldValid('address')">
+                <div class="invalid-feedback">{{ getErrorMessage('address') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Teléfono principal <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" formControlName="phone" [class.is-invalid]="isFieldInvalid('phone')" [class.is-valid]="isFieldValid('phone')">
+                <div class="invalid-feedback">{{ getErrorMessage('phone') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Teléfono secundario</label>
+                <input type="tel" class="form-control" formControlName="secondaryPhone" [class.is-invalid]="isFieldInvalid('secondaryPhone')" [class.is-valid]="isFieldValid('secondaryPhone')">
+                <div class="invalid-feedback">{{ getErrorMessage('secondaryPhone') }}</div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" formControlName="email" [class.is-invalid]="isFieldInvalid('email')" [class.is-valid]="isFieldValid('email')">
+                <div class="invalid-feedback">{{ getErrorMessage('email') }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DATOS PARA CRÉDITO -->
+        <div class="card mb-4">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>Datos para Crédito</h5></div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Límite de crédito máximo <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" class="form-control" formControlName="creditLimit" step="0.01" [class.is-invalid]="isFieldInvalid('creditLimit')" [class.is-valid]="isFieldValid('creditLimit')">
+                </div>
+                <div class="invalid-feedback">{{ getErrorMessage('creditLimit') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Plazo predeterminado (días) <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="defaultTerm" [class.is-invalid]="isFieldInvalid('defaultTerm')" [class.is-valid]="isFieldValid('defaultTerm')">
+                <div class="invalid-feedback">{{ getErrorMessage('defaultTerm') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Calificación crediticia <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="creditRating" [class.is-invalid]="isFieldInvalid('creditRating')" [class.is-valid]="isFieldValid('creditRating')">
+                  <option *ngFor="let rating of creditRatings" [value]="rating">{{ rating }}</option>
+                </select>
+                <div class="invalid-feedback">{{ getErrorMessage('creditRating') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-check-label fw-semibold">
+                  <input type="checkbox" class="form-check-input" formControlName="applyLateInterest">
+                  Aplicar intereses por mora
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- REFERENCIAS -->
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-people me-2"></i>Referencias</h5>
+            <button type="button" class="btn btn-sm btn-primary" (click)="addReference()">
+              <i class="bi bi-plus me-1"></i> Agregar referencia
+            </button>
+          </div>
+          <div class="card-body">
+            <div formArrayName="references">
+              <div *ngFor="let ref of references.controls; let i = index" class="reference-item mb-3 p-3 border rounded">
+                <div [formGroupName]="i">
+                  <div class="row g-3">
+                    <div class="col-md-5">
+                      <label class="form-label fw-semibold">Nombre del contacto <span class="text-danger">*</span></label>
+                      <input type="text" class="form-control" formControlName="name">
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-semibold">Relación <span class="text-danger">*</span></label>
+                      <select class="form-select" formControlName="relationship">
+                        <option *ngFor="let rel of relationshipTypes" [value]="rel">{{ rel }}</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label fw-semibold">Teléfono <span class="text-danger">*</span></label>
+                      <input type="tel" class="form-control" formControlName="phone">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end">
+                      <button type="button" class="btn btn-sm btn-danger w-100" (click)="removeReference(i)" [disabled]="references.length === 1">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMNA DERECHA: DOCUMENTOS -->
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-file-earmark me-2"></i>Documentos</h5></div>
+          <div class="card-body">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Copia de cédula</label>
+              <input type="file" class="form-control" accept="image/*,.pdf" (change)="onFileChange($event, 'idCopy')">
+              <small class="text-muted">Imagen o PDF</small>
+            </div>
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Comprobante de domicilio</label>
+              <input type="file" class="form-control" accept="image/*,.pdf" (change)="onFileChange($event, 'addressProof')">
+              <small class="text-muted">Recibo o factura</small>
+            </div>
+            <div>
+              <label class="form-label fw-semibold">Otros documentos</label>
+              <input type="file" class="form-control" accept="image/*,.pdf" multiple (change)="onFileChange($event, 'others')">
+              <small class="text-muted">Archivos adicionales</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN -->
+    <div class="d-flex gap-2 mt-4">
+      <button type="submit" class="btn btn-primary btn-lg" [disabled]="isSaving">
+        <i class="bi bi-check-circle me-2"></i>Guardar Cliente
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-lg" (click)="cancel()">
+        <i class="bi bi-x-circle me-2"></i>Cancelar
+      </button>
+    </div>
+  </form>
+</div>

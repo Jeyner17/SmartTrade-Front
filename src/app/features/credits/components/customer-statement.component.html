@@ -1,0 +1,146 @@
+<div class="container-fluid mt-5 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1"><i class="bi bi-graph-up text-primary me-2"></i>Estado de Cuenta del Cliente</h2>
+      <p class="text-muted mb-0">Resumen completo de la situación crediticia</p>
+    </div>
+    <div class="btn-group" role="group">
+      <button type="button" class="btn btn-primary" (click)="newCredit()">
+        <i class="bi bi-plus-circle me-1"></i>Nuevo Cliente
+      </button>
+      <button type="button" class="btn btn-info" (click)="sendEmail()">
+        <i class="bi bi-envelope me-1"></i>Enviar por Email
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="print()">
+        <i class="bi bi-printer me-1"></i>Imprimir
+      </button>
+      <button type="button" class="btn btn-outline-secondary" (click)="goBack()">
+        <i class="bi bi-arrow-left me-1"></i>Volver
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+  </div>
+
+  <ng-container *ngIf="statement && !loading">
+    <!-- INFORMACIÓN DEL CLIENTE -->
+    <div class="card mb-4">
+      <div class="card-header"><h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Información del Cliente</h5></div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3"><p><strong>Nombre:</strong> {{ statement.name }}</p></div>
+          <div class="col-md-3"><p><strong>Documento:</strong> {{ statement.document }}</p></div>
+          <div class="col-md-3"><p><strong>Contacto:</strong> {{ statement.contact }}</p></div>
+          <div class="col-md-3"><p class="mb-0"><strong>Calificación:</strong> <span [ngClass]="'badge bg-' + getRatingClass()">{{ statement.rating }}</span></p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LÍMITE DE CRÉDITO Y UTILIZACIÓN -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Límite de Crédito</h5></div>
+          <div class="card-body">
+            <p class="mb-3">
+              <strong>Límite total:</strong> ${{ statement.creditLimit | number:'1.2-2' }} |
+              <strong>Crédito utilizado:</strong> ${{ statement.usedCredit | number:'1.2-2' }} |
+              <strong>Crédito disponible:</strong> <span class="text-success">${{ statement.availableCredit | number:'1.2-2' }}</span>
+            </p>
+            <div class="progress" style="height: 25px;">
+              <div class="progress-bar" role="progressbar" [style.width]="getCreditUtilizationPercentage() + '%'" [attr.aria-valuenow]="getCreditUtilizationPercentage()" aria-valuemin="0" aria-valuemax="100">
+                {{ getCreditUtilizationPercentage() }}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Estadísticas</h5></div>
+          <div class="card-body">
+            <p class="mb-2">Créditos históricos: <strong>{{ statement.totalCredits }}</strong></p>
+            <p class="mb-2">Créditos pagados: <strong>{{ statement.paidCredits }}</strong></p>
+            <p class="mb-2">Créditos activos: <strong>{{ statement.activeCredits }}</strong></p>
+            <p class="mb-0">Promedio días para pagar: <strong>{{ statement.avgDaysToPay }} días</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CRÉDITOS ACTIVOS -->
+    <div class="card mb-4">
+      <div class="card-header"><h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Créditos Activos</h5></div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>N° Crédito</th>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Pagado</th>
+              <th>Saldo</th>
+              <th>Vence</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="!statement.activeCreditsList || statement.activeCreditsList.length === 0">
+              <td colspan="7" class="text-center py-4 text-muted">No hay créditos activos</td>
+            </tr>
+            <tr *ngFor="let credit of statement.activeCreditsList">
+              <td>#{{ credit.id }}</td>
+              <td>{{ credit.startDate | date:'shortDate' }}</td>
+              <td>${{ credit.principalAmount | number:'1.2-2' }}</td>
+              <td>${{ (credit.principalAmount - credit.outstandingBalance) | number:'1.2-2' }}</td>
+              <td>${{ credit.outstandingBalance | number:'1.2-2' }}</td>
+              <td>{{ credit.dueDate | date:'shortDate' }}</td>
+              <td><span class="badge" [ngClass]="'bg-' + (credit.status === 'ACTIVE' ? 'success' : 'danger')">{{ credit.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CRÉDITOS PAGADOS -->
+    <div class="card">
+      <div class="card-header"><h5 class="mb-0"><i class="bi bi-check-circle me-2"></i>Créditos Pagados</h5></div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>N° Crédito</th>
+              <th>Fecha</th>
+              <th>Monto</th>
+              <th>Pagado en</th>
+              <th>Días para pagar</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="!statement.paidCreditsList || statement.paidCreditsList.length === 0">
+              <td colspan="6" class="text-center py-4 text-muted">No hay créditos pagados</td>
+            </tr>
+            <tr *ngFor="let credit of statement.paidCreditsList">
+              <td>#{{ credit.id }}</td>
+              <td>{{ credit.startDate | date:'shortDate' }}</td>
+              <td>${{ credit.principalAmount | number:'1.2-2' }}</td>
+              <td>{{ credit.lastPaymentDate | date:'shortDate' }}</td>
+              <td>{{ credit.daysToPay || 'N/A' }}</td>
+              <td><span class="badge bg-success">{{ credit.status }}</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>

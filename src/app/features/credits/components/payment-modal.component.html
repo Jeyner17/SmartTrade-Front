@@ -1,0 +1,100 @@
+<div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+  <i class="bi bi-exclamation-circle me-2"></i>{{ error }}
+</div>
+
+<div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+  <i class="bi bi-check-circle me-2"></i>{{ success }}
+</div>
+
+<form [formGroup]="paymentForm" (ngSubmit)="onSubmit()">
+  <!-- INFORMACIÓN DEL CRÉDITO -->
+  <div class="mb-4 p-3 bg-light rounded">
+    <p class="mb-1"><strong>Cliente:</strong> {{ credit?.customer?.fullName }}</p>
+    <p class="mb-1"><strong>N° Crédito:</strong> #{{ credit?.id }}</p>
+    <p class="mb-0"><strong>Saldo pendiente:</strong> <span class="text-danger fw-bold">${{ (credit?.outstandingBalance + (credit?.lateInterest || 0)) | number:'1.2-2' }}</span></p>
+  </div>
+
+  <div class="row g-3">
+    <!-- TIPO DE PAGO -->
+    <div class="col-12">
+      <label class="form-label fw-semibold">Tipo de pago <span class="text-danger">*</span></label>
+      <div class="btn-group w-100" role="group">
+        <input type="radio" class="btn-check" id="paymentType1" value="total" formControlName="paymentType" (change)="updateAmount()">
+        <label class="btn btn-outline-primary" for="paymentType1">Pago Total</label>
+        <input type="radio" class="btn-check" id="paymentType2" value="parcial" formControlName="paymentType">
+        <label class="btn btn-outline-primary" for="paymentType2">Pago Parcial</label>
+      </div>
+    </div>
+
+    <!-- MONTO A PAGAR -->
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Monto a pagar <span class="text-danger">*</span></label>
+      <div class="input-group">
+        <span class="input-group-text">$</span>
+        <input type="number" class="form-control" formControlName="amount" step="0.01" min="0">
+      </div>
+    </div>
+
+    <!-- MÉTODO DE PAGO -->
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Método de pago <span class="text-danger">*</span></label>
+      <select class="form-select" formControlName="paymentMethod">
+        <option *ngFor="let method of paymentMethods" [value]="method">
+          {{ method | titlecase }}
+        </option>
+      </select>
+    </div>
+
+    <!-- FECHA DE PAGO -->
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Fecha del pago <span class="text-danger">*</span></label>
+      <input type="date" class="form-control" formControlName="paymentDate">
+    </div>
+
+    <!-- OBSERVACIONES -->
+    <div class="col-md-6">
+      <label class="form-label fw-semibold">Observaciones</label>
+      <input type="text" class="form-control" formControlName="notes" placeholder="Opcional">
+    </div>
+
+    <!-- PRINT RECEIPT -->
+    <div class="col-12">
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="printReceipt" formControlName="printReceipt">
+        <label class="form-check-label" for="printReceipt">
+          Imprimir comprobante de pago
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMEN DE CÁLCULO -->
+  <div class="mt-4 p-3 bg-light rounded">
+    <div class="row g-3 text-center">
+      <div class="col-md-4">
+        <p class="text-muted mb-1">Saldo actual</p>
+        <h6 class="mb-0">${{ (credit?.outstandingBalance + (credit?.lateInterest || 0)) | number:'1.2-2' }}</h6>
+      </div>
+      <div class="col-md-4">
+        <p class="text-muted mb-1">Monto a pagar</p>
+        <h6 class="mb-0 text-primary">${{ paymentForm.value.amount | number:'1.2-2' }}</h6>
+      </div>
+      <div class="col-md-4">
+        <p class="text-muted mb-1">Nuevo saldo</p>
+        <h6 class="mb-0" [ngClass]="calculateNewBalance() > 0 ? 'text-danger' : 'text-success'">
+          ${{ calculateNewBalance() | number:'1.2-2' }}
+        </h6>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTONES -->
+  <div class="d-flex gap-2 mt-4">
+    <button type="submit" class="btn btn-success flex-fill" [disabled]="loading || paymentForm.invalid">
+      <i class="bi bi-check-circle me-1"></i>Confirmar Pago
+    </button>
+    <button type="button" class="btn btn-outline-secondary flex-fill" (click)="onCancel()">
+      <i class="bi bi-x-circle me-1"></i>Cancelar
+    </button>
+  </div>
+</form>

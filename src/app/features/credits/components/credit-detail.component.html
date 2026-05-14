@@ -1,0 +1,179 @@
+<div class="container-fluid mt-5 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="mb-1"><i class="bi bi-file-earmark-check text-primary me-2"></i>Detalle de Crédito</h2>
+      <p class="text-muted mb-0">Información completa del crédito y su estado</p>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="goBack()">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger" role="alert">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+  </div>
+
+  <ng-container *ngIf="credit && !loading">
+    <div class="row g-4 mb-4">
+      <!-- INFORMACIÓN DEL CLIENTE -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-person me-2"></i>Información del Cliente</h5></div>
+          <div class="card-body">
+            <p><strong>Nombre:</strong> {{ credit.customer?.fullName }}</p>
+            <p><strong>Documento:</strong> {{ credit.customer?.documentNumber }}</p>
+            <p><strong>Teléfono:</strong> {{ credit.customer?.phone }}</p>
+            <p><strong>Límite de crédito:</strong> ${{ credit.customer?.creditLimit | number:'1.2-2' }}</p>
+            <p class="mb-0"><strong>Créditos activos:</strong> {{ credit.customer?.activeCredits || 0 }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- INFORMACIÓN DEL CRÉDITO -->
+      <div class="col-lg-6">
+        <div class="card">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Información del Crédito</h5></div>
+          <div class="card-body">
+            <p><strong>Número de crédito:</strong> #{{ credit.id }}</p>
+            <p><strong>Fecha de crédito:</strong> {{ credit.startDate | date:'medium' }}</p>
+            <p><strong>Monto original:</strong> ${{ credit.principalAmount | number:'1.2-2' }}</p>
+            <p><strong>Plazo:</strong> {{ credit.termDays }} días</p>
+            <p><strong>Fecha de vencimiento:</strong> {{ credit.dueDate | date:'medium' }}</p>
+            <p class="mb-0">
+              <strong>Estado:</strong> 
+              <span [ngClass]="'badge bg-' + (getStatusColor() === 'verde' ? 'success' : 
+                                              getStatusColor() === 'amarillo' ? 'warning' : 
+                                              getStatusColor() === 'naranja' ? 'danger' : 'dark')">
+                {{ getStatusDisplay() }}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFORMACIÓN DE MORA SI APLICA -->
+    <div *ngIf="credit.status === 'OVERDUE' && credit.daysLate > 0" class="alert alert-warning alert-dismissible fade show" role="alert">
+      <i class="bi bi-exclamation-circle me-2"></i>
+      <strong>Crédito vencido</strong>
+      <ul class="mb-2">
+        <li>Días de atraso: <strong>{{ credit.daysLate }}</strong></li>
+        <li>Intereses por mora: <strong>${{ credit.lateInterest | number:'1.2-2' }}</strong></li>
+        <li>Nuevo total a pagar: <strong>${{ credit.totalAmount | number:'1.2-2' }}</strong></li>
+      </ul>
+    </div>
+
+    <!-- HISTORIAL DE PAGOS -->
+    <div class="card mb-4">
+      <div class="card-header"><h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Historial de Pagos</h5></div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Fecha de pago</th>
+              <th>Monto pagado</th>
+              <th>Método de pago</th>
+              <th>Saldo después del pago</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="!credit.payments || credit.payments.length === 0">
+              <td colspan="4" class="text-center py-4 text-muted">Sin pagos registrados</td>
+            </tr>
+            <tr *ngFor="let payment of credit.payments">
+              <td>{{ payment.paymentDate | date:'medium' }}</td>
+              <td>${{ payment.amount | number:'1.2-2' }}</td>
+              <td><span class="badge bg-info">{{ payment.paymentMethod }}</span></td>
+              <td>${{ payment.balanceAfter | number:'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALDO ACTUAL -->
+    <div class="card mb-4">
+      <div class="card-header"><h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Saldo Actual</h5></div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <p class="text-muted mb-2">Monto original</p>
+            <h5 class="mb-0">${{ credit.principalAmount | number:'1.2-2' }}</h5>
+          </div>
+          <div class="col-md-3">
+            <p class="text-muted mb-2">Pagado</p>
+            <h5 class="mb-0">${{ (credit.principalAmount - credit.outstandingBalance) | number:'1.2-2' }}</h5>
+          </div>
+          <div class="col-md-3">
+            <p class="text-muted mb-2">Intereses por mora</p>
+            <h5 class="mb-0">${{ credit.lateInterest | number:'1.2-2' }}</h5>
+          </div>
+          <div class="col-md-3">
+            <p class="text-muted mb-2">Saldo pendiente</p>
+            <h5 class="mb-0 text-danger fw-bold">${{ credit.totalAmount | number:'1.2-2' }}</h5>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN -->
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-success" (click)="openPaymentModal()" [disabled]="credit.status === 'PAID'">
+        <i class="bi bi-cash-coin me-1"></i>Registrar Pago
+      </button>
+      <button class="btn btn-info" (click)="sendReminder()" [disabled]="credit.status === 'PAID'">
+        <i class="bi bi-bell me-1"></i>Enviar Recordatorio
+      </button>
+      <button class="btn btn-primary" (click)="print()">
+        <i class="bi bi-printer me-1"></i>Imprimir Estado de Cuenta
+      </button>
+      <button class="btn btn-secondary" (click)="openRefinanceModal()" [disabled]="credit.status !== 'OVERDUE'">
+        <i class="bi bi-arrow-repeat me-1"></i>Refinanciar
+      </button>
+      <button class="btn btn-danger" (click)="openForgiveModal()" [disabled]="credit.status === 'PAID'">
+        <i class="bi bi-trash me-1"></i>Condonar Deuda
+      </button>
+    </div>
+  </ng-container>
+</div>
+
+<!-- MODAL DE PAGO -->
+<div *ngIf="showPaymentModal" class="modal d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Registrar Pago</h5>
+        <button type="button" class="btn-close" (click)="closePaymentModal()"></button>
+      </div>
+      <div class="modal-body">
+        <app-payment-modal [credit]="credit" (closed)="closePaymentModal()" (paymentRegistered)="onPaymentRegistered()"></app-payment-modal>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONDONACIÓN -->
+<div *ngIf="showForgiveModal" class="modal d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Condonar Deuda</h5>
+        <button type="button" class="btn-close" (click)="closeForgiveModal()"></button>
+      </div>
+      <div class="modal-body">
+        <app-debt-forgiveness-modal [credit]="credit" (closed)="closeForgiveModal()" (debtForgiven)="onPaymentRegistered()"></app-debt-forgiveness-modal>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE REFINANCIAMIENTO -->
+<div *ngIf="showRefinanceModal">
+  <app-refinance-modal [credit]="credit" (closed)="closeRefinanceModal()" (refinanceCompleted)="onRefinanceCompleted()"></app-refinance-modal>
+</div>

@@ -1,0 +1,98 @@
+<div class="modal" tabindex="-1" role="dialog" style="display: block; background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-arrow-repeat me-2"></i>Refinanciar Crédito</h5>
+        <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- MENSAJES -->
+        <div *ngIf="error" class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+          <button type="button" class="btn-close" (click)="error = null"></button>
+        </div>
+        <div *ngIf="success" class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="bi bi-check-circle me-2"></i>{{ success }}
+        </div>
+
+        <!-- INFORMACIÓN DEL CRÉDITO -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <p><strong>Crédito #:</strong> {{ credit?.id }}</p>
+            <p><strong>Cliente:</strong> {{ credit?.customer?.fullName }}</p>
+            <p><strong>Monto:</strong> ${{ credit?.principalAmount | number:'1.2-2' }}</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>Estado:</strong> {{ credit?.status }}</p>
+            <p><strong>Saldo pendiente:</strong> ${{ credit?.outstandingBalance | number:'1.2-2' }}</p>
+            <p *ngIf="credit?.status === 'OVERDUE'" class="text-danger">
+              <strong>Atraso:</strong> {{ credit?.daysLate }} días
+            </p>
+          </div>
+        </div>
+
+        <!-- FORMULARIO -->
+        <form [formGroup]="refinanceForm" (ngSubmit)="submit()">
+          <div class="row">
+            <!-- PLAZO -->
+            <div class="col-md-6 mb-3">
+              <label for="termDays" class="form-label fw-semibold">Nuevo Plazo (días)</label>
+              <input type="number" class="form-control" id="termDays" formControlName="termDays"
+                     [ngClass]="{ 'is-invalid': isFieldInvalid('termDays') }" min="1" max="365">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('termDays')">
+                {{ getErrorMessage('termDays') }}
+              </div>
+            </div>
+
+            <!-- TASA DE INTERÉS -->
+            <div class="col-md-6 mb-3">
+              <label for="interestRate" class="form-label fw-semibold">Tasa de Interés (%)</label>
+              <input type="number" class="form-control" id="interestRate" formControlName="interestRate"
+                     [ngClass]="{ 'is-invalid': isFieldInvalid('interestRate') }" min="0" max="100" step="0.01">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('interestRate')">
+                {{ getErrorMessage('interestRate') }}
+              </div>
+            </div>
+
+            <!-- TASA DIARIA DE MORA -->
+            <div class="col-md-6 mb-3">
+              <label for="moraRateDaily" class="form-label fw-semibold">Tasa Diaria de Mora (%)</label>
+              <input type="number" class="form-control" id="moraRateDaily" formControlName="moraRateDaily"
+                     min="0" max="10" step="0.01">
+            </div>
+
+            <!-- MOTIVO -->
+            <div class="col-md-6 mb-3">
+              <label for="reason" class="form-label fw-semibold">Motivo de Refinanciamiento</label>
+              <input type="text" class="form-control" id="reason" formControlName="reason"
+                     [ngClass]="{ 'is-invalid': isFieldInvalid('reason') }">
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('reason')">
+                {{ getErrorMessage('reason') }}
+              </div>
+            </div>
+
+            <!-- OBSERVACIONES -->
+            <div class="col-12 mb-3">
+              <label for="observations" class="form-label fw-semibold">Observaciones (opcional)</label>
+              <textarea class="form-control" id="observations" formControlName="observations" rows="3"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="close()" [disabled]="loading">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="submit()" [disabled]="loading || refinanceForm.invalid">
+          <span *ngIf="!loading"><i class="bi bi-check me-1"></i>Refinanciar</span>
+          <span *ngIf="loading">
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Procesando...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

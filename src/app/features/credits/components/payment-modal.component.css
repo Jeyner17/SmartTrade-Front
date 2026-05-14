@@ -1,0 +1,52 @@
+/* Modal de pago */
+.modal {
+  background: #fff;
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 500px;
+  margin: 2rem auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.error {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.success {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.btn-group-vertical {
+  width: 100%;
+  gap: 0.5rem;
+}
+
+.alert {
+  margin-bottom: 1rem;
+}
+
+.calculation-summary {
+  background-color: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.calculation-summary .row {
+  gap: 1rem;
+}
+
+.calculation-summary h6 {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.text-success {
+  color: #28a745;
+}
