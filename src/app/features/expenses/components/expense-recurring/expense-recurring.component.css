@@ -1,0 +1,11 @@
+.recurring-card { border-radius: 14px; transition: transform .18s, box-shadow .18s; }
+.recurring-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.1) !important; }
+.recurring-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.opacity-65 { opacity: .65; }
+.example-item { background: rgba(13,202,240,.06); }
+.preview-box { border: 1px dashed #adb5bd; }
+.page-title { font-size: 1.6rem; font-weight: 700; }

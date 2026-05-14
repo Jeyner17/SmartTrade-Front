@@ -134,7 +134,16 @@ export const API_CONSTANTS = {
       CASH_WITHDRAWAL:        '/cash/movements/withdrawal',
       CASH_SALE:              '/cash/sales',
       CASH_ARQUEO:            (sessionId: number) => `/cash/sessions/${sessionId}/examination`,
-      CASH_REPORT:            (sessionId: number) => `/cash/sessions/${sessionId}/report`
+      CASH_REPORT:            (sessionId: number) => `/cash/sessions/${sessionId}/report`,
+
+    // Sprint 16: Gastos Operativos
+    EXPENSES_CATEGORIES:          '/expenses/categories',
+    EXPENSES_EXPENSES:            '/expenses/expenses',
+    EXPENSES_BY_ID:               (id: number) => `/expenses/expenses/${id}`,
+    EXPENSES_RECEIPT:             (id: number) => `/expenses/expenses/${id}/receipt`,
+    EXPENSES_REPORT_BY_CATEGORY:  '/expenses/reports/by-category',
+    EXPENSES_REPORT_TOTAL:        '/expenses/reports/total',
+    EXPENSES_RECURRINGS:          '/expenses/recurrings'
 
   },
 

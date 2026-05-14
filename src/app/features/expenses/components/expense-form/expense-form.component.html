@@ -1,0 +1,274 @@
+<div class="expense-form-page">
+
+  <!-- ── ENCABEZADO ─────────────────────────────────────────────── -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+          <li class="breadcrumb-item"><a routerLink="/expenses">Gastos</a></li>
+          <li class="breadcrumb-item active">{{ isEditMode ? 'Editar Gasto' : 'Nuevo Gasto' }}</li>
+        </ol>
+      </nav>
+      <h1 class="page-title mb-0">
+        <i class="bi" [ngClass]="isEditMode ? 'bi-pencil-square' : 'bi-plus-circle'" class="me-2 text-danger"></i>
+        {{ isEditMode ? 'Editar Gasto' : 'Registrar Nuevo Gasto' }}
+      </h1>
+    </div>
+    <button class="btn btn-outline-secondary" (click)="cancel()">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </button>
+  </div>
+
+  <!-- ── FORMULARIO ─────────────────────────────────────────────── -->
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="row g-4">
+
+      <!-- Columna principal -->
+      <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2 text-primary"></i>Información del Gasto</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+
+              <!-- Fecha -->
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Fecha del gasto <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="date"
+                       [ngClass]="{ 'is-invalid': isInvalid('date') }">
+                <div class="invalid-feedback">La fecha es requerida</div>
+              </div>
+
+              <!-- Categoría -->
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Categoría <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <select class="form-select" formControlName="categoryId"
+                          [ngClass]="{ 'is-invalid': isInvalid('categoryId') }">
+                    <option value="">Seleccionar categoría...</option>
+                    <option *ngFor="let c of categories" [value]="c.id">{{ c.name }}</option>
+                  </select>
+                  <button type="button" class="btn btn-outline-secondary" (click)="openCategoryModal()"
+                          title="Crear nueva categoría">
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </div>
+                <div class="invalid-feedback">Seleccione una categoría</div>
+              </div>
+
+              <!-- Concepto -->
+              <div class="col-12">
+                <label class="form-label fw-semibold">Concepto / Descripción <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="concept"
+                       placeholder="Ej: Pago de electricidad de mayo"
+                       [ngClass]="{ 'is-invalid': isInvalid('concept') }">
+                <div class="invalid-feedback">El concepto es requerido</div>
+              </div>
+
+              <!-- Monto -->
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Monto <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text fw-bold">$</span>
+                  <input type="number" class="form-control form-control-lg fw-bold text-danger"
+                         formControlName="amount" min="0.01" step="0.01" placeholder="0.00"
+                         [ngClass]="{ 'is-invalid': isInvalid('amount') }">
+                </div>
+                <div class="invalid-feedback">Ingrese un monto válido (mayor a 0)</div>
+              </div>
+
+              <!-- Método de pago -->
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Método de pago <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="paymentMethod">
+                  <option value="CASH">💵 Efectivo</option>
+                  <option value="CARD">💳 Tarjeta</option>
+                  <option value="TRANSFER">🏦 Transferencia</option>
+                  <option value="BANK">📄 Cheque / Banco</option>
+                </select>
+              </div>
+
+              <!-- Aviso caja abierta -->
+              <div class="col-12" *ngIf="form.get('paymentMethod')?.value === 'CASH' && hasCashOpen">
+                <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+                  <i class="bi bi-cash-coin fs-5"></i>
+                  <div>
+                    <strong>Hay una sesión de caja activa.</strong>
+                    <div class="form-check mt-1 mb-0">
+                      <input type="checkbox" class="form-check-input" formControlName="deductFromCash"
+                             id="deductFromCash">
+                      <label class="form-check-label" for="deductFromCash">
+                        Descontar de la caja actual
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Número de comprobante -->
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Número de comprobante</label>
+                <input type="text" class="form-control" formControlName="receiptNumber"
+                       placeholder="Factura, recibo, etc.">
+              </div>
+
+              <!-- Proveedor -->
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Proveedor <span class="text-muted small">(opcional)</span></label>
+                <select class="form-select" formControlName="supplierId">
+                  <option [value]="null">Sin proveedor</option>
+                  <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }}</option>
+                </select>
+              </div>
+
+              <!-- Observaciones -->
+              <div class="col-12">
+                <label class="form-label fw-semibold">Observaciones adicionales</label>
+                <textarea class="form-control" formControlName="notes" rows="3"
+                          placeholder="Notas internas sobre este gasto..."></textarea>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna derecha: Comprobante -->
+      <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0 fw-semibold"><i class="bi bi-paperclip me-2 text-warning"></i>Comprobante</h5>
+          </div>
+          <div class="card-body">
+
+            <!-- Zona de carga -->
+            <div class="drop-zone"
+                 [class.drag-over]="isDragOver"
+                 (dragover)="$event.preventDefault(); isDragOver=true"
+                 (dragleave)="isDragOver=false"
+                 (drop)="onDrop($event)">
+
+              <!-- Vista previa -->
+              <ng-container *ngIf="receiptPreview; else noReceipt">
+                <div class="receipt-preview">
+                  <img *ngIf="isImageFile" [src]="receiptPreview" alt="Comprobante" class="img-fluid rounded">
+                  <div *ngIf="!isImageFile" class="pdf-preview">
+                    <i class="bi bi-file-earmark-pdf text-danger fs-1"></i>
+                    <p class="mt-2 mb-0 fw-semibold small">{{ receiptFileName }}</p>
+                  </div>
+                  <button type="button" class="btn btn-sm btn-outline-danger mt-2 w-100"
+                          (click)="clearReceipt()">
+                    <i class="bi bi-trash me-1"></i>Quitar
+                  </button>
+                </div>
+              </ng-container>
+
+              <ng-template #noReceipt>
+                <div class="drop-zone-content text-center">
+                  <i class="bi bi-cloud-upload fs-1 text-muted"></i>
+                  <p class="text-muted my-2 small">Arrastra imagen o PDF aquí</p>
+                  <label class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-folder2-open me-1"></i>Seleccionar archivo
+                    <input type="file" class="d-none" accept="image/*,.pdf"
+                           (change)="onFileSelect($event)">
+                  </label>
+                  <p class="text-muted mt-2 mb-0" style="font-size:.75rem">
+                    JPG, PNG, PDF — Máx. 10MB
+                  </p>
+                </div>
+              </ng-template>
+            </div>
+
+            <!-- Barra de progreso de upload -->
+            <div *ngIf="uploadProgress > 0 && uploadProgress < 100" class="mt-2">
+              <div class="progress" style="height:6px">
+                <div class="progress-bar bg-primary" [style.width.%]="uploadProgress"></div>
+              </div>
+              <small class="text-muted">Subiendo... {{ uploadProgress }}%</small>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── BOTONES ─────────────────────────────────────────────── -->
+    <div class="action-bar card border-0 shadow-sm mt-4">
+      <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <small class="text-muted"><span class="text-danger">*</span> Campos obligatorios</small>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-outline-secondary" (click)="cancel()">
+            <i class="bi bi-x-circle me-1"></i>Cancelar
+          </button>
+          <button type="button" class="btn btn-outline-primary" (click)="saveAndCreateAnother()"
+                  [disabled]="saving || form.invalid">
+            <i class="bi bi-arrow-repeat me-1"></i>Guardar y crear otro
+          </button>
+          <button type="submit" class="btn btn-danger px-4" [disabled]="saving || form.invalid">
+            <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
+            <i *ngIf="!saving" class="bi bi-check-circle me-1"></i>
+            {{ saving ? 'Guardando...' : 'Guardar Gasto' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+  <!-- ── MODAL: NUEVA CATEGORÍA ──────────────────────────────────── -->
+  <div class="modal fade" id="categoryModal" tabindex="-1" #categoryModal>
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-tags me-2"></i>Nueva Categoría</h5>
+          <button type="button" class="btn-close" (click)="closeCategoryModal()"></button>
+        </div>
+        <div class="modal-body">
+          <form [formGroup]="categoryForm">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Nombre <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" formControlName="name" placeholder="Ej: Servicios Básicos">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Descripción</label>
+              <input type="text" class="form-control" formControlName="description"
+                     placeholder="Descripción opcional">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Tipo</label>
+              <div class="d-flex gap-3">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" formControlName="type"
+                         value="FIXED" id="typeFixed">
+                  <label class="form-check-label" for="typeFixed">
+                    <strong>Fijo</strong> <small class="text-muted">— se repite mensualmente</small>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" formControlName="type"
+                         value="VARIABLE" id="typeVariable">
+                  <label class="form-check-label" for="typeVariable">
+                    <strong>Variable</strong> <small class="text-muted">— ocasional</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeCategoryModal()">Cancelar</button>
+          <button class="btn btn-primary" (click)="saveCategory()"
+                  [disabled]="savingCategory || categoryForm.invalid">
+            <span *ngIf="savingCategory" class="spinner-border spinner-border-sm me-1"></span>
+            Guardar Categoría
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

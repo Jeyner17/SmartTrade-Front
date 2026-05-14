@@ -132,6 +132,14 @@ export const routes: Routes = [
         data: { module: MODULES.CASH_REGISTER }
       },
 
+      // Sprint 16: Gastos Operativos
+      {
+        path: 'expenses',
+        loadChildren: () => import('./features/expenses/expenses.routes')
+          .then(m => m.EXPENSES_ROUTES),
+        data: { module: MODULES.EXPENSES }
+      },
+
       // Cambiar contraseña (accesible para cualquier usuario autenticado)
       {
         path: 'change-password',

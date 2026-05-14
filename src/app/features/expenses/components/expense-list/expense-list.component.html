@@ -1,0 +1,302 @@
+<section class="expenses-page">
+
+  <!-- ── ENCABEZADO ─────────────────────────────────────────────── -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="page-title mb-1">
+        <i class="bi bi-cash-stack me-2 text-danger"></i>Gastos Operativos
+      </h1>
+      <p class="text-muted mb-0">Gestión y control de gastos del negocio</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-outline-secondary btn-sm" (click)="goToRecurring()">
+        <i class="bi bi-arrow-repeat me-1"></i>Recurrentes
+      </button>
+      <button class="btn btn-outline-warning btn-sm" (click)="goToCategories()">
+        <i class="bi bi-tags me-1"></i>Categorías
+      </button>
+      <button class="btn btn-outline-success btn-sm" (click)="exportExcel()">
+        <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+      </button>
+      <button class="btn btn-danger" (click)="newExpense()">
+        <i class="bi bi-plus-circle me-1"></i>Nuevo Gasto
+      </button>
+    </div>
+  </div>
+
+  <!-- ── TARJETAS DE RESUMEN ────────────────────────────────────── -->
+  <div class="d-flex align-items-center justify-content-end mb-2">
+    <span class="realtime-badge">
+      <span class="realtime-dot"></span>
+      En tiempo real &nbsp;·&nbsp; Actualizado: {{ lastUpdated | date:'HH:mm:ss' }}
+    </span>
+  </div>
+  <div class="row g-3 mb-4">
+    <!-- Total del periodo -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="summary-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="summary-icon bg-danger-subtle text-danger">
+              <i class="bi bi-wallet2"></i>
+            </div>
+            <div class="flex-fill">
+              <p class="summary-label mb-1">Total gastado en el periodo</p>
+              <h4 class="summary-value mb-0">{{ formatCurrency(totalReport.total) }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Promedio diario -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="summary-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="summary-icon bg-warning-subtle text-warning">
+              <i class="bi bi-calendar-day"></i>
+            </div>
+            <div class="flex-fill">
+              <p class="summary-label mb-1">Promedio diario</p>
+              <h4 class="summary-value mb-0">{{ formatCurrency(totalReport.avgDaily) }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Gasto más alto -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="summary-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="summary-icon bg-primary-subtle text-primary">
+              <i class="bi bi-arrow-up-circle"></i>
+            </div>
+            <div class="flex-fill min-w-0">
+              <p class="summary-label mb-1">Gasto más alto</p>
+              <h4 class="summary-value mb-0" *ngIf="highestExpense; else noHighest">
+                {{ formatCurrency(highestExpense.amount) }}
+              </h4>
+              <small class="text-muted text-truncate d-block"
+                     *ngIf="highestExpense"
+                     [title]="highestExpense.concept"
+                     style="max-width:180px">
+                ({{ highestExpense.concept }})
+              </small>
+              <ng-template #noHighest>
+                <h4 class="summary-value mb-0 text-muted">$0.00</h4>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Categoría con más gastos -->
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="summary-card card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="summary-icon bg-success-subtle text-success">
+              <i class="bi bi-tags"></i>
+            </div>
+            <div class="flex-fill min-w-0">
+              <p class="summary-label mb-1">Categoría con más gastos</p>
+              <h4 class="summary-value mb-0 fs-6 text-truncate" *ngIf="topCategory; else noCat"
+                  [title]="topCategory.category?.name">
+                {{ topCategory.category?.name || '—' }}
+              </h4>
+              <small class="text-muted" *ngIf="topCategory">
+                {{ formatCurrency(topCategory.total) }} total
+              </small>
+              <ng-template #noCat>
+                <h4 class="summary-value mb-0 fs-6 text-muted">Sin datos</h4>
+              </ng-template>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── FILTROS ────────────────────────────────────────────────── -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3">
+      <div class="row g-2 align-items-end">
+        <!-- Rango rápido -->
+        <div class="col-12 col-md-3">
+          <label class="form-label small mb-1 fw-semibold">Periodo</label>
+          <select class="form-select form-select-sm" [(ngModel)]="quickPeriod" (change)="onQuickPeriodChange()">
+            <option value="current">Mes actual</option>
+            <option value="prev">Mes anterior</option>
+            <option value="custom">Personalizado</option>
+          </select>
+        </div>
+        <!-- Fechas personalizadas -->
+        <div class="col-6 col-md-2" *ngIf="quickPeriod === 'custom'">
+          <label class="form-label small mb-1 fw-semibold">Desde</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.startDate"
+                 (change)="loadExpenses(); loadSummary()">
+        </div>
+        <div class="col-6 col-md-2" *ngIf="quickPeriod === 'custom'">
+          <label class="form-label small mb-1 fw-semibold">Hasta</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="filters.endDate"
+                 (change)="loadExpenses(); loadSummary()">
+        </div>
+        <!-- Categoría -->
+        <div class="col-12 col-md-2">
+          <label class="form-label small mb-1 fw-semibold">Categoría</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filters.categoryId" (change)="loadExpenses()">
+            <option [ngValue]="undefined">Todas</option>
+            <option *ngFor="let c of categories" [ngValue]="c.id">{{ c.name }}</option>
+          </select>
+        </div>
+        <!-- Método pago -->
+        <div class="col-12 col-md-2">
+          <label class="form-label small mb-1 fw-semibold">Método de pago</label>
+          <select class="form-select form-select-sm" [(ngModel)]="filters.paymentMethod" (change)="loadExpenses()">
+            <option value="">Todos</option>
+            <option value="CASH">Efectivo</option>
+            <option value="CARD">Tarjeta</option>
+            <option value="TRANSFER">Transferencia</option>
+            <option value="BANK">Cheque/Banco</option>
+          </select>
+        </div>
+        <!-- Búsqueda -->
+        <div class="col-12 col-md-3">
+          <label class="form-label small mb-1 fw-semibold">Buscar concepto</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" class="form-control" placeholder="Buscar..." [(ngModel)]="searchTerm"
+                   (input)="onSearch()">
+            <button class="btn btn-outline-secondary" *ngIf="searchTerm" (click)="clearSearch()">
+              <i class="bi bi-x"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TABLA DE GASTOS ────────────────────────────────────────── -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+
+      <!-- Loading -->
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-danger" role="status"></div>
+        <p class="text-muted mt-2 mb-0">Cargando gastos...</p>
+      </div>
+
+      <!-- Sin resultados -->
+      <div *ngIf="!loading && filteredExpenses.length === 0" class="text-center py-5">
+        <i class="bi bi-inbox fs-1 text-muted"></i>
+        <p class="text-muted mt-2">No se encontraron gastos para los filtros aplicados</p>
+        <button class="btn btn-primary btn-sm" (click)="newExpense()">
+          <i class="bi bi-plus me-1"></i>Registrar primer gasto
+        </button>
+      </div>
+
+      <!-- Tabla -->
+      <div *ngIf="!loading && filteredExpenses.length > 0" class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr>
+              <th class="ps-3 sortable" (click)="sortBy('date')">
+                Fecha <i class="bi" [ngClass]="getSortIcon('date')"></i>
+              </th>
+              <th class="sortable" (click)="sortBy('category')">
+                Categoría <i class="bi" [ngClass]="getSortIcon('category')"></i>
+              </th>
+              <th>Concepto</th>
+              <th class="sortable text-end" (click)="sortBy('amount')">
+                Monto <i class="bi" [ngClass]="getSortIcon('amount')"></i>
+              </th>
+              <th>Método</th>
+              <th class="text-center">Comprobante</th>
+              <th>Registrado por</th>
+              <th class="text-center pe-3">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let exp of filteredExpenses">
+              <td class="ps-3">
+                <span class="fw-semibold">{{ formatDate(exp.date) }}</span>
+              </td>
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary">
+                  {{ exp.category?.name || '—' }}
+                </span>
+              </td>
+              <td>
+                <span class="text-truncate d-block" style="max-width:200px" [title]="exp.concept">
+                  {{ exp.concept }}
+                </span>
+                <small class="text-muted" *ngIf="exp.receiptNumber">
+                  <i class="bi bi-receipt me-1"></i>{{ exp.receiptNumber }}
+                </small>
+              </td>
+              <td class="text-end fw-bold text-danger">
+                {{ formatCurrency(exp.amount) }}
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getPaymentBadgeClass(exp.paymentMethod)">
+                  <i class="bi me-1" [ngClass]="getPaymentIcon(exp.paymentMethod)"></i>
+                  {{ getPaymentLabel(exp.paymentMethod) }}
+                </span>
+              </td>
+              <td class="text-center">
+                <i class="bi bi-paperclip text-primary fs-5"
+                   *ngIf="exp.receipts && exp.receipts.length > 0"
+                   [title]="'Ver comprobante'"></i>
+                <span class="text-muted" *ngIf="!exp.receipts || exp.receipts.length === 0">—</span>
+              </td>
+              <td>
+                <small>{{ exp.createdByUser?.username || '—' }}</small>
+              </td>
+              <td class="text-center pe-3">
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-primary" (click)="viewExpense(exp)" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-outline-warning" (click)="editExpense(exp)" title="Editar">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <button class="btn btn-outline-danger" (click)="confirmDelete(exp)" title="Eliminar">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div *ngIf="!loading && totalCount > pageSize" class="card-footer d-flex justify-content-between align-items-center">
+        <small class="text-muted">
+          Mostrando {{ filteredExpenses.length }} de {{ totalCount }} gastos
+        </small>
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button class="page-link" (click)="changePage(currentPage - 1)">
+                <i class="bi bi-chevron-left"></i>
+              </button>
+            </li>
+            <li class="page-item" *ngFor="let p of getPageNumbers()"
+                [class.active]="p === currentPage">
+              <button class="page-link" (click)="changePage(p)">{{ p }}</button>
+            </li>
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button class="page-link" (click)="changePage(currentPage + 1)">
+                <i class="bi bi-chevron-right"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+</section>
