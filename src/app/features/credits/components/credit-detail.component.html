@@ -46,9 +46,9 @@
             <p><strong>Plazo:</strong> {{ credit.termDays }} días</p>
             <p><strong>Fecha de vencimiento:</strong> {{ credit.dueDate | date:'medium' }}</p>
             <p class="mb-0">
-              <strong>Estado:</strong> 
-              <span [ngClass]="'badge bg-' + (getStatusColor() === 'verde' ? 'success' : 
-                                              getStatusColor() === 'amarillo' ? 'warning' : 
+              <strong>Estado:</strong>
+              <span [ngClass]="'badge bg-' + (getStatusColor() === 'verde' ? 'success' :
+                                              getStatusColor() === 'amarillo' ? 'warning' :
                                               getStatusColor() === 'naranja' ? 'danger' : 'dark')">
                 {{ getStatusDisplay() }}
               </span>
@@ -127,7 +127,7 @@
       <button class="btn btn-success" (click)="openPaymentModal()" [disabled]="credit.status === 'PAID'">
         <i class="bi bi-cash-coin me-1"></i>Registrar Pago
       </button>
-      <button class="btn btn-info" (click)="sendReminder()" [disabled]="credit.status === 'PAID'">
+      <button class="btn btn-info" (click)="openReminderModal()" [disabled]="credit.status === 'PAID'">
         <i class="bi bi-bell me-1"></i>Enviar Recordatorio
       </button>
       <button class="btn btn-primary" (click)="print()">
@@ -141,6 +141,46 @@
       </button>
     </div>
   </ng-container>
+</div>
+
+<!-- MODAL DE RECORDATORIO -->
+<div *ngIf="showReminderModal" class="modal d-block" tabindex="-1" role="dialog" style="background-color: rgba(0,0,0,0.5)">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Enviar recordatorio</h5>
+        <button type="button" class="btn-close" (click)="closeReminderModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted mb-3">Selecciona el canal para enviar el recordatorio a {{ credit.customer?.fullName }}.</p>
+
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="reminderChannel" id="reminderEmail" [(ngModel)]="reminderChannel" value="EMAIL" [disabled]="!credit.customer?.email">
+          <label class="form-check-label" for="reminderEmail">
+            Email <span class="text-muted" *ngIf="!credit.customer?.email">(no disponible)</span>
+          </label>
+        </div>
+
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="radio" name="reminderChannel" id="reminderSms" [(ngModel)]="reminderChannel" value="SMS" [disabled]="!credit.customer?.phone">
+          <label class="form-check-label" for="reminderSms">
+            SMS <span class="text-muted" *ngIf="!credit.customer?.phone">(no disponible)</span>
+          </label>
+        </div>
+
+        <div class="alert alert-info mb-0">
+          <strong>Importante:</strong> el backend registra y envía la notificación al canal elegido. Si el proveedor de correo/SMS aún no está conectado, quedará como notificación emitida en el sistema.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeReminderModal()" [disabled]="sendingReminder">Cancelar</button>
+        <button type="button" class="btn btn-info" (click)="sendReminder()" [disabled]="sendingReminder || (reminderChannel === 'EMAIL' && !credit.customer?.email) || (reminderChannel === 'SMS' && !credit.customer?.phone)">
+          <span *ngIf="sendingReminder" class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+          Enviar
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- MODAL DE PAGO -->

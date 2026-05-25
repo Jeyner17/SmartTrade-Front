@@ -7,7 +7,6 @@
 }
 
 .progress-bar {
-  background: linear-gradient(90deg, #1976d2, #1565c0);
   color: #fff;
   display: flex;
   justify-content: center;
@@ -42,6 +41,14 @@
 
 .regular {
   background-color: #ffc107;
+}
+
+.warning {
+  background-color: #ffc107;
+}
+
+.danger {
+  background-color: #dc3545;
 }
 
 .deficiente {

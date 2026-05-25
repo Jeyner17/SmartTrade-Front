@@ -17,7 +17,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
   customers: any[] = [];
   loading = false;
   selectedCustomers: Set<number> = new Set();
-  
+
   stats = {
     totalDebt: 0,
     delinquentCount: 0,
@@ -59,20 +59,33 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
   loadCustomers(): void {
     this.loading = true;
     this.selectedCustomers.clear();
-    
+
     const params: any = {};
     if (this.filters.delayDays) params.minLateDays = this.getMinDelayDays();
-    
+
     this.creditsService.getDelinquentCustomers(params)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-          // El backend retorna: { success: true, data: [...] }
-          const customerData = response.data;
-          this.customers = Array.isArray(customerData) ? customerData : (customerData?.data || []);
-          this.calculateStats();
-          this.loading = false;
-        },
+            // El backend retorna arreglo de objetos: { customer, totalOverdue, maxLateDays, credits }
+            const customerData = response.data;
+            const raw = Array.isArray(customerData) ? customerData : (customerData?.data || []);
+
+            // Mapear a la interfaz que usa la UI
+            this.customers = raw.map((item: any) => ({
+              id: item.customer?.id,
+              name: item.customer?.fullName || item.customer?.name || '—',
+              phone: item.customer?.phone || item.customer?.contact || '—',
+              overdueCredits: Array.isArray(item.credits) ? item.credits.length : 0,
+              totalDue: Number(item.totalOverdue || 0),
+              avgDelayDays: Number(item.maxLateDays || 0),
+              lastAction: item.lastAction || null,
+              credits: item.credits || []
+            }));
+
+            this.calculateStats();
+            this.loading = false;
+          },
         error: () => {
           this.loading = false;
         }
@@ -90,7 +103,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
   calculateStats(): void {
     this.stats.delinquentCount = this.customers.length;
     this.stats.totalDebt = this.customers.reduce((sum, c) => sum + (c.totalDue || 0), 0);
-    
+
     if (this.customers.length > 0) {
       const totalDelayDays = this.customers.reduce((sum, c) => sum + (c.avgDelayDays || 0), 0);
       this.stats.avgDelayDays = Math.round(totalDelayDays / this.customers.length);
@@ -163,7 +176,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
     const action = prompt(
       'Tipo de acción realizada:\n1. Llamada\n2. SMS\n3. Email\n4. Visita\n5. Otro\n\nIngrese el número (1-5):'
     );
-    
+
     if (action && ['1', '2', '3', '4', '5'].includes(action)) {
       const actionTypeMap: any = {
         '1': 'llamada',
@@ -172,14 +185,14 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
         '4': 'visita',
         '5': 'otro'
       };
-      
+
       const description = prompt('Descripción de la gestión realizada:');
-      
+
       if (description) {
         const status = prompt(
           'Resultado:\n1. Éxito\n2. Sin respuesta\n3. Compromiso\n4. Rechazado\n\nIngrese el número (1-4):'
         );
-        
+
         if (status && ['1', '2', '3', '4'].includes(status)) {
           const statusMap: any = {
             '1': 'éxito',
@@ -187,7 +200,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
             '3': 'compromiso',
             '4': 'rechazado'
           };
-          
+
           alert(`Gestión de cobro registrada exitosamente:\nTipo: ${actionTypeMap[action]}\nResultado: ${statusMap[status]}`);
           // Aquí se enviaría al backend si hubiera un endpoint
           console.log({
@@ -213,7 +226,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
 
     if (channel && ['1', '2'].includes(channel)) {
       const channelMap: any = { '1': 'EMAIL', '2': 'SMS' };
-      
+
       if (confirm(
         `¿Enviar recordatorio por ${channelMap[channel]} a ${this.selectedCustomers.size} cliente(s)?`
       )) {

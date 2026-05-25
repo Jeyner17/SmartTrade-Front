@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { CreditsService } from '../services/credits.service';
 import { Credit } from '../models/credit.model';
+import { NotificationsService } from '../services/notifications.service';
 import { PaymentModalComponent } from './payment-modal.component';
 
 @Component({
@@ -26,7 +27,7 @@ export class CreditsListComponent implements OnInit, OnDestroy {
     overdueAmount: 0,
     dueThisWeek: 0
   };
-  
+
   filters = {
     customerName: '',
     status: 'todos',
@@ -49,7 +50,11 @@ export class CreditsListComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private creditsService: CreditsService, private router: Router) {}
+  constructor(
+    private creditsService: CreditsService,
+    private notificationsService: NotificationsService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadCredits();
@@ -92,7 +97,7 @@ export class CreditsListComponent implements OnInit, OnDestroy {
     this.totalStats.overdueAmount = this.credits
       .filter(c => c.status === 'OVERDUE')
       .reduce((sum, c) => sum + (c.outstandingBalance || 0), 0);
-    
+
     this.totalStats.dueThisWeek = this.credits.filter(c => {
       const dueDate = new Date(c.dueDate);
       return c.status === 'ACTIVE' && dueDate > today && dueDate <= sevenDaysLater;
@@ -144,16 +149,16 @@ export class CreditsListComponent implements OnInit, OnDestroy {
     this.loadCredits();
   }
 
-  sendReminder(creditId: number): void {
+  sendReminder(credit: any): void {
     if (confirm('¿Enviar recordatorio de pago a este cliente?')) {
-      this.creditsService.createReminder(creditId, { channel: 'EMAIL' })
+      this.notificationsService.sendReminder(credit)
         .pipe(takeUntil(this.destroy$))
         .subscribe({
           next: () => {
             alert('Recordatorio enviado exitosamente');
           },
-          error: () => {
-            alert('Error al enviar recordatorio');
+          error: (error) => {
+            alert(error.error?.message || error.message || 'Error al enviar recordatorio');
           }
         });
     }

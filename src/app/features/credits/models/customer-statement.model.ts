@@ -1,16 +1,16 @@
+export interface StatementCustomer {
+  id: number;
+  fullName: string;
+  documentNumber: string;
+  phone?: string;
+  email?: string;
+  creditLimit?: number;
+}
+
 export interface CustomerStatement {
-  customerId: string;
-  name: string;
-  document: string;
-  contact: string;
-  creditLimit: number;
-  usedCredit: number;
-  availableCredit: number;
-  totalCredits: number;
-  paidCredits: number;
-  activeCredits: number;
-  avgDaysToPay: number;
-  rating: string;
-  activeCreditsList: any[];
-  paidCreditsList: any[];
+  customer: StatementCustomer;
+  totalDebt: number;
+  activeCredits: any[];
+  payments: any[];
+  averageLateDays: number;
 }

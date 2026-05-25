@@ -1,8 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { CreditsService } from '../services/credits.service';
+import { NotificationsService } from '../services/notifications.service';
 import { PaymentModalComponent } from './payment-modal.component';
 import { DebtForgivenessModalComponent } from './debt-forgiveness-modal.component';
 import { RefinanceModalComponent } from './refinance-modal.component';
@@ -12,7 +14,7 @@ import { RefinanceModalComponent } from './refinance-modal.component';
   templateUrl: './credit-detail.component.html',
   styleUrls: ['./credit-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, PaymentModalComponent, DebtForgivenessModalComponent, RefinanceModalComponent]
+  imports: [CommonModule, FormsModule, PaymentModalComponent, DebtForgivenessModalComponent, RefinanceModalComponent]
 })
 export class CreditDetailComponent implements OnInit, OnDestroy {
   credit: any = null;
@@ -21,10 +23,14 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   showPaymentModal = false;
   showRefinanceModal = false;
   showForgiveModal = false;
+  showReminderModal = false;
+  reminderChannel: 'EMAIL' | 'SMS' = 'EMAIL';
+  sendingReminder = false;
   private destroy$ = new Subject<void>();
 
   constructor(
     private creditsService: CreditsService,
+    private notificationsService: NotificationsService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
@@ -69,18 +75,18 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     const daysLate = Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
 
     this.credit.daysLate = Math.max(0, daysLate);
-    
-    // Calcular intereses por mora
+
+    // Calcular intereses por mora — asegurarse que los valores sean numéricos
+    const outstanding = Number(this.credit.outstandingBalance || 0);
+    const rate = Number(this.credit.moraRateDaily || 0);
+
     if (this.credit.status === 'OVERDUE' && daysLate > 0) {
-      this.credit.lateInterest = Number((
-        this.credit.outstandingBalance * this.credit.moraRateDaily * daysLate
-      ).toFixed(2));
-      this.credit.totalAmount = Number((
-        this.credit.outstandingBalance + this.credit.lateInterest
-      ).toFixed(2));
+      const late = outstanding * rate * daysLate;
+      this.credit.lateInterest = Number(late.toFixed(2));
+      this.credit.totalAmount = Number((outstanding + this.credit.lateInterest).toFixed(2));
     } else {
       this.credit.lateInterest = 0;
-      this.credit.totalAmount = this.credit.outstandingBalance;
+      this.credit.totalAmount = Number(outstanding.toFixed(2));
     }
   }
 
@@ -137,19 +143,38 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
     this.loadDetail(this.credit.id);
   }
 
-  sendReminder(): void {
-    if (confirm('¿Enviar recordatorio de pago a este cliente?')) {
-      this.creditsService.createReminder(this.credit.id, { channel: 'EMAIL' })
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            alert('Recordatorio enviado exitosamente');
-          },
-          error: () => {
-            alert('Error al enviar recordatorio');
-          }
-        });
+  openReminderModal(): void {
+    if (!this.credit?.customer?.email && !this.credit?.customer?.phone) {
+      alert('Este cliente no tiene email ni teléfono registrado para enviar el recordatorio');
+      return;
     }
+
+    this.reminderChannel = this.credit?.customer?.email ? 'EMAIL' : 'SMS';
+    this.showReminderModal = true;
+  }
+
+  closeReminderModal(): void {
+    this.showReminderModal = false;
+    this.sendingReminder = false;
+  }
+
+  sendReminder(): void {
+    if (!this.credit) return;
+
+    this.sendingReminder = true;
+    this.notificationsService.sendReminder(this.credit, this.reminderChannel)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: () => {
+          this.sendingReminder = false;
+          this.closeReminderModal();
+          alert('Recordatorio enviado exitosamente');
+        },
+        error: (error) => {
+          this.sendingReminder = false;
+          alert(error.error?.message || error.message || 'Error al enviar recordatorio');
+        }
+      });
   }
 
   print(): void {

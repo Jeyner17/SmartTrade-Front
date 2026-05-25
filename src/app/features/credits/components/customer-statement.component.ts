@@ -13,7 +13,7 @@ import { CustomerStatement } from '../models/customer-statement.model';
   imports: [CommonModule]
 })
 export class CustomerStatementComponent implements OnInit, OnDestroy {
-  statement: any = null;
+  statement: CustomerStatement | null = null;
   loading = false;
   error: string | null = null;
   private destroy$ = new Subject<void>();
@@ -43,8 +43,8 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
     this.creditsService.getCustomerStatement(customerId)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data: any) => {
-          this.statement = data.data || data;
+        next: (response: any) => {
+          this.statement = response?.data || response || null;
           this.loading = false;
         },
         error: (err) => {
@@ -56,17 +56,16 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
 
   getCreditUtilizationPercentage(): number {
     if (!this.statement) return 0;
-    const limit = this.statement.creditLimit || 1;
-    return Math.round((this.statement.usedCredit / limit) * 100);
+    const limit = Number(this.statement.customer?.creditLimit || 0);
+    if (!limit) return 0;
+    return Math.min(100, Math.round((Number(this.statement.totalDebt || 0) / limit) * 100));
   }
 
-  getRatingClass(): string {
-    const rating = this.statement?.rating || '';
-    if (rating.includes('Excelente')) return 'excelente';
-    if (rating.includes('Buen')) return 'buen';
-    if (rating.includes('Regular')) return 'regular';
-    if (rating.includes('Deficiente')) return 'deficiente';
-    return 'desconocido';
+  getDebtStatusClass(): string {
+    const percentage = this.getCreditUtilizationPercentage();
+    if (percentage >= 90) return 'danger';
+    if (percentage >= 70) return 'warning';
+    return 'success';
   }
 
   newCredit(): void {
@@ -85,5 +84,17 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/credits']);
+  }
+
+  getActiveCredits(): any[] {
+    return this.statement?.activeCredits || [];
+  }
+
+  getPayments(): any[] {
+    return this.statement?.payments || [];
+  }
+
+  getPaidCreditsCount(): number {
+    return this.getPayments().length;
   }
 }
