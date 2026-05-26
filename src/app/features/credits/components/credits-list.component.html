@@ -119,13 +119,13 @@
             <td>{{ credit.dueDate | date:'shortDate' }}</td>
             <td>
               <span *ngIf="credit.status === 'OVERDUE'" class="badge bg-danger">{{ getDaysLateness(credit) }}</span>
-              <span *ngIf="credit.status !== 'OVERDUE'" class="badge bg-success">Activo</span>
+              <span *ngIf="credit.status !== 'OVERDUE'" class="badge bg-success">{{ formatEstado(credit.status) }}</span>
             </td>
             <td>
               <span [ngClass]="'badge bg-' + (getStatusColor(credit) === 'verde' ? 'success' :
                                               getStatusColor(credit) === 'amarillo' ? 'warning' :
                                               getStatusColor(credit) === 'naranja' ? 'danger' : 'dark')">
-                {{ credit.status }}
+                {{ formatEstado(credit.status) }}
               </span>
             </td>
             <td>

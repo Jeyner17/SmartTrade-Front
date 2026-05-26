@@ -295,9 +295,12 @@ export class CreditsListComponent implements OnInit, OnDestroy {
 
   formatEstado(status: string): string {
     switch (status) {
-      case 'ACTIVE': return 'AL DÍA';
+      case 'ACTIVE': return 'ACTIVO';
       case 'OVERDUE': return 'VENCIDO';
       case 'mora-grave': return 'MORA GRAVE';
+      case 'PAID': return 'PAGADO';
+      case 'FORGIVEN': return 'PERDONADO';
+      case 'REFINANCED': return 'REFINANCIADO';
       default: return status;
     }
   }
