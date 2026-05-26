@@ -103,7 +103,7 @@ export class CreditsListComponent implements OnInit, OnDestroy {
       return c.status === 'ACTIVE' && dueDate > today && dueDate <= sevenDaysLater;
     }).length;
 
-    this.totalStats.totalDue = this.credits.reduce((sum, c) => sum + (c.outstandingBalance || 0), 0);
+    this.totalStats.totalDue = this.credits.reduce((sum, c) => sum + Number(c.outstandingBalance || 0), 0);
   }
 
   getStatusColor(credit: any): string {
@@ -181,6 +181,142 @@ export class CreditsListComponent implements OnInit, OnDestroy {
   }
 
   export(): void {
-    alert('Funcionalidad de exportación en desarrollo');
+    this.loading = true;
+    setTimeout(() => {
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const fecha = `${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}`;
+      const hora = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      const usuario = localStorage.getItem('userName') || 'Usuario';
+
+      // Usar punto y coma como delimitador
+      const sep = ';';
+      let csv = '';
+
+      // Encabezado superior con líneas y símbolos
+      csv += `========================================${sep.repeat(5)}\r\n`;
+      csv += `★ SMART TRADE${sep.repeat(7)}\r\n`;
+      csv += `► REPORTE DE CRÉDITOS${sep.repeat(6)}\r\n`;
+      csv += `========================================${sep.repeat(5)}\r\n`;
+      csv += `FECHA DE EXPORTACIÓN:${sep}${fecha} ${hora}${sep.repeat(6)}\r\n`;
+      csv += `USUARIO:${sep}${usuario}${sep.repeat(7)}\r\n`;
+      csv += sep.repeat(9) + '\r\n';
+
+      // Sección resumen con líneas
+      csv += `---------- RESUMEN ----------${sep.repeat(5)}\r\n`;
+      csv += `TOTAL POR COBRAR:${sep}${this.formatMoney(this.totalStats.totalDue)}${sep.repeat(6)}\r\n`;
+      csv += `CRÉDITOS ACTIVOS:${sep}${this.totalStats.activeCredits}${sep.repeat(6)}\r\n`;
+      csv += `CRÉDITOS VENCIDOS:${sep}${this.totalStats.overdueCredits}${sep.repeat(6)}\r\n`;
+      csv += `POR VENCER ESTA SEMANA:${sep}${this.totalStats.dueThisWeek}${sep.repeat(5)}\r\n`;
+      csv += sep.repeat(9) + '\r\n';
+      csv += `========================================${sep.repeat(5)}\r\n`;
+
+      // Encabezados tabla principal destacados
+      csv += [
+        'CLIENTE',
+        'N° CRÉDITO',
+        'FECHA',
+        'MONTO ORIGINAL',
+        'PAGADO',
+        'SALDO PENDIENTE',
+        'FECHA VENCIMIENTO',
+        'DÍAS ATRASO',
+        'ESTADO'
+      ].map(h => `**${h}**`).join(sep) + '\r\n';
+
+      // Filas de créditos visibles (con filtros)
+      let totalOriginal = 0, totalPagado = 0, totalSaldo = 0;
+      this.credits.forEach(c => {
+        // Asegurar valores numéricos y no negativos
+        const principal = Number(c.principalAmount) || 0;
+        const saldoPendiente = Number(c.outstandingBalance) || 0;
+        let pagado = principal - saldoPendiente;
+        if (pagado < 0) pagado = 0;
+        if (saldoPendiente < 0) pagado = principal;
+        // Formatos
+        const cliente = (c.customer?.fullName || 'N/A').replace(/\n|\r|;/g, ' ');
+        const fecha = this.formatDate(c.startDate);
+        const montoOriginal = this.formatMoney(principal);
+        const pagadoFmt = this.formatMoney(pagado);
+        const saldoFmt = this.formatMoney(saldoPendiente < 0 ? 0 : saldoPendiente);
+        const fechaVenc = this.formatDate(c.dueDate);
+        const diasAtraso = c.status === 'OVERDUE' ? this.getDaysLatenessNum(c) : '';
+        const estado = this.formatEstado(c.status);
+        csv += [cliente, c.id, fecha, montoOriginal, pagadoFmt, saldoFmt, fechaVenc, diasAtraso, estado].join(sep) + '\r\n';
+        totalOriginal += principal;
+        totalPagado += pagado;
+        totalSaldo += saldoPendiente < 0 ? 0 : saldoPendiente;
+      });
+      csv += `----------------------------------------${sep.repeat(5)}\r\n`;
+
+      // Totales al final destacados
+      csv += sep.repeat(9) + '\r\n';
+      csv += [
+        '★ TOTALES', '', '',
+        this.formatMoney(totalOriginal),
+        this.formatMoney(totalPagado),
+        this.formatMoney(totalSaldo), '', '', ''
+      ].join(sep) + '\r\n';
+      csv += `========================================${sep.repeat(5)}\r\n`;
+
+      // Agregar BOM para UTF-8 y crear archivo
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `creditos_${fecha}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.loading = false;
+      this.showToast('CSV generado correctamente');
+    }, 500);
+  }
+
+  formatMoney(value: number): string {
+    return value == null ? '' : `$${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+  }
+
+  getDaysLatenessNum(credit: any): number {
+    if (credit.status !== 'OVERDUE') return 0;
+    const today = new Date();
+    const dueDate = new Date(credit.dueDate);
+    return Math.ceil((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  formatEstado(status: string): string {
+    switch (status) {
+      case 'ACTIVE': return 'AL DÍA';
+      case 'OVERDUE': return 'VENCIDO';
+      case 'mora-grave': return 'MORA GRAVE';
+      default: return status;
+    }
+  }
+
+  showToast(msg: string): void {
+    // Simple toast nativo, reemplazar por servicio si existe uno
+    const toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.style.position = 'fixed';
+    toast.style.bottom = '30px';
+    toast.style.left = '50%';
+    toast.style.transform = 'translateX(-50%)';
+    toast.style.background = '#28a745';
+    toast.style.color = '#fff';
+    toast.style.padding = '12px 24px';
+    toast.style.borderRadius = '6px';
+    toast.style.zIndex = '9999';
+    toast.style.fontWeight = 'bold';
+    document.body.appendChild(toast);
+    setTimeout(() => document.body.removeChild(toast), 2500);
   }
 }
