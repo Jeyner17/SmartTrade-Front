@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { CreditsService } from '../services/credits.service';
 import { Credit } from '../models/credit.model';
@@ -14,10 +14,11 @@ import { ConfirmationService } from '../../../core/services/confirmation.service
   templateUrl: './credits-list.component.html',
   styleUrls: ['./credits-list.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, PaymentModalComponent]
+  imports: [CommonModule, FormsModule, RouterModule, PaymentModalComponent]
 })
 export class CreditsListComponent implements OnInit, OnDestroy {
   credits: any[] = [];
+  allCredits: any[] = [];
   loading = false;
   showPaymentModal = false;
   selectedCredit: any = null;
@@ -69,19 +70,14 @@ export class CreditsListComponent implements OnInit, OnDestroy {
 
   loadCredits(): void {
     this.loading = true;
-    const params: any = {};
-    if (this.filters.customerName) params.customerName = this.filters.customerName;
-    if (this.filters.status !== 'todos') params.status = this.filters.status;
-    params.orderBy = this.filters.orderBy;
-
-    this.creditsService.getCredits(params)
+    this.creditsService.getCredits({ orderBy: this.filters.orderBy })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
           // El backend retorna: { success: true, data: { data: [...], pagination: {...} } }
           const creditData = response.data;
-          this.credits = Array.isArray(creditData) ? creditData : (creditData?.data || []);
-          this.calculateStats();
+          this.allCredits = Array.isArray(creditData) ? creditData : (creditData?.data || []);
+          this.applyFilters();
           this.loading = false;
         },
         error: () => {
@@ -129,7 +125,63 @@ export class CreditsListComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange(): void {
-    this.loadCredits();
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    const search = this.filters.customerName?.trim().toLowerCase() || '';
+    const status = this.filters.status;
+    const today = new Date();
+
+    this.credits = this.allCredits.filter((credit: any) => {
+      const name = (credit.customer?.fullName || credit.customer?.name || '').toString().toLowerCase();
+      const matchesName = !search || name.includes(search);
+      const matchesStatus = status === 'todos' || this.matchesStatus(credit, status, today);
+      return matchesName && matchesStatus;
+    });
+
+    this.credits = this.sortCredits(this.credits);
+    this.calculateStats();
+  }
+
+  private sortCredits(credits: any[]): any[] {
+    if (this.filters.orderBy === 'monto') {
+      return [...credits].sort((a, b) => (Number(b.principalAmount) || 0) - (Number(a.principalAmount) || 0));
+    }
+    if (this.filters.orderBy === 'cliente') {
+      return [...credits].sort((a, b) => {
+        const aName = (a.customer?.fullName || a.customer?.name || '').toString().toLowerCase();
+        const bName = (b.customer?.fullName || b.customer?.name || '').toString().toLowerCase();
+        return aName.localeCompare(bName);
+      });
+    }
+    // Fecha por defecto
+    return [...credits].sort((a, b) => {
+      const aDate = new Date(a.startDate).getTime();
+      const bDate = new Date(b.startDate).getTime();
+      return bDate - aDate;
+    });
+  }
+
+  private matchesStatus(credit: any, status: string, today: Date): boolean {
+    if (status === 'ACTIVE') {
+      return credit.status === 'ACTIVE';
+    }
+    if (status === 'OVERDUE') {
+      return credit.status === 'OVERDUE';
+    }
+    if (status === 'mora-grave') {
+      return credit.status === 'mora-grave';
+    }
+    if (status === 'por-vencer') {
+      if (!credit.dueDate) {
+        return false;
+      }
+      const dueDate = new Date(credit.dueDate);
+      const daysRemaining = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      return credit.status === 'ACTIVE' && daysRemaining >= 0 && daysRemaining <= 7;
+    }
+    return true;
   }
 
   viewDetail(creditId: number): void {

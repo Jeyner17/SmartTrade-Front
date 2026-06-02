@@ -11,7 +11,7 @@
       <button type="button" class="btn btn-info" (click)="createCredit()">
         <i class="bi bi-file-earmark-plus me-1"></i>Clientes de Crédito
       </button>
-      <button type="button" class="btn btn-warning" (click)="viewDelinquent()">
+      <button type="button" class="btn btn-warning" [routerLink]="['/credits/morosos']">
         <i class="bi bi-exclamation-circle me-1"></i>Clientes Morosos
       </button>
       <button type="button" class="btn btn-secondary" (click)="export()">
@@ -124,7 +124,7 @@
             <td>
               <span [ngClass]="'badge bg-' + (getStatusColor(credit) === 'verde' ? 'success' :
                                               getStatusColor(credit) === 'amarillo' ? 'warning' :
-                                              getStatusColor(credit) === 'naranja' ? 'danger' : 'dark')">
+                                              getStatusColor(credit) === 'naranja' || getStatusColor(credit) === 'rojo' ? 'danger' : 'dark')">
                 {{ formatEstado(credit.status) }}
               </span>
             </td>

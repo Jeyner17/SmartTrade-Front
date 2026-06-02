@@ -16,6 +16,7 @@ import { DelinquentCustomer } from '../models/delinquent-customer.model';
 })
 export class DelinquentCustomersComponent implements OnInit, OnDestroy {
   customers: any[] = [];
+  allCustomers: any[] = [];
   loading = false;
   selectedCustomers: Set<number> = new Set();
 
@@ -44,6 +45,35 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
     { value: 'monto', label: 'Monto adeudado' }
   ];
 
+  showActionModal = false;
+  actionCustomerId: number | null = null;
+  actionCustomerName = '';
+  actionType = '';
+  actionDescription = '';
+  actionStatus = '';
+  showBulkReminderModal = false;
+  bulkReminderChannel: '1' | '2' | '' = '';
+
+  actionTypeOptions = [
+    { value: '1', label: 'Llamada' },
+    { value: '2', label: 'SMS' },
+    { value: '3', label: 'Email' },
+    { value: '4', label: 'Visita' },
+    { value: '5', label: 'Otro' }
+  ];
+
+  actionStatusOptions = [
+    { value: '1', label: 'Éxito' },
+    { value: '2', label: 'Sin respuesta' },
+    { value: '3', label: 'Compromiso' },
+    { value: '4', label: 'Rechazado' }
+  ];
+
+  bulkReminderOptions = [
+    { value: '1', label: 'EMAIL' },
+    { value: '2', label: 'SMS' }
+  ];
+
   private destroy$ = new Subject<void>();
 
   constructor(private creditsService: CreditsService, private router: Router, private confirmation: ConfirmationService) {}
@@ -61,32 +91,29 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.selectedCustomers.clear();
 
-    const params: any = {};
-    if (this.filters.delayDays) params.minLateDays = this.getMinDelayDays();
-
-    this.creditsService.getDelinquentCustomers(params)
+    this.creditsService.getDelinquentCustomers()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response: any) => {
-            // El backend retorna arreglo de objetos: { customer, totalOverdue, maxLateDays, credits }
-            const customerData = response.data;
-            const raw = Array.isArray(customerData) ? customerData : (customerData?.data || []);
+          // El backend retorna arreglo de objetos: { customer, totalOverdue, maxLateDays, credits }
+          const customerData = response.data;
+          const raw = Array.isArray(customerData) ? customerData : (customerData?.data || []);
 
-            // Mapear a la interfaz que usa la UI
-            this.customers = raw.map((item: any) => ({
-              id: item.customer?.id,
-              name: item.customer?.fullName || item.customer?.name || '—',
-              phone: item.customer?.phone || item.customer?.contact || '—',
-              overdueCredits: Array.isArray(item.credits) ? item.credits.length : 0,
-              totalDue: Number(item.totalOverdue || 0),
-              avgDelayDays: Number(item.maxLateDays || 0),
-              lastAction: item.lastAction || null,
-              credits: item.credits || []
-            }));
+          // Mapear a la interfaz que usa la UI
+          this.allCustomers = raw.map((item: any) => ({
+            id: item.customer?.id,
+            name: item.customer?.fullName || item.customer?.name || '—',
+            phone: item.customer?.phone || item.customer?.contact || '—',
+            overdueCredits: Array.isArray(item.credits) ? item.credits.length : 0,
+            totalDue: Number(item.totalOverdue || 0),
+            avgDelayDays: Number(item.maxLateDays || 0),
+            lastAction: item.lastAction || null,
+            credits: item.credits || []
+          }));
 
-            this.calculateStats();
-            this.loading = false;
-          },
+          this.applyFilters();
+          this.loading = false;
+        },
         error: () => {
           this.loading = false;
         }
@@ -120,7 +147,47 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
   }
 
   onFilterChange(): void {
-    this.loadCustomers();
+    this.applyFilters();
+  }
+
+  private applyFilters(): void {
+    const minAmount = Number(this.filters.amountMin) || 0;
+    const maxAmount = Number(this.filters.amountMax) || 0;
+    const today = new Date();
+
+    this.customers = this.allCustomers.filter((customer: any) => {
+      const matchesAmountMin = minAmount <= 0 || customer.totalDue >= minAmount;
+      const matchesAmountMax = maxAmount <= 0 || customer.totalDue <= maxAmount;
+      const matchesDelay = this.matchesDelayRange(customer.avgDelayDays, this.filters.delayDays);
+      return matchesAmountMin && matchesAmountMax && matchesDelay;
+    });
+
+    this.customers = this.sortCustomers(this.customers);
+    this.calculateStats();
+  }
+
+  private matchesDelayRange(days: number, range: string): boolean {
+    if (range === '1-7') {
+      return days >= 1 && days <= 7;
+    }
+    if (range === '8-15') {
+      return days >= 8 && days <= 15;
+    }
+    if (range === '15-30') {
+      return days >= 16 && days <= 30;
+    }
+    if (range === '30+') {
+      return days >= 31;
+    }
+    return true;
+  }
+
+  private sortCustomers(customers: any[]): any[] {
+    if (this.filters.orderBy === 'monto') {
+      return [...customers].sort((a, b) => (b.totalDue || 0) - (a.totalDue || 0));
+    }
+
+    return [...customers].sort((a, b) => (b.avgDelayDays || 0) - (a.avgDelayDays || 0));
   }
 
   toggleCustomer(customerId: number): void {
@@ -173,46 +240,72 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
     this.router.navigate(['/credits/estado-cuenta', customerId]);
   }
 
-  registerAction(customerId: number): void {
-    const action = prompt(
-      'Tipo de acción realizada:\n1. Llamada\n2. SMS\n3. Email\n4. Visita\n5. Otro\n\nIngrese el número (1-5):'
-    );
+  openActionModal(customerId: number): void {
+    this.actionCustomerId = customerId;
+    const customer = this.customers.find(c => c.id === customerId);
+    this.actionCustomerName = customer?.name || 'Cliente';
+    this.actionType = '';
+    this.actionDescription = '';
+    this.actionStatus = '';
+    this.showActionModal = true;
+  }
 
-    if (action && ['1', '2', '3', '4', '5'].includes(action)) {
-      const actionTypeMap: any = {
-        '1': 'llamada',
-        '2': 'sms',
-        '3': 'email',
-        '4': 'visita',
-        '5': 'otro'
-      };
+  closeActionModal(): void {
+    this.showActionModal = false;
+    this.actionCustomerId = null;
+  }
 
-      const description = prompt('Descripción de la gestión realizada:');
-
-      if (description) {
-        const status = prompt(
-          'Resultado:\n1. Éxito\n2. Sin respuesta\n3. Compromiso\n4. Rechazado\n\nIngrese el número (1-4):'
-        );
-
-        if (status && ['1', '2', '3', '4'].includes(status)) {
-          const statusMap: any = {
-            '1': 'éxito',
-            '2': 'sin_respuesta',
-            '3': 'compromiso',
-            '4': 'rechazado'
-          };
-
-          alert(`Gestión de cobro registrada exitosamente:\nTipo: ${actionTypeMap[action]}\nResultado: ${statusMap[status]}`);
-          // Aquí se enviaría al backend si hubiera un endpoint
-          console.log({
-            customerId,
-            actionType: actionTypeMap[action],
-            description,
-            status: statusMap[status]
-          });
-        }
-      }
+  submitAction(): void {
+    if (!this.actionType || !this.actionDescription.trim() || !this.actionStatus) {
+      this.confirmation.confirm({ title: 'Datos incompletos', message: 'Complete todos los campos para registrar la gestión.', confirmText: 'Aceptar', cancelText: '', type: 'warning' }).subscribe();
+      return;
     }
+
+    const actionTypeMap: any = {
+      '1': 'llamada',
+      '2': 'sms',
+      '3': 'email',
+      '4': 'visita',
+      '5': 'otro'
+    };
+
+    const statusMap: any = {
+      '1': 'éxito',
+      '2': 'sin_respuesta',
+      '3': 'compromiso',
+      '4': 'rechazado'
+    };
+
+    this.confirmation.confirm({
+      title: 'Confirmar gestión',
+      message: `Registrar gestión de cobranza para ${this.actionCustomerName} como ${actionTypeMap[this.actionType]}?`,
+      confirmText: 'Registrar',
+      cancelText: 'Cancelar',
+      type: 'info'
+    }).subscribe(ok => {
+      if (!ok) return;
+
+      this.confirmation.confirm({
+        title: 'Gestión registrada',
+        message: `Gestión de cobro registrada exitosamente:\nTipo: ${actionTypeMap[this.actionType]}\nResultado: ${statusMap[this.actionStatus]}`,
+        confirmText: 'Aceptar',
+        cancelText: '',
+        type: 'info'
+      }).subscribe();
+
+      console.log({
+        customerId: this.actionCustomerId,
+        actionType: actionTypeMap[this.actionType],
+        description: this.actionDescription.trim(),
+        status: statusMap[this.actionStatus]
+      });
+
+      this.closeActionModal();
+    });
+  }
+
+  registerAction(customerId: number): void {
+    this.openActionModal(customerId);
   }
 
   sendBulkReminder(): void {
@@ -221,53 +314,108 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const channel = prompt(
-      'Seleccione el canal de envío:\n1. EMAIL\n2. SMS\n\nIngrese el número (1 o 2):'
-    );
+    this.bulkReminderChannel = '';
+    this.showBulkReminderModal = true;
+  }
 
-    if (channel && ['1', '2'].includes(channel)) {
-      const channelMap: any = { '1': 'EMAIL', '2': 'SMS' };
+  closeBulkReminderModal(): void {
+    this.showBulkReminderModal = false;
+    this.bulkReminderChannel = '';
+  }
 
-      this.confirmation.confirm({ title: 'Enviar recordatorios', message: `¿Enviar recordatorio por ${channelMap[channel]} a ${this.selectedCustomers.size} cliente(s)?`, confirmText: 'Enviar', cancelText: 'Cancelar', type: 'info' }).subscribe(ok => {
-        if (!ok) return;
-        this.confirmation.confirm({ title: 'Enviado', message: `${this.selectedCustomers.size} recordatorios enviados por ${channelMap[channel]}`, confirmText: 'Aceptar', cancelText: '', type: 'info' }).subscribe();
-        // Aquí se enviaría al backend si hubiera un endpoint para recordatorios masivos
-        this.selectedCustomers.clear();
-      });
+  submitBulkReminder(): void {
+    if (!['1', '2'].includes(this.bulkReminderChannel)) {
+      this.confirmation.confirm({ title: 'Datos incompletos', message: 'Seleccione el canal de envío.', confirmText: 'Aceptar', cancelText: '', type: 'warning' }).subscribe();
+      return;
     }
+
+    const channelMap: any = { '1': 'EMAIL', '2': 'SMS' };
+
+    this.confirmation.confirm({
+      title: 'Enviar recordatorios',
+      message: `¿Enviar recordatorio por ${channelMap[this.bulkReminderChannel]} a ${this.selectedCustomers.size} cliente(s)?`,
+      confirmText: 'Enviar',
+      cancelText: 'Cancelar',
+      type: 'info'
+    }).subscribe(ok => {
+      if (!ok) return;
+
+      this.confirmation.confirm({ title: 'Enviado', message: `${this.selectedCustomers.size} recordatorios enviados por ${channelMap[this.bulkReminderChannel]}`, confirmText: 'Aceptar', cancelText: '', type: 'info' }).subscribe();
+      this.selectedCustomers.clear();
+      this.closeBulkReminderModal();
+    });
   }
 
   export(): void {
     if (this.customers.length === 0) {
-      alert('No hay datos para exportar');
+      this.confirmation.confirm({ title: 'Aviso', message: 'No hay datos para exportar', confirmText: 'Aceptar', cancelText: '', type: 'info' }).subscribe();
       return;
     }
 
-    // Exportar a CSV
-    const headers = ['Cliente', 'Teléfono', 'Créditos Vencidos', 'Total Adeudado', 'Días Atraso Promedio', 'Última Gestión'];
-    const rows = this.customers.map(c => [
-      c.name,
-      c.phone,
-      c.overdueCredits,
-      c.totalDue,
-      c.avgDelayDays,
-      c.lastAction || 'N/A'
-    ]);
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const fecha = `${now.getFullYear()}_${pad(now.getMonth() + 1)}_${pad(now.getDate())}`;
+    const hora = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const usuario = localStorage.getItem('userName') || 'Usuario';
+    const sep = ';';
+    let csv = '';
 
-    let csvContent = headers.join(',') + '\n';
-    rows.forEach(row => {
-      csvContent += row.map(cell => `"${cell}"`).join(',') + '\n';
+    csv += `========================================${sep.repeat(5)}\r\n`;
+    csv += `★ SMART TRADE${sep.repeat(7)}\r\n`;
+    csv += `► REPORTE DE CLIENTES MOROSOS${sep.repeat(3)}\r\n`;
+    csv += `========================================${sep.repeat(5)}\r\n`;
+    csv += `FECHA DE EXPORTACIÓN:${sep}${fecha} ${hora}${sep.repeat(6)}\r\n`;
+    csv += `USUARIO:${sep}${usuario}${sep.repeat(7)}\r\n`;
+    csv += sep.repeat(9) + '\r\n';
+
+    csv += `---------- RESUMEN ----------${sep.repeat(5)}\r\n`;
+    csv += `TOTAL DEUDA EN MORA:${sep}${this.formatMoney(this.stats.totalDebt)}${sep.repeat(5)}\r\n`;
+    csv += `CLIENTES EN MORA:${sep}${this.stats.delinquentCount}${sep.repeat(7)}\r\n`;
+    csv += `MORA PROMEDIO:${sep}${this.stats.avgDelayDays} días${sep.repeat(6)}\r\n`;
+    csv += sep.repeat(9) + '\r\n';
+    csv += `========================================${sep.repeat(5)}\r\n`;
+
+    csv += [
+      '**CLIENTE**',
+      '**TELÉFONO**',
+      '**CRÉDITOS VENCIDOS**',
+      '**TOTAL ADEUDADO**',
+      '**DÍAS ATRASO PROMEDIO**',
+      '**ÚLTIMA GESTIÓN**'
+    ].join(sep) + '\r\n';
+
+    this.customers.forEach(c => {
+      const cliente = (c.name || 'N/A').toString().replace(/\n|\r|;/g, ' ');
+      const telefono = (c.phone || 'N/A').toString().replace(/\n|\r|;/g, ' ');
+      const deuda = this.formatMoney(Number(c.totalDue) || 0);
+      const dias = c.avgDelayDays != null ? c.avgDelayDays.toString() : '';
+      const ultimaGestion = (c.lastAction || 'N/A').toString().replace(/\n|\r|;/g, ' ');
+      csv += [cliente, telefono, c.overdueCredits, deuda, dias + ' días', ultimaGestion].join(sep) + '\r\n';
     });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    csv += `----------------------------------------${sep.repeat(5)}\r\n`;
+    csv += sep.repeat(9) + '\r\n';
+    csv += ['★ TOTALES', '', '', this.formatMoney(this.stats.totalDebt), '', ''].join(sep) + '\r\n';
+    csv += `========================================${sep.repeat(5)}\r\n`;
+
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `clientes-morosos-${new Date().toISOString().substring(0, 10)}.csv`);
-    link.style.visibility = 'hidden';
+    link.href = url;
+    link.download = `clientes-morosos-${fecha}.csv`;
+    link.rel = 'noopener noreferrer';
+    link.style.display = 'none';
     document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    link.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    }, 1000);
+  }
+
+  formatMoney(value: number): string {
+    return value == null ? '' : `$${value.toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   goBack(): void {
