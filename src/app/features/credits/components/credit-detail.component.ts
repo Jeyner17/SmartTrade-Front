@@ -18,6 +18,8 @@ import { RefinanceModalComponent } from './refinance-modal.component';
 })
 export class CreditDetailComponent implements OnInit, OnDestroy {
   credit: any = null;
+  generatedBy: string = 'Sistema';
+  now: Date = new Date();
   loading = false;
   error: string | null = null;
   showPaymentModal = false;
@@ -41,6 +43,9 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
         this.loadDetail(params['id']);
       }
     });
+    // Try to get current user name from local storage or auth context
+    try { this.generatedBy = (localStorage.getItem('currentUserName') || localStorage.getItem('userName') || 'Sistema'); } catch(e) { this.generatedBy = 'Sistema'; }
+    this.now = new Date();
   }
 
   ngOnDestroy(): void {
@@ -178,7 +183,24 @@ export class CreditDetailComponent implements OnInit, OnDestroy {
   }
 
   print(): void {
-    window.print();
+    // Add a class to body so print-only styles/structure are shown
+    try {
+      const body = document.body;
+      body.classList.add('printing');
+
+      // attach cleanup after print
+      const removePrinting = () => {
+        body.classList.remove('printing');
+        window.removeEventListener('afterprint', removePrinting);
+      };
+
+      window.addEventListener('afterprint', removePrinting);
+      window.print();
+      // For browsers that don't fire afterprint, remove after a short timeout
+      setTimeout(() => body.classList.remove('printing'), 1000);
+    } catch (e) {
+      window.print();
+    }
   }
 
   goBack(): void {

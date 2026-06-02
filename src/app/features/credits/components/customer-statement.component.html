@@ -1,10 +1,10 @@
-<div class="container-fluid mt-5 mb-5">
+<div class="container-fluid mb-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <h2 class="mb-1"><i class="bi bi-graph-up text-primary me-2"></i>Estado de Cuenta del Cliente</h2>
       <p class="text-muted mb-0">Resumen completo de la situación crediticia</p>
     </div>
-    <div class="btn-group" role="group">
+    <div class="btn-group no-print" role="group">
       <button type="button" class="btn btn-primary" (click)="newCredit()">
         <i class="bi bi-plus-circle me-1"></i>Nuevo Cliente
       </button>
@@ -31,18 +31,48 @@
   </div>
 
   <ng-container *ngIf="statement && !loading">
-    <!-- INFORMACIÓN DEL CLIENTE -->
-    <div class="card mb-4">
-      <div class="card-header"><h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Información del Cliente</h5></div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-3"><p><strong>Nombre:</strong> {{ statement.customer.fullName }}</p></div>
-          <div class="col-md-3"><p><strong>Documento:</strong> {{ statement.customer.documentNumber }}</p></div>
-          <div class="col-md-3"><p><strong>Contacto:</strong> {{ statement.customer.phone || statement.customer.email || 'N/A' }}</p></div>
-          <div class="col-md-3"><p class="mb-0"><strong>Estado:</strong> <span class="badge bg-primary">Activo</span></p></div>
+    <div class="print-header">
+      <div class="print-brand">
+        <div class="print-logo">ST</div>
+        <div>
+          <div class="print-system">Sistema de Gestión Comercial</div>
+          <div class="print-title">ESTADO DE CUENTA</div>
         </div>
       </div>
+      <div class="print-meta">
+        <div>Emitido: {{ now | date:'medium' }}</div>
+        <div>Usuario: {{ generatedBy }}</div>
+        <div>Estado: {{ getCustomerStatus() }}</div>
+      </div>
     </div>
+    <div class="printable-area">
+      <!-- INFORMACIÓN DEL CLIENTE -->
+      <div class="print-row">
+        <div class="card mb-4 client-info-card">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Información del Cliente</h5></div>
+          <div class="card-body">
+          <div class="row">
+            <div class="col-md-3"><p><strong>Nombre:</strong> {{ statement.customer.fullName }}</p></div>
+            <div class="col-md-3"><p><strong>Documento:</strong> {{ statement.customer.documentNumber }}</p></div>
+            <div class="col-md-3"><p><strong>Contacto:</strong> {{ statement.customer.phone || statement.customer.email || 'N/A' }}</p></div>
+            <div class="col-md-3"><p class="mb-0"><strong>Estado:</strong> <span class="badge bg-primary">{{ getCustomerStatus() }}</span></p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Print-only: show statistics next to client info for better printed layout -->
+      <div class="print-only-top">
+        <div class="card original-statistics-print">
+          <div class="card-header"><h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Estadísticas</h5></div>
+          <div class="card-body">
+            <p class="mb-2">Créditos activos: <strong>{{ getActiveCredits().length }}</strong></p>
+            <p class="mb-2">Pagos registrados: <strong>{{ getPaidCreditsCount() }}</strong></p>
+            <p class="mb-2">Promedio días de atraso: <strong>{{ statement.averageLateDays | number:'1.0-2' }} días</strong></p>
+            <p class="mb-0">Saldo por cobrar: <strong class="text-danger">${{ statement.totalDebt | number:'1.2-2' }}</strong></p>
+          </div>
+        </div>
+      </div>
+      </div>
 
     <!-- LÍMITE DE CRÉDITO Y UTILIZACIÓN -->
     <div class="row g-4 mb-4">
@@ -64,7 +94,7 @@
         </div>
       </div>
 
-      <div class="col-lg-4">
+      <div class="col-lg-4 original-statistics">
         <div class="card">
           <div class="card-header"><h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Estadísticas</h5></div>
           <div class="card-body">
@@ -104,7 +134,7 @@
               <td>${{ (credit.principalAmount - credit.outstandingBalance) | number:'1.2-2' }}</td>
               <td>${{ credit.outstandingBalance | number:'1.2-2' }}</td>
               <td>{{ credit.dueDate | date:'shortDate' }}</td>
-              <td><span class="badge" [ngClass]="'bg-' + (credit.status === 'ACTIVE' ? 'success' : 'danger')">{{ credit.status }}</span></td>
+              <td><span class="badge" [ngClass]="'bg-' + getCreditBadgeColor(credit.status)">{{ formatCreditStatus(credit.status) }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -142,6 +172,10 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      </div>
+      <div class="print-footer">
+        <div>Reporte corporativo · Sistema de Gestión Comercial · Página 1</div>
       </div>
     </div>
   </ng-container>

@@ -54,3 +54,74 @@
   background-color: #f8f9fa;
   border-bottom: 2px solid #dee2e6;
 }
+
+/* Modern print / PDF styles */
+/* General print-friendly fonts and layout when printing or when body.printing is set */
+body.printing, @media print {
+  --accent: #1f6feb;
+  --muted: #6c757d;
+  --card-bg: #ffffff;
+  --soft-border: rgba(0,0,0,0.08);
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  color: #222;
+}
+
+/* Print header */
+.print-header {
+  display: none;
+}
+
+body.printing .print-header,
+@media print {
+  .print-header { display: block; width: 100%; margin-bottom: 16px; }
+}
+
+.print-header .brand {
+  display: flex; align-items: center; gap: 12px;
+}
+.print-header img.logo { width: 88px; height: auto; border-radius: 6px; }
+.print-header .title { font-size: 20px; font-weight: 700; color: #0b3b66; }
+.print-header .meta { text-align: right; margin-left: auto; color: var(--muted); }
+
+/* Print layout sections */
+body.printing .printable-area,
+@media print {
+  .printable-area { width: 100%; max-width: 100%; padding: 0; margin: 0; }
+  .printable-area .card { box-shadow: none; border: 1px solid var(--soft-border); border-radius: 6px; margin-bottom: 12px; }
+  .printable-area .card-header { background: transparent; border-bottom: none; padding: 12px 16px; font-size: 14px; color: #0b3b66; }
+  .printable-area .card-body { padding: 12px 16px; }
+}
+
+/* Summary cards */
+.summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.summary-card { background: var(--card-bg); padding: 12px; border-radius: 8px; display:flex; align-items:center; gap:10px; }
+.summary-card .icon { width:42px; height:42px; border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; }
+.summary-card .value { font-size: 1.2rem; font-weight:700; }
+.summary-card .label { color:var(--muted); font-size:0.85rem; }
+
+/* Table styles for print */
+body.printing table, @media print table { width:100%; border-collapse:collapse; }
+body.printing thead th, @media print thead th { background:#f6f8fa; color:#0b3b66; font-weight:700; padding:10px; text-align:left; border-bottom:1px solid var(--soft-border); }
+body.printing tbody td, @media print tbody td { padding:10px; border-bottom:1px solid rgba(0,0,0,0.04); }
+body.printing tbody tr:nth-child(even), @media print tbody tr:nth-child(even) { background: #fbfcfd; }
+
+.badge-status { padding:6px 8px; border-radius:12px; font-weight:700; font-size:0.8rem; }
+.badge-status.success { background:#d4f5e0; color:#0b6b3b; }
+.badge-status.warning { background:#fff5d6; color:#8a6d00; }
+.badge-status.danger { background:#ffe2e2; color:#a01a1a; }
+
+/* Empty state */
+.empty-state { padding:24px; text-align:center; color:var(--muted); border:1px dashed var(--soft-border); border-radius:8px; }
+
+/* Footer for print with page number */
+.print-footer { display:none; }
+@media print {
+  .print-footer { display:block; position:fixed; bottom:12px; left:0; right:0; text-align:center; font-size:12px; color:var(--muted); }
+  @page { size: A4; margin: 20mm }
+  body { -webkit-print-color-adjust: exact; }
+  .no-print { display:none !important; }
+}
+
+/* When printing from the app (body.printing) hide UI chrome */
+body.printing .no-print { display: none !important; }
+

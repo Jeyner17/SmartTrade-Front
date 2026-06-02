@@ -5,6 +5,8 @@ export interface StatementCustomer {
   phone?: string;
   email?: string;
   creditLimit?: number;
+  status?: string; // Opcional para visualización
+  address?: string; // Opcional para visualización
 }
 
 export interface CustomerStatement {

@@ -20,17 +20,39 @@
   </div>
 
   <ng-container *ngIf="credit && !loading">
+    <!-- Print header (shown only during printing / when body.printing is active) -->
+    <div class="print-header">
+      <div class="brand">
+        <img src="/assets/logo.png" alt="Logo" class="logo"/>
+        <div>
+          <div style="font-weight:700; font-size:14px; color:#0b3b66">Sistema de Gestión Comercial</div>
+          <!-- <div class="title">ESTADO DE CUENTA</div> -->
+        </div>
+        <div class="meta">
+          <div>Emitido: {{ (credit?.generatedAt || (now | date:'medium')) }}</div>
+          <div>Usuario: {{ generatedBy }}</div>
+        </div>
+      </div>
+      <hr/>
+      <div style="display:flex; gap:12px; align-items:center;">
+        <div><strong>Cliente:</strong> {{ credit.customer?.fullName }}</div>
+        <div style="margin-left:12px"><strong>Documento:</strong> {{ credit.customer?.documentNumber }}</div>
+      </div>
+    </div>
     <div class="row g-4 mb-4">
       <!-- INFORMACIÓN DEL CLIENTE -->
       <div class="col-lg-6">
         <div class="card">
           <div class="card-header"><h5 class="mb-0"><i class="bi bi-person me-2"></i>Información del Cliente</h5></div>
           <div class="card-body">
-            <p><strong>Nombre:</strong> {{ credit.customer?.fullName }}</p>
-            <p><strong>Documento:</strong> {{ credit.customer?.documentNumber }}</p>
-            <p><strong>Teléfono:</strong> {{ credit.customer?.phone }}</p>
-            <p><strong>Límite de crédito:</strong> ${{ credit.customer?.creditLimit | number:'1.2-2' }}</p>
-            <p class="mb-0"><strong>Créditos activos:</strong> {{ credit.customer?.activeCredits || 0 }}</p>
+            <div class="row">
+              <div class="col-6"><p><strong>Nombre:</strong><br/>{{ credit.customer?.fullName }}</p></div>
+              <div class="col-6"><p><strong>Documento:</strong><br/>{{ credit.customer?.documentNumber }}</p></div>
+              <div class="col-6"><p><strong>Teléfono:</strong><br/>{{ credit.customer?.phone || '-' }}</p></div>
+              <div class="col-6"><p><strong>Dirección:</strong><br/>{{ credit.customer?.address || '-' }}</p></div>
+              <div class="col-6"><p><strong>Límite de crédito:</strong><br/>${{ credit.customer?.creditLimit | number:'1.2-2' }}</p></div>
+              <div class="col-6"><p class="mb-0"><strong>Créditos activos:</strong><br/>{{ credit.customer?.activeCredits || 0 }}</p></div>
+            </div>
           </div>
         </div>
       </div>
@@ -40,19 +62,16 @@
         <div class="card">
           <div class="card-header"><h5 class="mb-0"><i class="bi bi-cash-coin me-2"></i>Información del Crédito</h5></div>
           <div class="card-body">
-            <p><strong>Número de crédito:</strong> #{{ credit.id }}</p>
-            <p><strong>Fecha de crédito:</strong> {{ credit.startDate | date:'medium' }}</p>
-            <p><strong>Monto original:</strong> ${{ credit.principalAmount | number:'1.2-2' }}</p>
-            <p><strong>Plazo:</strong> {{ credit.termDays }} días</p>
-            <p><strong>Fecha de vencimiento:</strong> {{ credit.dueDate | date:'medium' }}</p>
-            <p class="mb-0">
-              <strong>Estado:</strong>
-              <span [ngClass]="'badge bg-' + (getStatusColor() === 'verde' ? 'success' :
-                                              getStatusColor() === 'amarillo' ? 'warning' :
-                                              getStatusColor() === 'naranja' ? 'danger' : 'dark')">
-                {{ getStatusDisplay() }}
-              </span>
-            </p>
+            <div class="row">
+              <div class="col-6"><p><strong>Número de crédito:</strong><br/>#{{ credit.id }}</p></div>
+              <div class="col-6"><p><strong>Fecha de crédito:</strong><br/>{{ credit.startDate | date:'medium' }}</p></div>
+              <div class="col-6"><p><strong>Monto original:</strong><br/>${{ credit.principalAmount | number:'1.2-2' }}</p></div>
+              <div class="col-6"><p><strong>Plazo:</strong><br/>{{ credit.termDays }} días</p></div>
+              <div class="col-6"><p><strong>Fecha de vencimiento:</strong><br/>{{ credit.dueDate | date:'medium' }}</p></div>
+              <div class="col-6"><p class="mb-0"><strong>Estado:</strong><br/>
+                <span class="badge-status {{ getStatusColor() === 'verde' ? 'success' : getStatusColor() === 'naranja' ? 'warning' : getStatusColor() === 'rojo' ? 'danger' : '' }}">{{ getStatusDisplay() }}</span>
+              </p></div>
+            </div>
           </div>
         </div>
       </div>
@@ -72,58 +91,70 @@
     <!-- HISTORIAL DE PAGOS -->
     <div class="card mb-4">
       <div class="card-header"><h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Historial de Pagos</h5></div>
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Fecha de pago</th>
-              <th>Monto pagado</th>
-              <th>Método de pago</th>
-              <th>Saldo después del pago</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="!credit.payments || credit.payments.length === 0">
-              <td colspan="4" class="text-center py-4 text-muted">Sin pagos registrados</td>
-            </tr>
-            <tr *ngFor="let payment of credit.payments">
-              <td>{{ payment.paymentDate | date:'medium' }}</td>
-              <td>${{ payment.amount | number:'1.2-2' }}</td>
-              <td><span class="badge bg-info">{{ payment.paymentMethod }}</span></td>
-              <td>${{ payment.balanceAfter | number:'1.2-2' }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card-body">
+        <div *ngIf="!credit.payments || credit.payments.length === 0" class="empty-state">No existen pagos registrados</div>
+        <div *ngIf="credit.payments && credit.payments.length > 0" class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th class="text-end">Monto</th>
+                <th>Método</th>
+                <th class="text-end">Saldo después</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let payment of credit.payments">
+                <td>{{ payment.paymentDate | date:'mediumDate' }}</td>
+                <td class="text-end">${{ payment.amount | number:'1.2-2' }}</td>
+                <td>{{ payment.paymentMethod }}</td>
+                <td class="text-end">${{ payment.balanceAfter | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <!-- SALDO ACTUAL -->
+    <!-- SALDO ACTUAL / RESUMEN FINANCIERO -->
     <div class="card mb-4">
-      <div class="card-header"><h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Saldo Actual</h5></div>
+      <div class="card-header"><h5 class="mb-0"><i class="bi bi-calculator me-2"></i>Resumen Financiero</h5></div>
       <div class="card-body">
-        <div class="row text-center">
-          <div class="col-md-3">
-            <p class="text-muted mb-2">Monto original</p>
-            <h5 class="mb-0">${{ credit.principalAmount | number:'1.2-2' }}</h5>
+        <div class="summary-grid">
+          <div class="summary-card">
+            <div class="icon" style="background:#1f6feb">💼</div>
+            <div>
+              <div class="label">Límite de crédito</div>
+              <div class="value">${{ credit.customer?.creditLimit | number:'1.2-2' }}</div>
+            </div>
           </div>
-          <div class="col-md-3">
-            <p class="text-muted mb-2">Pagado</p>
-            <h5 class="mb-0">${{ (credit.principalAmount - credit.outstandingBalance) | number:'1.2-2' }}</h5>
+          <div class="summary-card">
+            <div class="icon" style="background:#e76f51">💳</div>
+            <div>
+              <div class="label">Deuda total</div>
+              <div class="value">${{ credit.totalAmount | number:'1.2-2' }}</div>
+            </div>
           </div>
-          <div class="col-md-3">
-            <p class="text-muted mb-2">Intereses por mora</p>
-            <h5 class="mb-0">${{ credit.lateInterest | number:'1.2-2' }}</h5>
+          <div class="summary-card">
+            <div class="icon" style="background:#2a9d8f">✅</div>
+            <div>
+              <div class="label">Crédito disponible</div>
+              <div class="value">${{ (credit.customer?.creditLimit - credit.totalAmount) | number:'1.2-2' }}</div>
+            </div>
           </div>
-          <div class="col-md-3">
-            <p class="text-muted mb-2">Saldo pendiente</p>
-            <h5 class="mb-0 text-danger fw-bold">${{ credit.totalAmount | number:'1.2-2' }}</h5>
+          <div class="summary-card">
+            <div class="icon" style="background:#f4c152">📈</div>
+            <div>
+              <div class="label">Créditos activos</div>
+              <div class="value">{{ credit.customer?.activeCredits || 0 }}</div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
     <!-- BOTONES DE ACCIÓN -->
-    <div class="d-flex gap-2 flex-wrap">
+    <div class="d-flex gap-2 flex-wrap no-print">
       <button class="btn btn-success" (click)="openPaymentModal()" [disabled]="credit.status === 'PAID'">
         <i class="bi bi-cash-coin me-1"></i>Registrar Pago
       </button>
@@ -139,6 +170,11 @@
       <button class="btn btn-danger" (click)="openForgiveModal()" [disabled]="credit.status === 'PAID'">
         <i class="bi bi-trash me-1"></i>Condonar Deuda
       </button>
+    </div>
+
+    <!-- Print footer (visible in print) -->
+    <div class="print-footer">
+      <div>Generado: {{ now | date:'medium' }} · Usuario: {{ generatedBy }} · Página <span class="pageNumber"></span></div>
     </div>
   </ng-container>
 </div>

@@ -1,0 +1,256 @@
+/* Print-specific styles for customer statement */
+@media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-family: 'Inter', Arial, sans-serif !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body *,
+  .printable-area,
+  .printable-area * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-header,
+  .print-header *,
+  .printable-area,
+  .printable-area *,
+  .print-footer,
+  .print-footer * {
+    visibility: visible !important;
+  }
+
+  .print-header,
+  .printable-area,
+  .print-footer {
+    display: block !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    float: none !important;
+  }
+
+  .printable-area {
+    padding: 0 !important;
+    box-shadow: none !important;
+    background: #fff !important;
+  }
+
+  .print-header {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    align-items: start !important;
+    gap: 10px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+    margin-bottom: 8px !important;
+  }
+
+  .print-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+  }
+
+  .print-logo {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 0.95rem !important;
+    border-radius: 10px !important;
+  }
+
+  .print-system {
+    font-size: 0.75rem !important;
+    color: rgba(0,0,0,0.55) !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+  }
+
+  .print-title {
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    margin-top: 0 !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #0f3057 !important;
+  }
+
+  p {
+    margin: 0 0 4px 0 !important;
+    color: #2c3e50 !important;
+  }
+
+  .print-meta {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin-top: 0 !important;
+  }
+
+  .print-meta div {
+    padding: 8px 10px !important;
+    background: #f5f7fb !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+    font-size: 10.5px !important;
+  }
+
+  .print-footer {
+    margin-top: 18px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(0,0,0,0.12) !important;
+    text-align: center !important;
+    font-size: 10.5px !important;
+    color: rgba(0,0,0,0.62) !important;
+  }
+
+  .progress {
+    display: block !important;
+    width: 100% !important;
+    height: 18px !important;
+    background: #e9ecef !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    margin-bottom: 0 !important;
+  }
+
+  .progress-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 2rem !important;
+    height: 100% !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    background-color: #198754 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .progress-bar.bg-success { background-color: #198754 !important; }
+  .progress-bar.bg-warning { background-color: #ffc107 !important; color: #212529 !important; }
+  .progress-bar.bg-danger { background-color: #dc3545 !important; }
+  .progress-bar.bg-secondary { background-color: #6c757d !important; }
+  .progress-bar.bg-info { background-color: #0dcaf0 !important; color: #000 !important; }
+
+  .badge-status,
+  .badge,
+  .badge.bg-success,
+  .badge.bg-warning,
+  .badge.bg-danger,
+  .badge.bg-secondary,
+  .badge.bg-info,
+  .badge.bg-primary,
+  .badge.bg-light,
+  .badge.bg-dark {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .badge.bg-success { background-color: #198754 !important; color: #fff !important; }
+  .badge.bg-warning { background-color: #ffc107 !important; color: #212529 !important; }
+  .badge.bg-danger { background-color: #dc3545 !important; color: #fff !important; }
+  .badge.bg-secondary { background-color: #6c757d !important; color: #fff !important; }
+  .badge.bg-info { background-color: #0dcaf0 !important; color: #000 !important; }
+
+  .no-print,
+  .btn,
+  .btn-group,
+  .sidebar,
+  .navbar,
+  .alert,
+  .spinner-border,
+  .d-print-none,
+  nav,
+  header,
+  footer,
+  aside {
+    display: none !important;
+  }
+
+  .card {
+    box-shadow: none !important;
+    border: 1px solid rgba(0,0,0,0.08) !important;
+    page-break-inside: avoid !important;
+    background: #fff !important;
+    margin-bottom: 10px !important;
+  }
+
+  .card-header {
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+  }
+
+  .card-body {
+    padding: 10px 12px !important;
+  }
+
+  .row.g-4 {
+    gap: 10px !important;
+  }
+
+  .printable-area .row > [class*='col-'] {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+
+  .table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 12px !important;
+    font-size: 11px !important;
+  }
+
+  th, td {
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    padding: 8px !important;
+    font-size: 11px !important;
+    text-align: left !important;
+  }
+
+  thead th {
+    background: #f5f7fb !important;
+    color: #1f3d72 !important;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #f9fbff !important;
+  }
+
+  .print-title {
+    font-size: 1.7rem !important;
+    letter-spacing: 0.04em !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm 10mm 12mm 10mm;
+  }
+  
+  /* Prevent selection highlight appearing in print previews */
+  ::selection { background: transparent !important; color: inherit !important; }
+  *::selection { background: transparent !important; color: inherit !important; }
+
+  /* Remove top page padding so printed content starts at top */
+  .page-content { padding: 0 !important; }
+  .container-fluid { padding-top: 0 !important; margin-top: 0 !important; }
+}

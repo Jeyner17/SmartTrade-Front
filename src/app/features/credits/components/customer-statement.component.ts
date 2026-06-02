@@ -16,6 +16,8 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
   statement: CustomerStatement | null = null;
   loading = false;
   error: string | null = null;
+  generatedBy: string = 'Sistema';
+  now: Date = new Date();
   private destroy$ = new Subject<void>();
 
   constructor(
@@ -30,6 +32,12 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
         this.loadStatement(params['id']);
       }
     });
+    try {
+      this.generatedBy = localStorage.getItem('currentUserName') || localStorage.getItem('userName') || 'Sistema';
+    } catch (e) {
+      this.generatedBy = 'Sistema';
+    }
+    this.now = new Date();
   }
 
   ngOnDestroy(): void {
@@ -68,6 +76,18 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
     return 'success';
   }
 
+  formatCreditStatus(status?: string): string {
+    return this.translateStatus(status);
+  }
+
+  getCreditBadgeColor(status?: string): string {
+    const normalized = status?.trim().toUpperCase();
+    if (normalized === 'ACTIVE' || normalized === 'PAID') return 'success';
+    if (normalized === 'OVERDUE') return 'danger';
+    if (normalized === 'PENDING') return 'warning';
+    return 'secondary';
+  }
+
   newCredit(): void {
     this.router.navigate(['/credits/nuevo-cliente']);
   }
@@ -79,6 +99,7 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
   }
 
   print(): void {
+    // Use the native browser print dialog directly.
     window.print();
   }
 
@@ -96,5 +117,39 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
 
   getPaidCreditsCount(): number {
     return this.getPayments().length;
+  }
+
+  private translateStatus(status?: string): string {
+    if (!status) {
+      return 'Activo';
+    }
+
+    const normalized = status.trim().toLowerCase();
+    const map: Record<string, string> = {
+      'active': 'Activo',
+      'activo': 'Activo',
+      'inactive': 'Inactivo',
+      'inactivo': 'Inactivo',
+      'paid': 'Pagado',
+      'pagado': 'Pagado',
+      'overdue': 'Vencido',
+      'vencido': 'Vencido',
+      'pending': 'Pendiente',
+      'pendiente': 'Pendiente',
+      'cancelled': 'Cancelado',
+      'cancelado': 'Cancelado',
+      'suspended': 'Suspendido',
+      'suspendido': 'Suspendido',
+      'open': 'Abierto',
+      'abierto': 'Abierto',
+      'closed': 'Cerrado',
+      'cerrado': 'Cerrado'
+    };
+
+    return map[normalized] || status;
+  }
+
+  getCustomerStatus(): string {
+    return this.translateStatus(this.statement?.customer?.status);
   }
 }

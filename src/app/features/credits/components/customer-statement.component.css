@@ -1,4 +1,103 @@
-/* Estado de cuenta */
+.print-header {
+  display: none;
+}
+
+.print-header {
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.print-brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.print-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: #1f6feb;
+  color: #fff;
+  font-weight: 700;
+  border-radius: 12px;
+  font-size: 1.2rem;
+}
+
+.print-system {
+  font-size: 0.9rem;
+  color: #5a5f66;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.print-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-top: 4px;
+  color: #1f3d72;
+}
+
+.print-meta {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  font-size: 0.95rem;
+  color: #444;
+}
+
+.print-meta div {
+  padding: 8px 12px;
+  background: #f6f8fb;
+  border-radius: 8px;
+}
+
+/* Print-only helpers for customer statement */
+.print-only-top { display: none; }
+.print-top-grid { display: block; }
+
+@media print {
+  .print-only-top { display: block !important; margin-bottom: 12px; }
+  .print-top-grid { display: grid !important; grid-template-columns: 1fr 320px; gap: 12px; align-items: start; }
+  /* Place client info and stats on same row */
+  .print-row { display: flex !important; gap: 12px !important; align-items: flex-start !important; }
+  .print-row .client-info-card { flex: 1 1 auto !important; }
+  .print-only-top { width: 320px !important; flex: 0 0 320px !important; }
+  /* Hide the original statistics column when printing to avoid duplication */
+  .original-statistics { display: none !important; }
+  .original-statistics-print { box-shadow: none; border: 1px solid rgba(0,0,0,0.08); }
+}
+
+/* Remove selection highlight for both screen (optional) and print preview */
+::selection { background: transparent !important; color: inherit !important; }
+*::selection { background: transparent !important; color: inherit !important; }
+
+@media print {
+  ::selection { background: transparent !important; color: inherit !important; }
+  *::selection { background: transparent !important; color: inherit !important; }
+}
+
+.printable-area {
+  width: 100%;
+}
+
+.print-footer {
+  display: none;
+}
+
+body.printing .print-header,
+body.printing .print-footer {
+  display: block !important;
+}
+
+body.printing .no-print {
+  display: none !important;
+}
+
 .progress {
   height: 25px;
   background-color: #e9ecef;
@@ -18,56 +117,152 @@
 .card {
   margin-bottom: 1.5rem;
   border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
 }
 
 .card-header {
   background-color: #f8f9fa;
-  border-bottom: 2px solid #dee2e6;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 12px 12px 0 0;
+}
+
+.card-body {
+  background: #fff;
+  padding: 20px;
 }
 
 .badge {
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.75rem;
   font-weight: 600;
+  border-radius: 999px;
 }
 
-.excelente {
-  background-color: #28a745;
+.text-success, .text-danger, .text-primary, .text-info, .text-warning {
+  color: inherit;
 }
 
-.buen {
-  background-color: #1976d2;
+.no-print {
+  display: inline-flex !important;
 }
 
-.regular {
-  background-color: #ffc107;
-}
+@media print {
+  html, body {
+    background: #fff !important;
+    color: #000 !important;
+    font-family: 'Segoe UI', Arial, sans-serif !important;
+    font-size: 12px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
 
-.warning {
-  background-color: #ffc107;
-}
+  .container-fluid {
+    margin: 0 !important;
+    padding: 16mm !important;
+    width: auto !important;
+    max-width: 210mm !important;
+    background: #fff !important;
+  }
 
-.danger {
-  background-color: #dc3545;
-}
+  .btn, .btn-group, .sidebar, nav, .navbar, .alert, .d-print-none, .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
 
-.deficiente {
-  background-color: #dc3545;
-}
+  .print-header {
+    display: block !important;
+  }
 
-.desconocido {
-  background-color: #6c757d;
-}
+  .print-footer {
+    display: block !important;
+    width: 100%;
+    text-align: center;
+    margin-top: 24px;
+    font-size: 11px;
+    color: #555;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+  }
 
-.progress-fill {
-  height: 100%;
-  border-radius: 8px;
-  text-align: center;
-  line-height: 24px;
-}
+  .card {
+    box-shadow: none !important;
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    page-break-inside: avoid !important;
+    background: #fff !important;
+  }
 
-.actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  .card-header, .card-body, .table {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 16px !important;
+    page-break-inside: auto !important;
+  }
+
+  th, td {
+    border: 1px solid rgba(0,0,0,0.12) !important;
+    padding: 8px 10px !important;
+    color: #000 !important;
+    font-size: 12px !important;
+  }
+
+  th {
+    background: #f4f5f7 !important;
+    font-weight: 700 !important;
+    text-align: left !important;
+  }
+
+  tbody tr:nth-child(even) {
+    background: #fbfcfd !important;
+  }
+
+  .badge {
+    color: #fff !important;
+    background: #222 !important;
+  }
+
+  h2, h5, h6 {
+    color: #000 !important;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+    font-weight: bold;
+  }
+
+  .print-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .print-meta div {
+    padding: 10px 12px !important;
+    background: #f9fafb !important;
+  }
+
+  .progress {
+    display: block !important;
+    height: 25px !important;
+    background-color: #e9ecef !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    margin-bottom: 0 !important;
+  }
+
+  .progress-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+    height: 100% !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 16mm 16mm 16mm 16mm;
+  }
 }
