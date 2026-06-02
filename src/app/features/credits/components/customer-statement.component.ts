@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { CreditsService } from '../services/credits.service';
 import { CustomerStatement } from '../models/customer-statement.model';
 
@@ -23,7 +24,8 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
   constructor(
     private creditsService: CreditsService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private confirmation: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -93,9 +95,17 @@ export class CustomerStatementComponent implements OnInit, OnDestroy {
   }
 
   sendEmail(): void {
-    if (confirm('¿Enviar estado de cuenta por email?')) {
-      alert('Funcionalidad de envío de email en desarrollo');
-    }
+    this.confirmation.confirm({
+      title: 'Enviar estado de cuenta',
+      message: '¿Enviar estado de cuenta por email?',
+      confirmText: 'Enviar',
+      cancelText: 'Cancelar',
+      type: 'info'
+    }).subscribe(ok => {
+      if (ok) {
+        this.confirmation.confirm({ title: 'En desarrollo', message: 'Funcionalidad de envío de email en desarrollo', confirmText: 'Aceptar', cancelText: '' , type: 'info'}).subscribe();
+      }
+    });
   }
 
   print(): void {

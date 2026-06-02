@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { CreditsService } from '../services/credits.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 import { DelinquentCustomer } from '../models/delinquent-customer.model';
 
 @Component({
@@ -45,7 +46,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
 
   private destroy$ = new Subject<void>();
 
-  constructor(private creditsService: CreditsService, private router: Router) {}
+  constructor(private creditsService: CreditsService, private router: Router, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     this.loadCustomers();
@@ -153,7 +154,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
       // Abre cliente de SMS nativo del sistema
       window.location.href = `sms:${phone}?body=Recordatorio%20de%20pago%20de%20crédito%20vencido`;
     } else {
-      alert('No hay número de teléfono disponible');
+      this.confirmation.confirm({ title: 'Aviso', message: 'No hay número de teléfono disponible', confirmText: 'Aceptar', cancelText: '', type: 'info' }).subscribe();
     }
   }
 
@@ -164,7 +165,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
       const body = 'Le recordamos que tiene créditos vencidos que requieren su atención. Por favor contacte con nosotros.';
       window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     } else {
-      alert('No hay correo electrónico disponible');
+      this.confirmation.confirm({ title: 'Aviso', message: 'No hay correo electrónico disponible', confirmText: 'Aceptar', cancelText: '', type: 'info' }).subscribe();
     }
   }
 
@@ -216,7 +217,7 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
 
   sendBulkReminder(): void {
     if (this.selectedCustomers.size === 0) {
-      alert('Seleccione al menos un cliente');
+      this.confirmation.confirm({ title: 'Aviso', message: 'Seleccione al menos un cliente', confirmText: 'Aceptar', cancelText: '', type: 'info' }).subscribe();
       return;
     }
 
@@ -227,13 +228,12 @@ export class DelinquentCustomersComponent implements OnInit, OnDestroy {
     if (channel && ['1', '2'].includes(channel)) {
       const channelMap: any = { '1': 'EMAIL', '2': 'SMS' };
 
-      if (confirm(
-        `¿Enviar recordatorio por ${channelMap[channel]} a ${this.selectedCustomers.size} cliente(s)?`
-      )) {
-        alert(`${this.selectedCustomers.size} recordatorios enviados por ${channelMap[channel]}`);
+      this.confirmation.confirm({ title: 'Enviar recordatorios', message: `¿Enviar recordatorio por ${channelMap[channel]} a ${this.selectedCustomers.size} cliente(s)?`, confirmText: 'Enviar', cancelText: 'Cancelar', type: 'info' }).subscribe(ok => {
+        if (!ok) return;
+        this.confirmation.confirm({ title: 'Enviado', message: `${this.selectedCustomers.size} recordatorios enviados por ${channelMap[channel]}`, confirmText: 'Aceptar', cancelText: '', type: 'info' }).subscribe();
         // Aquí se enviaría al backend si hubiera un endpoint para recordatorios masivos
         this.selectedCustomers.clear();
-      }
+      });
     }
   }
 

@@ -7,6 +7,7 @@ import { CreditsService } from '../services/credits.service';
 import { Credit } from '../models/credit.model';
 import { NotificationsService } from '../services/notifications.service';
 import { PaymentModalComponent } from './payment-modal.component';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 
 @Component({
   selector: 'app-credits-list',
@@ -53,7 +54,8 @@ export class CreditsListComponent implements OnInit, OnDestroy {
   constructor(
     private creditsService: CreditsService,
     private notificationsService: NotificationsService,
-    private router: Router
+    private router: Router,
+    private confirmation: ConfirmationService
   ) {}
 
   ngOnInit(): void {
@@ -150,18 +152,20 @@ export class CreditsListComponent implements OnInit, OnDestroy {
   }
 
   sendReminder(credit: any): void {
-    if (confirm('¿Enviar recordatorio de pago a este cliente?')) {
-      this.notificationsService.sendReminder(credit)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: () => {
-            alert('Recordatorio enviado exitosamente');
-          },
-          error: (error) => {
-            alert(error.error?.message || error.message || 'Error al enviar recordatorio');
-          }
-        });
-    }
+    this.confirmation.confirm({ title: 'Enviar recordatorio', message: '¿Enviar recordatorio de pago a este cliente?', confirmText: 'Enviar', cancelText: 'Cancelar', type: 'info' })
+      .subscribe(ok => {
+        if (!ok) return;
+        this.notificationsService.sendReminder(credit)
+          .pipe(takeUntil(this.destroy$))
+          .subscribe({
+            next: () => {
+              this.showToast('Recordatorio enviado exitosamente');
+            },
+            error: (error) => {
+              this.confirmation.confirm({ title: 'Error', message: error.error?.message || error.message || 'Error al enviar recordatorio', confirmText: 'Aceptar', cancelText: '', type: 'danger' }).subscribe();
+            }
+          });
+      });
   }
 
   viewCustomerStatement(customerId: number): void {

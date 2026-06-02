@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChange
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CreditsService } from '../services/credits.service';
+import { ConfirmationService } from '../../../core/services/confirmation.service';
 
 @Component({
   selector: 'app-debt-forgiveness-modal',
@@ -27,7 +28,7 @@ export class DebtForgivenessModalComponent implements OnInit, OnChanges {
     'Otro'
   ];
 
-  constructor(private fb: FormBuilder, private creditsService: CreditsService) {}
+  constructor(private fb: FormBuilder, private creditsService: CreditsService, private confirmation: ConfirmationService) {}
 
   ngOnInit(): void {
     this.buildForm();
@@ -104,10 +105,22 @@ export class DebtForgivenessModalComponent implements OnInit, OnChanges {
       return;
     }
 
-    if (!confirm('¿Confirma la condonación de deuda? Esta acción es irreversible.')) {
-      return;
-    }
+    this.confirmation.confirm({
+      title: 'Confirmar condonación',
+      message: '¿Confirma la condonación de deuda? Esta acción es irreversible.',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+      type: 'danger'
+    }).subscribe(confirmed => {
+      if (!confirmed) return;
 
+      this.executeForgive();
+    });
+    return;
+
+  }
+
+  private executeForgive(): void {
     this.loading = true;
     const formValue = this.forgivenessForm.value;
     const forgivenessData: any = {
